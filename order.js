@@ -547,14 +547,14 @@ function bootOrderPage() {
   });
 
   // Auto-preview typed address on map
-  const addressTextarea = document.querySelector("#customer-address");
-  if (addressTextarea) {
-    addressTextarea.addEventListener("input", (event) => {
+  const mapSearchInput = document.querySelector("#map-search-input");
+  if (mapSearchInput) {
+    mapSearchInput.addEventListener("input", (event) => {
       const address = event.target.value.trim();
       if (address.length > 4) {
         updateMapPreview(address);
         document.querySelector("#map-link").value = `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
-        locationStatus.textContent = "Previewing exact address on map.";
+        locationStatus.textContent = "Previewing searched place on map.";
       } else if (!address && !document.querySelector("#latitude").value) {
         selectedMap.innerHTML = "";
         selectedMap.classList.remove("is-visible");
