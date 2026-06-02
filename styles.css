@@ -1849,3 +1849,90 @@ footer strong {
     grid-template-columns: 1fr;
   }
 }
+
+/* Flipkart-style Order Placed Animation Overlay */
+.order-success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+.order-success-overlay[hidden] {
+  display: none !important;
+}
+
+.success-animation {
+  margin-bottom: 24px;
+}
+.checkmark {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: var(--basil);
+  stroke-miterlimit: 10;
+  margin: 0 auto;
+  box-shadow: inset 0px 0px 0px var(--basil);
+  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+}
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 3;
+  stroke-miterlimit: 10;
+  stroke: var(--basil);
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes scale {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.1, 1.1, 1); }
+}
+@keyframes fill {
+  100% { box-shadow: inset 0px 0px 0px 50px rgba(18, 128, 92, 0.1); }
+}
+
+.order-success-overlay h2 {
+  font-size: 2rem;
+  color: var(--basil-dark);
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideUp 0.5s ease-out 1.2s forwards;
+}
+.order-success-overlay p {
+  color: var(--muted);
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideUp 0.5s ease-out 1.3s forwards;
+}
+.order-success-overlay .success-actions {
+  display: flex;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideUp 0.5s ease-out 1.4s forwards;
+}
+
+@keyframes slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}

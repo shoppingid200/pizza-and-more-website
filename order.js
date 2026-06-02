@@ -466,11 +466,24 @@ async function submitOrder(event) {
 
   sendWhatsapp.href = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
   confirmationBox.hidden = false;
-  showToast("Order receipt created");
+  
+  const overlay = document.getElementById("order-success-overlay");
+  if (overlay) {
+    document.getElementById("success-order-id").textContent = `Order #${serverOrder?.id || id}`;
+    document.getElementById("success-whatsapp-btn").href = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+    
+    overlay.hidden = false;
+    
+    document.getElementById("success-close-btn").onclick = () => {
+      overlay.hidden = true;
+      confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+  } else {
+    showToast("Order receipt created");
+    confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 
   renderOrderHistory();
-
-  confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function bootScrollAnimations() {
