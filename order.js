@@ -45,7 +45,7 @@ async function placeOrderOnApi(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || data?.error || "Failed to place order");
+  if (!res.ok) throw new Error(data?.error || data?.message || "Failed to place order");
   return data;
 }
 
@@ -56,7 +56,7 @@ async function patchOrderStatusOnApi({ id, status }) {
     body: JSON.stringify({ id, status }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || data?.error || "Failed to update order");
+  if (!res.ok) throw new Error(data?.error || data?.message || "Failed to update order");
   return data;
 }
 
