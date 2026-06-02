@@ -260,7 +260,7 @@ function saveInventory(inventory) {
 }
 
 async function syncInventoryFromApi() {
-  const res = await fetch(INVENTORY_API_URL, { headers: { Accept: "application/json" } });
+  const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
   if (!res.ok) throw new Error(`Inventory sync failed (${res.status})`);
   const inventory = await res.json();
   if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");

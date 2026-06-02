@@ -61,7 +61,7 @@ function buildDefaultInventory() {
 
 async function ensureSeeded() {
   const existing = await kv.get(INVENTORY_KEY);
-  if (Array.isArray(existing) && existing.length > 0) return existing;
+  if (Array.isArray(existing)) return existing;
   const seeded = buildDefaultInventory();
   await kv.set(INVENTORY_KEY, seeded);
   return seeded;
@@ -103,6 +103,7 @@ async function readJsonBody(req) {
 module.exports = async (req, res) => {
   setCors(res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
   if (req.method === "OPTIONS") return res.status(200).end();
 

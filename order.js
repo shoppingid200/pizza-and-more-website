@@ -30,7 +30,7 @@ function showToast(message) {
 }
 
 async function syncInventoryFromApi() {
-  const res = await fetch(INVENTORY_API_URL, { headers: { Accept: "application/json" } });
+  const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
   if (!res.ok) throw new Error(`Inventory sync failed (${res.status})`);
   const inventory = await res.json();
   if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
@@ -45,7 +45,7 @@ async function placeOrderOnApi(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Failed to place order");
+  if (!res.ok) throw new Error(data?.message || data?.error || "Failed to place order");
   return data;
 }
 
@@ -56,7 +56,7 @@ async function patchOrderStatusOnApi({ id, status }) {
     body: JSON.stringify({ id, status }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Failed to update order");
+  if (!res.ok) throw new Error(data?.message || data?.error || "Failed to update order");
   return data;
 }
 
