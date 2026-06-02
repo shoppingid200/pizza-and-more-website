@@ -235,17 +235,16 @@ const menuItems = [
 const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
 const INVENTORY_API_URL = "/api/inventory";
 
-function initializeInventory() {
-  if (!localStorage.getItem(INVENTORY_STORAGE_KEY)) {
-    const items = menuItems.map(item => ({
-      ...item,
-      stock: 50,
-      available: true
-    }));
-    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
-  }
+function initializeInventoryFromDefaults() {
+  // Only used as an absolute fallback when both the API and localStorage are empty.
+  const items = menuItems.map(item => ({
+    ...item,
+    stock: 50,
+    available: true
+  }));
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
 }
-initializeInventory();
+// Do NOT call initializeInventoryFromDefaults here; bootMenu handles it.
 
 function readInventory() {
   try {
@@ -537,11 +536,15 @@ async function copyOrder() {
 }
 
 async function bootMenu() {
-  // Load latest inventory shared by the admin portal (works across devices).
+  // Load latest inventory from the API (single source of truth).
   try {
     await syncInventoryFromApi();
   } catch (e) {
     console.warn("Inventory sync skipped:", e);
+    // If API failed AND localStorage is empty, seed with hardcoded defaults.
+    if (!localStorage.getItem(INVENTORY_STORAGE_KEY) || readInventory().length === 0) {
+      initializeInventoryFromDefaults();
+    }
   }
 
   restoreCart();
@@ -599,7 +602,7 @@ async function bootMenu() {
     } catch {
       // Keep the UI usable with cached inventory.
     }
-  }, 8000);
+  }, 5000);
 
   // Dynamic cross-tab stock sync
   window.addEventListener("storage", (event) => {

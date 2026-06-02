@@ -718,18 +718,25 @@
         window.dispatchEvent(new Event("storage"));
       }
 
-      function saveInventory(inventory) {
+      async function saveInventory(inventory) {
         // Update UI immediately.
         saveInventoryLocal(inventory);
 
         // Persist globally (admin changes should affect all visitors).
-        void fetch(INVENTORY_API_URL, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ inventory }),
-        }).catch((e) => {
-          console.warn("Inventory persist failed:", e);
-        });
+        try {
+          const res = await fetch(INVENTORY_API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ inventory }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
+          }
+        } catch (e) {
+          console.error("Inventory persist failed:", e);
+          showToast(`⚠️ Failed to save to server: ${e.message}`);
+        }
       }
 
       async function syncInventoryFromApi() {
@@ -813,7 +820,7 @@
           .join("");
       }
 
-      function handleQuickSave(name, trElement) {
+      async function handleQuickSave(name, trElement) {
         const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
         const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
         const availVal = trElement.querySelector(".avail-checkbox").checked;
@@ -824,22 +831,22 @@
           item.price = priceVal;
           item.stock = stockVal;
           item.available = availVal;
-          saveInventory(inventory);
+          await saveInventory(inventory);
           showToast(`Updated ${name}`);
           renderInventory();
         }
       }
 
-      function handleQuickDelete(name) {
+      async function handleQuickDelete(name) {
         if (!confirm(`Are you sure you want to delete "${name}" from the inventory menu?`)) return;
         const inventory = readInventory();
         const filtered = inventory.filter((x) => x.name !== name);
-        saveInventory(filtered);
+        await saveInventory(filtered);
         showToast(`Deleted ${name}`);
         renderInventory();
       }
 
-      function addNewItem(e) {
+      async function addNewItem(e) {
         e.preventDefault();
         const name = document.querySelector("#new-item-name").value.trim();
         const category = document.querySelector("#new-item-category").value;
@@ -865,7 +872,7 @@
         };
 
         inventory.push(newItem);
-        saveInventory(inventory);
+        await saveInventory(inventory);
         showToast(`Added ${name} to catalog!`);
         addItemForm.reset();
         renderInventory();
@@ -947,12 +954,13 @@
 
           renderOrders();
 
+          try {
+            await syncInventoryFromApi();
+          } catch {
+            // ignore
+          }
+
           if (currentView === "inventory") {
-            try {
-              await syncInventoryFromApi();
-            } catch {
-              // ignore
-            }
             renderInventory();
             renderStockDeductions();
           }
