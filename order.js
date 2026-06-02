@@ -238,6 +238,26 @@ function saveAllOrders(orders) {
   localStorage.setItem(ALL_ORDERS_KEY, JSON.stringify(orders));
 }
 
+async function syncOrdersFromApi() {
+  const res = await fetch(`${ORDERS_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Orders sync failed (${res.status})`);
+  const apiOrders = await res.json();
+  if (!Array.isArray(apiOrders)) return;
+
+  // Only keep orders that belong to this customer (match by IDs we have locally)
+  const localOrders = readAllOrders();
+  const localIds = new Set(localOrders.map(o => o.id));
+  
+  // Update local orders with server status, keep local-only orders as-is
+  const merged = localOrders.map(localOrder => {
+    const serverOrder = apiOrders.find(o => o.id === localOrder.id);
+    return serverOrder || localOrder;
+  });
+  
+  saveAllOrders(merged);
+  return merged;
+}
+
 function renderOrderHistory() {
   const historyList = document.querySelector("#order-history-list");
   if (!historyList) return;
@@ -550,6 +570,16 @@ function bootOrderPage() {
   });
 
   orderForm.addEventListener("submit", submitOrder);
+
+  // Poll for order status updates from admin every 5 seconds
+  window.setInterval(async () => {
+    try {
+      await syncOrdersFromApi();
+      renderOrderHistory();
+    } catch {
+      // ignore network errors
+    }
+  }, 5000);
 }
 
 bootOrderPage();
