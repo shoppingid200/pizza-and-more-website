@@ -548,18 +548,76 @@ function bootOrderPage() {
 
   // Auto-preview typed address on map
   const mapSearchInput = document.querySelector("#map-search-input");
-  if (mapSearchInput) {
+  const mapSearchResults = document.querySelector("#map-search-results");
+  let searchTimeout = null;
+
+  if (mapSearchInput && mapSearchResults) {
     mapSearchInput.addEventListener("input", (event) => {
-      const address = event.target.value.trim();
-      if (address.length > 4) {
-        updateMapPreview(address);
-        document.querySelector("#map-link").value = `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
-        locationStatus.textContent = "Previewing searched place on map.";
-      } else if (!address && !document.querySelector("#latitude").value) {
-        selectedMap.innerHTML = "";
-        selectedMap.classList.remove("is-visible");
-        selectedMap.setAttribute("aria-hidden", "true");
-        locationStatus.textContent = "No map location selected.";
+      const query = event.target.value.trim();
+      clearTimeout(searchTimeout);
+      
+      if (query.length < 3) {
+        mapSearchResults.hidden = true;
+        if (!query && !document.querySelector("#latitude").value) {
+          selectedMap.innerHTML = "";
+          selectedMap.classList.remove("is-visible");
+          selectedMap.setAttribute("aria-hidden", "true");
+          locationStatus.textContent = "No map location selected.";
+        }
+        return;
+      }
+
+      mapSearchResults.hidden = false;
+      mapSearchResults.innerHTML = `<li class="loading-li">Searching...</li>`;
+
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=5`);
+          const data = await res.json();
+          
+          if (!data || data.length === 0) {
+            mapSearchResults.innerHTML = `<li class="empty-li">No results found in India.</li>`;
+            return;
+          }
+
+          mapSearchResults.innerHTML = data.map(item => `
+            <li data-lat="${item.lat}" data-lon="${item.lon}" data-name="${item.display_name.replace(/"/g, '&quot;')}">
+              ${item.display_name}
+            </li>
+          `).join("");
+
+        } catch (e) {
+          mapSearchResults.innerHTML = `<li class="empty-li">Search failed. Try again.</li>`;
+        }
+      }, 500);
+    });
+
+    // Handle clicks on autocomplete results
+    mapSearchResults.addEventListener("click", (e) => {
+      const li = e.target.closest("li");
+      if (!li || li.classList.contains("loading-li") || li.classList.contains("empty-li")) return;
+
+      const lat = parseFloat(li.dataset.lat).toFixed(6);
+      const lon = parseFloat(li.dataset.lon).toFixed(6);
+      const name = li.dataset.name;
+
+      mapSearchInput.value = name;
+      mapSearchResults.hidden = true;
+
+      document.querySelector("#latitude").value = lat;
+      document.querySelector("#longitude").value = lon;
+      
+      const gmapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+      document.querySelector("#map-link").value = gmapsLink;
+      
+      locationStatus.textContent = `Selected: ${name}`;
+      updateMapPreview(`${lat},${lon}`);
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!mapSearchInput.contains(e.target) && !mapSearchResults.contains(e.target)) {
+        mapSearchResults.hidden = true;
       }
     });
   }

@@ -127,9 +127,10 @@
                 <span class="panel-step">4</span>
                 <h2 id="location-title">Map Location (Optional)</h2>
               </div>
-              <label class="field" style="margin-bottom:14px;">
+              <label class="field" style="margin-bottom:14px; position:relative;">
                 <span>Search Place on Map</span>
-                <input type="search" id="map-search-input" placeholder="Search a place, landmark, etc." />
+                <input type="search" id="map-search-input" placeholder="Search a place, landmark, etc." autocomplete="off" />
+                <ul id="map-search-results" class="search-dropdown" hidden></ul>
               </label>
               <div class="field-grid">
                 <label class="field">
