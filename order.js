@@ -255,12 +255,12 @@ function renderOrderHistory() {
     .map((order) => {
       const date = new Date(order.createdAt).toLocaleString();
       const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
-      
+
       const itemsText = order.items
         ? order.items.map((item) => `${item.qty} x ${item.name}`).join(", ")
         : order.cart
-        ? order.cart.map((item) => `${item.qty} x ${item.name}`).join(", ")
-        : "No items";
+          ? order.cart.map((item) => `${item.qty} x ${item.name}`).join(", ")
+          : "No items";
 
       const canCancel = order.status === "Pending";
       const cancelBtn = canCancel
@@ -321,7 +321,7 @@ function validateStockAvailability() {
       if (!invItem || !invItem.available || invItem.stock < cartItem.qty) {
         return {
           available: false,
-          message: invItem 
+          message: invItem
             ? `Sorry, only ${invItem.stock} of ${cartItem.name} are available in stock.`
             : `Sorry, ${cartItem.name} is no longer available.`
         };
@@ -337,7 +337,7 @@ function deductInventoryStock(cartItems) {
   try {
     const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
     let updated = false;
-    
+
     cartItems.forEach((cartItem) => {
       const invItem = inventory.find((item) => item.name === cartItem.name);
       if (invItem) {
@@ -345,7 +345,7 @@ function deductInventoryStock(cartItems) {
         updated = true;
       }
     });
-    
+
     if (updated) {
       localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
       // Notify other tabs immediately
