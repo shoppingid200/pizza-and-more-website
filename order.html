@@ -8,7 +8,9 @@
       content="Complete an order for R Pizza and More with customer details, service choice, and optional location selection."
     />
     <title>Order | R Pizza and More</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   </head>
   <body class="checkout-body">
     <header class="topbar">
@@ -147,7 +149,7 @@
               <input id="latitude" name="latitude" type="hidden" />
               <input id="longitude" name="longitude" type="hidden" />
               <p class="location-status" id="location-status">No map location selected.</p>
-              <div class="map-preview" id="selected-map" aria-hidden="true"></div>
+              <div class="map-preview" id="interactive-map" style="height: 250px; border-radius: 8px; z-index: 1;" aria-hidden="true"></div>
             </section>
 
             <section class="form-panel" aria-labelledby="notes-title">

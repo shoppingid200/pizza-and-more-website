@@ -191,11 +191,46 @@ async function copyText(text, successMessage) {
   }
 }
 
-function updateMapPreview(query) {
-  const source = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
-  selectedMap.innerHTML = `<iframe title="Selected location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${source}"></iframe>`;
-  selectedMap.classList.add("is-visible");
-  selectedMap.removeAttribute("aria-hidden");
+let leafletMap = null;
+let leafletMarker = null;
+
+function updateMapPreview(lat, lng) {
+  const mapContainer = document.getElementById("interactive-map");
+  mapContainer.classList.add("is-visible");
+  mapContainer.removeAttribute("aria-hidden");
+  
+  if (!leafletMap) {
+    leafletMap = L.map('interactive-map').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(leafletMap);
+    
+    leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(leafletMap);
+    
+    leafletMarker.on('dragend', function() {
+      const position = leafletMarker.getLatLng();
+      setMapCoordinates(position.lat, position.lng);
+    });
+
+    leafletMap.on('click', function(e) {
+      leafletMarker.setLatLng(e.latlng);
+      setMapCoordinates(e.latlng.lat, e.latlng.lng);
+    });
+    
+    setTimeout(() => leafletMap.invalidateSize(), 200);
+  } else {
+    leafletMap.setView([lat, lng], 15);
+    leafletMarker.setLatLng([lat, lng]);
+  }
+}
+
+function setMapCoordinates(lat, lng) {
+  const flat = parseFloat(lat).toFixed(6);
+  const flng = parseFloat(lng).toFixed(6);
+  document.querySelector("#latitude").value = flat;
+  document.querySelector("#longitude").value = flng;
+  document.querySelector("#map-link").value = `https://www.google.com/maps?q=${flat},${flng}`;
+  locationStatus.textContent = `Selected: ${flat}, ${flng} (You can drag the pin)`;
 }
 
 function selectCurrentLocation() {
@@ -212,8 +247,8 @@ function selectCurrentLocation() {
       document.querySelector("#latitude").value = lat;
       document.querySelector("#longitude").value = lng;
       document.querySelector("#map-link").value = `https://www.google.com/maps?q=${lat},${lng}`;
-      locationStatus.textContent = `Selected: ${lat}, ${lng}`;
-      updateMapPreview(`${lat},${lng}`);
+      locationStatus.textContent = `Selected: ${lat}, ${lng} (You can drag the pin)`;
+      updateMapPreview(lat, lng);
       showToast("Location selected");
     },
     () => {
@@ -610,8 +645,8 @@ function bootOrderPage() {
       const gmapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
       document.querySelector("#map-link").value = gmapsLink;
       
-      locationStatus.textContent = `Selected: ${name}`;
-      updateMapPreview(`${lat},${lon}`);
+      locationStatus.textContent = `Selected: ${name} (You can drag the pin to adjust)`;
+      updateMapPreview(lat, lon);
     });
 
     // Hide dropdown when clicking outside
