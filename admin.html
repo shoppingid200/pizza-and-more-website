@@ -528,44 +528,53 @@
           .join("");
       }
 
-      function handleAction(orderId, action) {
-        const orders = readOrders();
+      async function handleAction(orderId, action) {
         if (action === "Delete") {
           if (!confirm(`Are you sure you want to delete order #${orderId} from logs?`)) return;
-          const filtered = orders.filter((o) => o.id !== orderId);
-          saveOrders(filtered);
-          showToast("Order log deleted");
-
-          // Persist globally in backend.
-          void fetch(ORDERS_API_URL, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ id: orderId }),
-          })
-            .then(() => syncOrdersFromApi())
-            .catch((e) => console.warn("Order delete failed:", e));
-        } else {
-          const order = orders.find((o) => o.id === orderId);
-          if (order) {
-            order.status = action;
-            saveOrders(orders);
-            showToast(`Order status updated to ${action}`);
+          try {
+            const res = await fetch(ORDERS_API_URL, {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({ id: orderId }),
+            });
+            if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+            await syncOrdersFromApi();
+            showToast("Order log deleted");
+          } catch (e) {
+            console.error(e);
+            showToast(`⚠️ Failed to delete order: ${e.message}`);
           }
-
-          // Persist globally in backend.
-          void fetch(ORDERS_API_URL, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ id: orderId, status: action }),
-          })
-            .then(() => syncOrdersFromApi())
-            .catch((e) => console.warn("Order status update failed:", e));
+        } else {
+          try {
+            const res = await fetch(ORDERS_API_URL, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({ id: orderId, status: action }),
+            });
+            if (!res.ok) throw new Error(`Update failed (${res.status})`);
+            const data = await res.json().catch(() => ({}));
+            await syncOrdersFromApi();
+            // Also refresh inventory since cancellation restores stock
+            if (data?.inventory) {
+              saveInventoryLocal(data.inventory);
+            } else {
+              try { await syncInventoryFromApi(); } catch {}
+            }
+            showToast(`Order status updated to ${action}`);
+          } catch (e) {
+            console.error(e);
+            showToast(`⚠️ Failed to update order: ${e.message}`);
+          }
         }
         renderOrders();
+        if (currentView === "inventory") {
+          renderInventory();
+          renderStockDeductions();
+        }
       }
 
       // Generate realistic mock order for testing
-      function generateMockOrder() {
+      async function generateMockOrder() {
         const mockNames = ["Rahul Kumar", "Anjali Singh", "Mohammad Saif", "Vikram Rathore", "Priya Sharma", "Aman Verma"];
         const mockPhones = ["+91 9876543210", "+91 8765432109", "+91 7654321098", "+91 9123456789", "+91 9988776655"];
         const mockAddresses = [
@@ -580,80 +589,58 @@
           { name: "Farmhouse", price: 209, category: "Veg Specials" },
           { name: "Margherita", price: 99, category: "Classic Veg" },
           { name: "Chicken dominator", price: 249, category: "Non Veg" },
-          { name: "Loaded veg burger", price: 79, category: "Burgers & More" }
+          { name: "Loaded veg", price: 79, category: "Burgers & More" }
         ];
 
-        // Randomly pick details
         const name = mockNames[Math.floor(Math.random() * mockNames.length)];
         const phone = mockPhones[Math.floor(Math.random() * mockPhones.length)];
         const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
         const service = Math.random() > 0.3 ? "No-contact delivery" : "Dine-in";
         const payment = Math.random() > 0.5 ? "UPI" : "Cash";
         
-        // Random items
-        const numItems = Math.floor(Math.random() * 3) + 1; // 1 to 3 items
+        const numItems = Math.floor(Math.random() * 3) + 1;
         const selectedItems = [];
         let total = 0;
         
         for (let i = 0; i < numItems; i++) {
           const item = mockPizzas[Math.floor(Math.random() * mockPizzas.length)];
-          const qty = Math.floor(Math.random() * 2) + 1; // 1 or 2 quantity
-          
-          // Check if already in list
+          const qty = Math.floor(Math.random() * 2) + 1;
           const existing = selectedItems.find(x => x.name === item.name);
           if (existing) {
             existing.qty += qty;
           } else {
-            selectedItems.push({
-              name: item.name,
-              price: item.price,
-              category: item.category,
-              qty: qty
-            });
+            selectedItems.push({ name: item.name, price: item.price, category: item.category, qty: qty });
           }
         }
-        
-        // Calculate total
-        selectedItems.forEach(x => {
-          total += x.price * x.qty;
-        });
+        selectedItems.forEach(x => { total += x.price * x.qty; });
 
         const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
-        
         const details = {
-          name: name,
-          phone: phone,
+          name, phone,
           address: service === "No-contact delivery" ? address : "",
           mapLink: service === "No-contact delivery" ? `https://www.google.com/maps?q=25.899200,85.679500` : "",
-          latitude: service === "No-contact delivery" ? "25.899200" : "",
-          longitude: service === "No-contact delivery" ? "85.679500" : "",
-          service: service,
-          time: "As soon as possible",
-          payment: payment,
+          service, time: "As soon as possible", payment,
           notes: Math.random() > 0.5 ? "Make it fresh and hot!" : ""
-        };
-
-        const payload = {
-          id: id,
-          details: details,
-          cart: selectedItems,
-          total: total
         };
 
         try {
           const res = await fetch(ORDERS_API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ id, details, cart: selectedItems, total }),
           });
-          if (!res.ok) throw new Error("API rejected mock order");
-          
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data?.error || data?.message || "API rejected mock order");
+          }
           await syncOrdersFromApi();
+          try { await syncInventoryFromApi(); } catch {}
           renderOrders();
-          showToast("Mock order generated and saved to API!");
+          if (currentView === "inventory") { renderInventory(); renderStockDeductions(); }
+          showToast("Mock order generated!");
         } catch (e) {
           console.error(e);
-          showToast("Failed to generate mock order on server.");
+          showToast(`⚠️ Mock order failed: ${e.message}`);
         }
       }
 
@@ -926,12 +913,20 @@
       }
 
       async function bootAdmin() {
+        // Sync both orders AND inventory from API on startup
         try {
           await syncOrdersFromApi();
         } catch (e) {
           console.warn("Initial orders sync skipped:", e);
         }
+        try {
+          await syncInventoryFromApi();
+        } catch (e) {
+          console.warn("Initial inventory sync skipped:", e);
+        }
         renderOrders();
+        renderInventory();
+        renderStockDeductions();
 
         // Listen for storage events (updates from other tabs)
         window.addEventListener("storage", (event) => {
@@ -994,9 +989,20 @@
         document.querySelector("#btn-mock-order").addEventListener("click", generateMockOrder);
 
         // Clear All trigger
-        document.querySelector("#btn-clear-all").addEventListener("click", () => {
+        document.querySelector("#btn-clear-all").addEventListener("click", async () => {
           if (!confirm("Are you SURE you want to clear ALL orders? This cannot be undone!")) return;
-          saveOrders([]);
+          const orders = readOrders();
+          // Delete each order from server
+          for (const order of orders) {
+            try {
+              await fetch(ORDERS_API_URL, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({ id: order.id }),
+              });
+            } catch {}
+          }
+          await syncOrdersFromApi();
           renderOrders();
           showToast("All order logs cleared");
         });
