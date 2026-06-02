@@ -291,13 +291,8 @@
         const apiOrders = await res.json();
         if (!Array.isArray(apiOrders)) return;
 
-        // Merge by order id so local test/mock orders aren't lost instantly.
-        const localOrders = readOrders();
-        const byId = new Map();
-        localOrders.forEach((o) => o?.id && byId.set(o.id, o));
-        apiOrders.forEach((o) => o?.id && byId.set(o.id, o));
-
-        saveOrders([...byId.values()]);
+        // The API is the single source of truth.
+        saveOrders(apiOrders);
       }
 
       // Play chime when a new order comes in
@@ -638,21 +633,28 @@
           notes: Math.random() > 0.5 ? "Make it fresh and hot!" : ""
         };
 
-        const mockOrder = {
+        const payload = {
           id: id,
-          createdAt: new Date().toISOString(),
           details: details,
-          items: selectedItems,
-          total: total,
-          status: "Pending"
+          cart: selectedItems,
+          total: total
         };
 
-        const orders = readOrders();
-        orders.push(mockOrder);
-        saveOrders(orders);
-        
-        renderOrders();
-        showToast("Mock order generated!");
+        try {
+          const res = await fetch(ORDERS_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error("API rejected mock order");
+          
+          await syncOrdersFromApi();
+          renderOrders();
+          showToast("Mock order generated and saved to API!");
+        } catch (e) {
+          console.error(e);
+          showToast("Failed to generate mock order on server.");
+        }
       }
 
       // VIEW SWITCHING CONTROL
