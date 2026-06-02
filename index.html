@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="R Pizza and More in Tajpur, Samastipur, Bihar. Explore pizza menu, prices, contact, directions, and ordering details."
+    />
+    <title>R Pizza and More | Tajpur, Samastipur</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand-lockup" href="#home" aria-label="R Pizza and More home">
+        <span class="brand-mark">R</span>
+        <span>
+          <strong>R PIZZA AND MORE</strong>
+          <small>आर पिज़्ज़ा एंड मोरे</small>
+        </span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#menu">Menu</a>
+        <a href="order.html">Order</a>
+        <a href="#visit">Visit</a>
+        <a href="#reviews">Reviews</a>
+      </nav>
+      <a class="nav-call" href="order.html" aria-label="Go to order page">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 4h14c.6 0 1 .4 1 1v15l-3-1.5-3 1.5-3-1.5L8 20l-3-1.5V5c0-.6.4-1 1-1Zm3 4v2h8V8H8Zm0 4v2h8v-2H8Z" />
+        </svg>
+        Order
+      </a>
+    </header>
+
+    <main id="home">
+      <section class="hero" aria-labelledby="hero-title">
+        <canvas id="pizza-scene" aria-hidden="true"></canvas>
+        <div class="hero-noise" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <div class="hero-copy reveal">
+            <div class="rating-row">
+              <span class="rating-badge">3.8</span>
+              <span class="stars" aria-label="3.8 out of 5 stars">★★★★<span>★</span></span>
+              <span>52 Google ratings</span>
+              <span>₹1-200</span>
+            </div>
+            <h1 id="hero-title">R PIZZA AND MORE</h1>
+            <p class="hindi-name">आर पिज़्ज़ा एंड मोरे</p>
+            <p class="hero-text">
+              Fast food restaurant in Tajpur serving loaded veg pizzas, paneer specials,
+              chicken favorites, and quick bites from AGARWAL COMPLEX 0005.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#menu">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 5.5C4 4.7 4.7 4 5.5 4H19c.6 0 1 .4 1 1v14c0 .6-.4 1-1 1H5.5C4.7 20 4 19.3 4 18.5v-13Zm3 2v2h10v-2H7Zm0 4v2h10v-2H7Zm0 4v2h7v-2H7Z" />
+                </svg>
+                View menu
+              </a>
+              <a
+                class="button ghost"
+                href="https://www.google.com/maps/search/?api=1&query=R%20PIZZA%20AND%20MORE%20AGARWAL%20COMPLEX%200005%20Tajpur%20Samastipur%20Bihar%20848130"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2.5c3.9 0 7 3.1 7 7 0 5.4-7 12-7 12s-7-6.6-7-12c0-3.9 3.1-7 7-7Zm0 9.7c1.5 0 2.7-1.2 2.7-2.7S13.5 6.8 12 6.8 9.3 8 9.3 9.5s1.2 2.7 2.7 2.7Z" />
+                </svg>
+                Directions
+              </a>
+            </div>
+            <div class="service-grid" aria-label="Available services">
+              <span>Dine-in</span>
+              <span>Drive-through</span>
+              <span>No-contact delivery</span>
+              <span>Opens 11 AM</span>
+            </div>
+          </div>
+
+          <aside class="quick-ticket reveal" aria-label="Quick order highlights">
+            <div class="ticket-top">
+              <span>Today at Tajpur</span>
+              <strong>Popular Picks</strong>
+            </div>
+            <button class="quick-add" type="button" data-add-item="Margherita">
+              <span>Margherita</span>
+              <strong>₹99</strong>
+            </button>
+            <button class="quick-add" type="button" data-add-item="Peppy Paneer">
+              <span>Peppy Paneer</span>
+              <strong>₹209</strong>
+            </button>
+            <button class="quick-add" type="button" data-add-item="Chicken dominator">
+              <span>Chicken Dominator</span>
+              <strong>₹249</strong>
+            </button>
+            <a class="ticket-call" href="order.html">Start order</a>
+          </aside>
+        </div>
+      </section>
+
+      <section class="motion-strip" aria-label="Featured menu items">
+        <div class="strip-track">
+          <span>Fresh Veggie ₹179</span>
+          <span>Farmhouse ₹209</span>
+          <span>Tandoori Paneer ₹239</span>
+          <span>Barbecue Chicken ₹189</span>
+          <span>Loaded Chicken ₹129</span>
+          <span>Cheese Corn ₹179</span>
+          <span>Fresh Veggie ₹179</span>
+          <span>Farmhouse ₹209</span>
+          <span>Tandoori Paneer ₹239</span>
+          <span>Barbecue Chicken ₹189</span>
+        </div>
+      </section>
+
+      <section class="menu-section" id="menu" aria-labelledby="menu-title">
+        <div class="section-shell">
+          <div class="section-heading reveal">
+            <span class="eyebrow">Menu</span>
+            <h2 id="menu-title">Pizza, burgers, and more</h2>
+            <p>Menu prices from the Google listing.</p>
+          </div>
+
+          <div class="menu-tools reveal">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4.1 4.1-1.4 1.4-4.1-4.1A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
+              </svg>
+              <input id="menu-search" type="search" placeholder="Search menu" autocomplete="off" />
+            </label>
+            <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Menu categories"></div>
+          </div>
+
+          <div class="menu-layout">
+            <div class="menu-grid" id="menu-grid" aria-live="polite"></div>
+            <aside class="order-panel reveal" aria-label="Order summary">
+              <div class="order-header">
+                <span class="eyebrow">Order</span>
+                <strong id="cart-count">0 items</strong>
+              </div>
+              <div id="cart-lines" class="cart-lines">
+                <p class="empty-cart">No items selected yet.</p>
+              </div>
+              <div class="cart-total">
+                <span>Total</span>
+                <strong id="cart-total">₹0</strong>
+              </div>
+              <div class="order-actions">
+                <button id="copy-order" class="icon-button" type="button" aria-label="Copy order" title="Copy order">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 8V5.5C8 4.7 8.7 4 9.5 4h8c.8 0 1.5.7 1.5 1.5v8c0 .8-.7 1.5-1.5 1.5H15v2.5c0 .8-.7 1.5-1.5 1.5h-8C4.7 19 4 18.3 4 17.5v-8C4 8.7 4.7 8 5.5 8H8Zm2 0h3.5c.8 0 1.5.7 1.5 1.5V13h4V6h-9v2Zm-4 2v7h7v-7H6Z" />
+                  </svg>
+                </button>
+                <button id="clear-cart" class="icon-button" type="button" aria-label="Clear order" title="Clear order">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 4h8l1 2h4v2H3V6h4l1-2Zm-1 6h14l-1 10c-.1.6-.5 1-1.1 1H8.1c-.6 0-1-.4-1.1-1L6 10Zm4 2v6h2v-6h-2Zm4 0v6h2v-6h-2Z" />
+                  </svg>
+                </button>
+                <a class="button primary full" id="checkout-order" href="order.html">Proceed to order</a>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="reviews-section" id="reviews" aria-labelledby="reviews-title">
+        <div class="section-shell reviews-grid">
+          <div class="section-heading reveal">
+            <span class="eyebrow">Google Overview</span>
+            <h2 id="reviews-title">3.8 rating from 52 visitors</h2>
+            <p>Fast food restaurant with budget-friendly pricing and multiple service options.</p>
+          </div>
+          <div class="review-metrics reveal">
+            <div>
+              <strong>₹1-200</strong>
+              <span>per person</span>
+            </div>
+            <div>
+              <strong>16</strong>
+              <span>price reports</span>
+            </div>
+            <div>
+              <strong>VM6F+89</strong>
+              <span>Tajpur, Bihar</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="visit-section" id="visit" aria-labelledby="visit-title">
+        <div class="section-shell visit-layout">
+          <div class="visit-copy reveal">
+            <span class="eyebrow">Visit</span>
+            <h2 id="visit-title">AGARWAL COMPLEX 0005, Tajpur</h2>
+            <p>Samastipur, Bihar 848130</p>
+            <ul class="contact-list">
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2.5c3.9 0 7 3.1 7 7 0 5.4-7 12-7 12s-7-6.6-7-12c0-3.9 3.1-7 7-7Zm0 9.7c1.5 0 2.7-1.2 2.7-2.7S13.5 6.8 12 6.8 9.3 8 9.3 9.5s1.2 2.7 2.7 2.7Z" />
+                </svg>
+                <span>AGARWAL COMPLEX 0005, Tajpur, Samastipur, Bihar 848130</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6.6 10.8c1.5 3 3.8 5.3 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1v3.5c0 .6-.4 1-1 1C10.6 21.5 2.5 13.4 2.5 3.7c0-.6.4-1 1-1H7c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1l-2.1 2.2Z" />
+                </svg>
+                <a href="tel:+916301045696">063010 45696</a>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm1 5h-2v6l5 3 .9-1.7-3.9-2.3V7Z" />
+                </svg>
+                <span>Closed · Opens 11 AM</span>
+              </li>
+            </ul>
+            <div class="visit-actions">
+              <a
+                class="button primary"
+                href="https://www.google.com/maps/search/?api=1&query=R%20PIZZA%20AND%20MORE%20AGARWAL%20COMPLEX%200005%20Tajpur%20Samastipur%20Bihar%20848130"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Get directions
+              </a>
+              <a class="button ghost dark" href="https://www.instagram.com/" target="_blank" rel="noreferrer">
+                Instagram menu
+              </a>
+            </div>
+          </div>
+          <div class="map-wrap reveal">
+            <iframe
+              title="Google Map for R Pizza and More"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://maps.google.com/maps?q=R%20PIZZA%20AND%20MORE%20AGARWAL%20COMPLEX%200005%20Tajpur%20Samastipur%20Bihar%20848130&t=&z=16&ie=UTF8&iwloc=&output=embed"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer>
+      <strong>R PIZZA AND MORE</strong>
+      <span>Fast food restaurant · Tajpur, Samastipur · ₹1-200</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
