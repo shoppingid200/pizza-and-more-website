@@ -232,14 +232,51 @@ const menuItems = [
   },
 ];
 
+const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+const INVENTORY_API_URL = "/api/inventory";
+
+function initializeInventory() {
+  if (!localStorage.getItem(INVENTORY_STORAGE_KEY)) {
+    const items = menuItems.map(item => ({
+      ...item,
+      stock: 50,
+      available: true
+    }));
+    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
+  }
+}
+initializeInventory();
+
+function readInventory() {
+  try {
+    return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveInventory(inventory) {
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+}
+
+async function syncInventoryFromApi() {
+  const res = await fetch(INVENTORY_API_URL, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Inventory sync failed (${res.status})`);
+  const inventory = await res.json();
+  if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+  saveInventory(inventory);
+  return inventory;
+}
+
 const menuGrid = document.querySelector("#menu-grid");
 const tabs = document.querySelector("#category-tabs");
 const searchInput = document.querySelector("#menu-search");
 const cartLines = document.querySelector("#cart-lines");
 const cartCount = document.querySelector("#cart-count");
 const cartTotal = document.querySelector("#cart-total");
+const floatingCartButton = document.querySelector("#floating-cart");
+const floatingCartCount = document.querySelector("#floating-cart-count");
 const toast = document.querySelector("#toast");
-const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
 const CART_STORAGE_KEY = "r-pizza-cart";
 const cart = new Map();
 
@@ -281,16 +318,25 @@ function saveCart() {
 }
 
 function restoreCart() {
+  const inventory = readInventory();
   readStoredCart().forEach((entry) => {
-    const item = menuItems.find((menuItem) => menuItem.name === entry.name) || entry;
+    const item = inventory.find((menuItem) => menuItem.name === entry.name) || entry;
     const qty = Number(entry.qty) || 0;
-    if (item.name && qty > 0) {
-      cart.set(item.name, { item, qty });
+    if (item.name && qty > 0 && item.available && item.stock > 0) {
+      const finalQty = Math.min(qty, item.stock);
+      cart.set(item.name, { item, qty: finalQty });
     }
   });
+  saveCart();
+}
+
+function getCategories() {
+  const inventory = readInventory();
+  return ["All", ...new Set(inventory.map((item) => item.category))];
 }
 
 function renderTabs() {
+  const categories = getCategories();
   tabs.innerHTML = categories
     .map(
       (category) => `
@@ -309,8 +355,9 @@ function renderTabs() {
 }
 
 function currentItems() {
+  const inventory = readInventory();
   const searchTerm = searchInput.value.trim().toLowerCase();
-  return menuItems.filter((item) => {
+  return inventory.filter((item) => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
     const matchesSearch = [item.name, item.desc, item.category, item.type]
       .join(" ")
@@ -330,32 +377,47 @@ function renderMenu() {
 
   menuGrid.innerHTML = items
     .map(
-      (item) => `
-      <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}">
-        <div class="item-top">
-          <h3 class="item-name">${item.name}</h3>
-          <span class="item-price">${formatRupees(item.price)}</span>
-        </div>
-        <p class="item-desc">${item.desc}</p>
-        <div class="item-meta">
-          <span class="item-tag">${item.type}</span>
-          <button class="add-button" type="button" data-add-item="${item.name}" aria-label="Add ${item.name}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
-            </svg>
-          </button>
-        </div>
-      </article>
-    `
+      (item) => {
+        const isOutOfStock = item.stock <= 0 || item.available === false;
+        
+        const actionControl = isOutOfStock
+          ? `<span class="status-badge status-cancelled" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`
+          : `<button class="add-button" type="button" data-add-item="${item.name}" aria-label="Add ${item.name}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+              </svg>
+            </button>`;
+
+        return `
+          <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}">
+            <div class="item-top">
+              <h3 class="item-name">${item.name}</h3>
+              <span class="item-price">${formatRupees(item.price)}</span>
+            </div>
+            <p class="item-desc">${item.desc}</p>
+            <div class="item-meta">
+              <span class="item-tag">${item.type}</span>
+              ${actionControl}
+            </div>
+          </article>
+        `;
+      }
     )
     .join("");
 }
 
 function addItem(name) {
-  const item = menuItems.find((entry) => entry.name === name);
+  const inventory = readInventory();
+  const item = inventory.find((entry) => entry.name === name);
   if (!item) return;
 
   const existing = cart.get(name) || { item, qty: 0 };
+  
+  if (existing.qty >= item.stock) {
+    showToast(`Sorry, only ${item.stock} of ${item.name} are available in stock.`);
+    return;
+  }
+
   existing.qty += 1;
   cart.set(name, existing);
   renderCart();
@@ -365,6 +427,16 @@ function addItem(name) {
 function changeQty(name, delta) {
   const line = cart.get(name);
   if (!line) return;
+  
+  if (delta > 0) {
+    const inventory = readInventory();
+    const item = inventory.find((entry) => entry.name === name);
+    if (item && line.qty >= item.stock) {
+      showToast(`Sorry, only ${item.stock} of ${item.name} are available in stock.`);
+      return;
+    }
+  }
+
   line.qty += delta;
   if (line.qty <= 0) {
     cart.delete(name);
@@ -390,6 +462,11 @@ function renderCart() {
   cartCount.textContent = `${count} ${count === 1 ? "item" : "items"}`;
   cartTotal.textContent = formatRupees(total);
 
+  if (floatingCartButton && floatingCartCount) {
+    floatingCartCount.textContent = String(count);
+    floatingCartButton.hidden = count === 0;
+  }
+
   if (!count) {
     cartLines.innerHTML = `<p class="empty-cart">No items selected yet.</p>`;
     return;
@@ -409,6 +486,26 @@ function renderCart() {
     `
     )
     .join("");
+}
+
+function reconcileCartWithInventory(inventory) {
+  let changed = false;
+  cart.forEach(({ item, qty }, name) => {
+    const inv = inventory.find((x) => x.name === name);
+    if (!inv || !inv.available || inv.stock <= 0) {
+      cart.delete(name);
+      changed = true;
+      return;
+    }
+    if (qty > inv.stock) {
+      cart.set(name, { item: inv, qty: inv.stock });
+      changed = true;
+      return;
+    }
+    // Keep reference in sync in case price/desc/category changed in admin.
+    cart.set(name, { item: inv, qty });
+  });
+  return changed;
 }
 
 function orderText() {
@@ -436,7 +533,14 @@ async function copyOrder() {
   }
 }
 
-function bootMenu() {
+async function bootMenu() {
+  // Load latest inventory shared by the admin portal (works across devices).
+  try {
+    await syncInventoryFromApi();
+  } catch (e) {
+    console.warn("Inventory sync skipped:", e);
+  }
+
   restoreCart();
   renderTabs();
   renderMenu();
@@ -470,6 +574,54 @@ function bootMenu() {
     cart.clear();
     renderCart();
     showToast("Order cleared");
+  });
+
+  if (floatingCartButton) {
+    floatingCartButton.addEventListener("click", () => {
+      const panel = document.querySelector("#cart-panel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "center" });
+      else window.location.href = "order.html";
+    });
+  }
+
+  // Periodically sync inventory from backend (cross-user updates).
+  window.setInterval(async () => {
+    try {
+      const inventory = await syncInventoryFromApi();
+      const cartChanged = reconcileCartWithInventory(inventory);
+      if (cartChanged) showToast("Cart updated due to stock changes.");
+      renderTabs();
+      renderMenu();
+      renderCart();
+    } catch {
+      // Keep the UI usable with cached inventory.
+    }
+  }, 8000);
+
+  // Dynamic cross-tab stock sync
+  window.addEventListener("storage", (event) => {
+    if (event.key === INVENTORY_STORAGE_KEY || event.key === null) {
+      renderTabs();
+      renderMenu();
+      
+      let cartChanged = false;
+      const inventory = readInventory();
+      cart.forEach((line, name) => {
+        const item = inventory.find((entry) => entry.name === name);
+        if (!item || !item.available || item.stock <= 0) {
+          cart.delete(name);
+          cartChanged = true;
+        } else if (line.qty > item.stock) {
+          line.qty = item.stock;
+          cart.set(name, line);
+          cartChanged = true;
+        }
+      });
+      if (cartChanged) {
+        renderCart();
+        showToast("Cart updated due to stock changes.");
+      }
+    }
   });
 }
 
@@ -774,6 +926,6 @@ async function bootPizzaScene() {
   }
 }
 
-bootMenu();
+void bootMenu();
 bootScrollAnimations();
 bootPizzaScene();

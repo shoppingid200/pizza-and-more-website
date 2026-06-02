@@ -27,109 +27,211 @@
     <main class="admin-shell">
       <section class="admin-header">
         <div class="admin-title-area">
-          <h1>Admin Dashboard</h1>
-          <p>Manage customer orders, track sales, and process fulfillments.</p>
+          <h1 id="admin-main-title">Admin Dashboard</h1>
+          <p id="admin-main-subtitle">Manage customer orders, track sales, and process fulfillments.</p>
+        </div>
+        <div class="admin-view-switcher" style="display: flex; gap: 10px; margin-top: 18px; width: 100%;">
+          <button class="button primary" id="tab-orders-view" type="button" style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;">
+            Orders Dashboard
+          </button>
+          <button class="button ghost" id="tab-inventory-view" type="button" style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
+            Inventory Manager
+          </button>
         </div>
       </section>
 
-      <!-- Dashboard Stats -->
-      <section class="admin-stats-grid" id="stats-grid">
-        <div class="admin-stat-card">
-          <div class="admin-stat-icon revenue">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z"/>
-            </svg>
-          </div>
-          <div class="admin-stat-info">
-            <span class="admin-stat-label">Total Revenue</span>
-            <strong class="admin-stat-val" id="stat-revenue">₹0</strong>
-          </div>
-        </div>
-
-        <div class="admin-stat-card">
-          <div class="admin-stat-icon pending">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-            </svg>
-          </div>
-          <div class="admin-stat-info">
-            <span class="admin-stat-label">Pending</span>
-            <strong class="admin-stat-val" id="stat-pending">0</strong>
-          </div>
-        </div>
-
-        <div class="admin-stat-card">
-          <div class="admin-stat-icon" style="background: #f6f0fe; color: #7928ca;">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 8H4V6h16v2zm-2-6H6v2h12V2zm2 10H4v2h16v-2zm-2 6H6v2h12v-2z"/>
-            </svg>
-          </div>
-          <div class="admin-stat-info">
-            <span class="admin-stat-label">Active (Prep/Delivery)</span>
-            <strong class="admin-stat-val" id="stat-active">0</strong>
-          </div>
-        </div>
-
-        <div class="admin-stat-card">
-          <div class="admin-stat-icon completed">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-          </div>
-          <div class="admin-stat-info">
-            <span class="admin-stat-label">Completed</span>
-            <strong class="admin-stat-val" id="stat-completed">0</strong>
-          </div>
-        </div>
-      </section>
-
-      <!-- Dashboard Controls -->
-      <section class="admin-controls">
-        <div class="admin-tabs" id="filter-tabs">
-          <button class="admin-tab active" data-filter="All">All Orders</button>
-          <button class="admin-tab" data-filter="Pending">Pending</button>
-          <button class="admin-tab" data-filter="Preparing">Preparing</button>
-          <button class="admin-tab" data-filter="Out for Delivery">Delivery</button>
-          <button class="admin-tab" data-filter="Fulfilled">Fulfilled</button>
-          <button class="admin-tab" data-filter="Cancelled">Cancelled</button>
-        </div>
-
-        <label class="admin-search-wrapper">
-          <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
-            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-          </svg>
-          <input id="admin-search" type="search" placeholder="Search customer, phone..." autocomplete="off" />
-        </label>
-      </section>
-
-      <!-- Grid Layout -->
-      <div class="admin-grid-layout">
-        <!-- Orders List -->
-        <section class="admin-orders-list" id="admin-orders-list" aria-live="polite">
-          <!-- Rendered dynamically -->
-        </section>
-
-        <!-- Sidebar Actions -->
-        <aside class="admin-sidebar">
-          <div class="admin-panel-card">
-            <h3>Quick Utilities</h3>
-            <div class="admin-utility-grid">
-              <button class="button primary admin-sidebar-action" id="btn-mock-order" type="button">
-                Generate Mock Order
-              </button>
-              <button class="button ghost admin-sidebar-action" id="btn-clear-all" type="button" style="color: var(--tomato-dark); border-color: var(--tomato);">
-                Clear All Orders
-              </button>
+      <!-- VIEW 1: ORDERS DASHBOARD -->
+      <div id="orders-view-container">
+        <!-- Dashboard Stats -->
+        <section class="admin-stats-grid" id="stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon revenue">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z"/>
+              </svg>
+            </div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-label">Total Revenue</span>
+              <strong class="admin-stat-val" id="stat-revenue">₹0</strong>
             </div>
           </div>
 
-          <div class="admin-panel-card" style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
-            <strong>Information Panel</strong>
-            <p style="margin: 8px 0 0 0;">
-              This dashboard runs fully in local memory using the Web Storage API. Open a customer-facing window alongside this one to test real-time order tracking updates!
-            </p>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon pending">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              </svg>
+            </div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-label">Pending</span>
+              <strong class="admin-stat-val" id="stat-pending">0</strong>
+            </div>
           </div>
-        </aside>
+
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon" style="background: #f6f0fe; color: #7928ca;">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 8H4V6h16v2zm-2-6H6v2h12V2zm2 10H4v2h16v-2zm-2 6H6v2h12v-2z"/>
+              </svg>
+            </div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-label">Active (Prep/Delivery)</span>
+              <strong class="admin-stat-val" id="stat-active">0</strong>
+            </div>
+          </div>
+
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon completed">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+            </div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-label">Completed</span>
+              <strong class="admin-stat-val" id="stat-completed">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dashboard Controls -->
+        <section class="admin-controls">
+          <div class="admin-tabs" id="filter-tabs">
+            <button class="admin-tab active" data-filter="All">All Orders</button>
+            <button class="admin-tab" data-filter="Pending">Pending</button>
+            <button class="admin-tab" data-filter="Preparing">Preparing</button>
+            <button class="admin-tab" data-filter="Out for Delivery">Delivery</button>
+            <button class="admin-tab" data-filter="Fulfilled">Fulfilled</button>
+            <button class="admin-tab" data-filter="Cancelled">Cancelled</button>
+          </div>
+
+          <label class="admin-search-wrapper">
+            <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input id="admin-search" type="search" placeholder="Search customer, phone..." autocomplete="off" />
+          </label>
+        </section>
+
+        <!-- Grid Layout -->
+        <div class="admin-grid-layout">
+          <!-- Orders List -->
+          <section class="admin-orders-list" id="admin-orders-list" aria-live="polite">
+            <!-- Rendered dynamically -->
+          </section>
+
+          <!-- Sidebar Actions -->
+          <aside class="admin-sidebar">
+            <div class="admin-panel-card">
+              <h3>Quick Utilities</h3>
+              <div class="admin-utility-grid">
+                <button class="button primary admin-sidebar-action" id="btn-mock-order" type="button">
+                  Generate Mock Order
+                </button>
+                <button class="button ghost admin-sidebar-action" id="btn-clear-all" type="button" style="color: var(--tomato-dark); border-color: var(--tomato);">
+                  Clear All Orders
+                </button>
+              </div>
+            </div>
+
+            <div class="admin-panel-card" style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
+              <strong>Information Panel</strong>
+              <p style="margin: 8px 0 0 0;">
+                Orders and inventory are stored on the server (Vercel KV). When someone places an order from the website, it should appear here automatically.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- VIEW 2: INVENTORY MANAGER -->
+      <div id="inventory-view-container" style="display: none;">
+        <div class="admin-grid-layout">
+          <!-- Inventory Table Panel -->
+          <section class="admin-panel-card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <h2 style="margin: 0; font-size: 1.5rem;">Inventory Items Registry</h2>
+              <label class="admin-search-wrapper" style="width: 240px; margin: 0;">
+                <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
+                  <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input id="inventory-search" type="search" placeholder="Search inventory..." autocomplete="off" />
+              </label>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table id="inventory-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--ink); font-weight: 900; color: var(--muted); font-size: 0.78rem; text-transform: uppercase;">
+                    <th style="padding: 10px 8px;">Item Details</th>
+                    <th style="padding: 10px 8px; width: 100px;">Price (₹)</th>
+                    <th style="padding: 10px 8px; width: 110px;">Stock</th>
+                    <th style="padding: 10px 8px; width: 80px;">Active</th>
+                    <th style="padding: 10px 8px; width: 140px; text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Sidebar Actions for Catalog Management -->
+          <aside class="admin-sidebar">
+            <!-- Add Item Form -->
+            <div class="admin-panel-card">
+              <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top:0;">Add New Item</h3>
+              <form id="add-item-form" style="display: grid; gap: 12px;">
+                <label class="field" style="gap: 4px;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Item Name</span>
+                  <input type="text" id="new-item-name" required placeholder="e.g. Garlic Bread" style="min-height: 38px; padding: 0 10px;" />
+                </label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <label class="field" style="gap: 4px;">
+                    <span style="font-size: 0.75rem; font-weight: 850;">Category</span>
+                    <select id="new-item-category" required style="min-height: 38px; padding: 0 8px;">
+                      <option value="Veg Specials">Veg Specials</option>
+                      <option value="Paneer Pizzas">Paneer Pizzas</option>
+                      <option value="Classic Veg">Classic Veg</option>
+                      <option value="Non Veg">Non Veg</option>
+                      <option value="Burgers & More">Burgers & More</option>
+                    </select>
+                  </label>
+                  <label class="field" style="gap: 4px;">
+                    <span style="font-size: 0.75rem; font-weight: 850;">Item Type</span>
+                    <select id="new-item-type" required style="min-height: 38px; padding: 0 8px;">
+                      <option value="Veg">Veg</option>
+                      <option value="Non Veg">Non Veg</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="field" style="gap: 4px;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Description</span>
+                  <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..." style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
+                </label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <label class="field" style="gap: 4px;">
+                    <span style="font-size: 0.75rem; font-weight: 850;">Price (₹)</span>
+                    <input type="number" id="new-item-price" min="0" required placeholder="120" style="min-height: 38px; padding: 0 10px;" />
+                  </label>
+                  <label class="field" style="gap: 4px;">
+                    <span style="font-size: 0.75rem; font-weight: 850;">Stock Level</span>
+                    <input type="number" id="new-item-stock" min="0" required placeholder="30" style="min-height: 38px; padding: 0 10px;" />
+                  </label>
+                </div>
+                <button class="button primary" type="submit" style="width: 100%; min-height: 40px; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center;">Add Catalog Item</button>
+              </form>
+            </div>
+
+            <!-- Stock Deduction Audit Log -->
+            <div class="admin-panel-card">
+              <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 0; margin-bottom: 8px;">Recent Stock Deductions</h3>
+              <div id="stock-deductions-log" style="display: grid; gap: 8px; max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
+                <!-- Filled dynamically from user orders -->
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </main>
 
@@ -143,6 +245,8 @@
     <script>
       const ALL_ORDERS_KEY = "r-pizza-all-orders";
       const RESTAURANT_WHATSAPP = "916301045696";
+      const ORDERS_API_URL = "/api/orders";
+      const INVENTORY_API_URL = "/api/inventory";
 
       const ordersList = document.querySelector("#admin-orders-list");
       const searchInput = document.querySelector("#admin-search");
@@ -176,6 +280,21 @@
         localStorage.setItem(ALL_ORDERS_KEY, JSON.stringify(orders));
         // Trigger a storage event manually in case other tabs are listening
         window.dispatchEvent(new Event("storage"));
+      }
+
+      async function syncOrdersFromApi() {
+        const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`Orders sync failed (${res.status})`);
+        const apiOrders = await res.json();
+        if (!Array.isArray(apiOrders)) return;
+
+        // Merge by order id so local test/mock orders aren't lost instantly.
+        const localOrders = readOrders();
+        const byId = new Map();
+        localOrders.forEach((o) => o?.id && byId.set(o.id, o));
+        apiOrders.forEach((o) => o?.id && byId.set(o.id, o));
+
+        saveOrders([...byId.values()]);
       }
 
       // Play chime when a new order comes in
@@ -270,9 +389,9 @@
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
               </svg>
               No orders found.
-              <div style="margin-top: 14px; font-size: 0.85rem; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.4; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 12px;">
-                <strong>Connection Note:</strong> If you placed an order on the order page but it does not appear here, please ensure both the Checkout and Admin pages are open on the <strong>same address and port</strong> (e.g., both on <code>localhost:49484</code> or <code>localhost:8000</code>). Browser security isolates localStorage between different ports.
-              </div>
+                <div style="margin-top: 14px; font-size: 0.85rem; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.4; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 12px;">
+                <strong>Note:</strong> Orders appear automatically once they’re placed from the website.
+                </div>
             </div>
           `;
           return;
@@ -418,6 +537,15 @@
           const filtered = orders.filter((o) => o.id !== orderId);
           saveOrders(filtered);
           showToast("Order log deleted");
+
+          // Persist globally in backend.
+          void fetch(ORDERS_API_URL, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ id: orderId }),
+          })
+            .then(() => syncOrdersFromApi())
+            .catch((e) => console.warn("Order delete failed:", e));
         } else {
           const order = orders.find((o) => o.id === orderId);
           if (order) {
@@ -425,6 +553,15 @@
             saveOrders(orders);
             showToast(`Order status updated to ${action}`);
           }
+
+          // Persist globally in backend.
+          void fetch(ORDERS_API_URL, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ id: orderId, status: action }),
+          })
+            .then(() => syncOrdersFromApi())
+            .catch((e) => console.warn("Order status update failed:", e));
         }
         renderOrders();
       }
@@ -515,18 +652,303 @@
         showToast("Mock order generated!");
       }
 
-      function bootAdmin() {
+      // VIEW SWITCHING CONTROL
+      const btnOrdersView = document.querySelector("#tab-orders-view");
+      const btnInventoryView = document.querySelector("#tab-inventory-view");
+      const ordersContainer = document.querySelector("#orders-view-container");
+      const inventoryContainer = document.querySelector("#inventory-view-container");
+      
+      const adminMainTitle = document.querySelector("#admin-main-title");
+      const adminMainSubtitle = document.querySelector("#admin-main-subtitle");
+
+      let currentView = "orders";
+
+      function switchView(view) {
+        currentView = view;
+        if (view === "orders") {
+          btnOrdersView.className = "button primary";
+          btnInventoryView.className = "button ghost";
+          btnInventoryView.style.borderColor = "var(--line)";
+          ordersContainer.style.display = "block";
+          inventoryContainer.style.display = "none";
+          adminMainTitle.textContent = "Admin Dashboard";
+          adminMainSubtitle.textContent = "Manage customer orders, track sales, and process fulfillments.";
+          renderOrders();
+        } else {
+          btnOrdersView.className = "button ghost";
+          btnOrdersView.style.borderColor = "var(--line)";
+          btnInventoryView.className = "button primary";
+          ordersContainer.style.display = "none";
+          inventoryContainer.style.display = "block";
+          adminMainTitle.textContent = "Inventory Management";
+          adminMainSubtitle.textContent = "Manage menu pricing, stock availability, and catalog listings.";
+          syncInventoryFromApi()
+            .then(() => renderInventory())
+            .catch(() => renderInventory());
+          renderStockDeductions();
+        }
+      }
+
+      btnOrdersView.addEventListener("click", () => switchView("orders"));
+      btnInventoryView.addEventListener("click", () => switchView("inventory"));
+
+      // INVENTORY LOGIC
+      const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+      const inventoryTbody = document.querySelector("#inventory-tbody");
+      const inventorySearch = document.querySelector("#inventory-search");
+      const addItemForm = document.querySelector("#add-item-form");
+
+      let inventorySearchPhrase = "";
+
+      function readInventory() {
+        try {
+          return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveInventoryLocal(inventory) {
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      function saveInventory(inventory) {
+        // Update UI immediately.
+        saveInventoryLocal(inventory);
+
+        // Persist globally (admin changes should affect all visitors).
+        void fetch(INVENTORY_API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ inventory }),
+        }).catch((e) => {
+          console.warn("Inventory persist failed:", e);
+        });
+      }
+
+      async function syncInventoryFromApi() {
+        const res = await fetch(INVENTORY_API_URL, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`Inventory sync failed (${res.status})`);
+        const inventory = await res.json();
+        if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+        saveInventoryLocal(inventory);
+        return inventory;
+      }
+
+      function renderInventory() {
+        const inventory = readInventory();
+        const search = inventorySearchPhrase.toLowerCase();
+
+        const filtered = inventory.filter((item) => {
+          return !search || 
+            item.name.toLowerCase().includes(search) || 
+            item.category.toLowerCase().includes(search) || 
+            item.type.toLowerCase().includes(search);
+        });
+
+        if (filtered.length === 0) {
+          inventoryTbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 24px; color: var(--muted);">
+                No inventory items found.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        inventoryTbody.innerHTML = filtered
+          .map((item) => {
+            const isOutOfStock = item.stock <= 0;
+            const isUnavailable = !item.available;
+            
+            let stockStatus = "";
+            if (isUnavailable || isOutOfStock) {
+              stockStatus = `<span class="status-badge status-cancelled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
+            } else if (item.stock < 10) {
+              stockStatus = `<span class="status-badge status-pending" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Low Stock (${item.stock})</span>`;
+            } else {
+              stockStatus = `<span class="status-badge status-fulfilled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">In Stock (${item.stock})</span>`;
+            }
+
+            return `
+              <tr style="border-bottom: 1px solid var(--line); vertical-align: middle;">
+                <td style="padding: 12px 8px;">
+                  <div style="font-weight: 850; font-size: 1rem; color: var(--ink);">${item.name}</div>
+                  <div style="font-size: 0.78rem; color: var(--muted); margin-top: 2px;">
+                    ${item.category} · <span style="font-style: italic;">${item.type}</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px; max-width: 320px; line-height: 1.3;">
+                    ${item.desc || "No description"}
+                  </div>
+                </td>
+                <td style="padding: 12px 8px;">
+                  <input type="number" min="0" value="${item.price}" class="price-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                </td>
+                <td style="padding: 12px 8px;">
+                  <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                  <div style="margin-top: 6px;">${stockStatus}</div>
+                </td>
+                <td style="padding: 12px 8px;">
+                  <input type="checkbox" class="avail-checkbox" data-name="${item.name}" ${item.available ? "checked" : ""} style="width: 18px; height: 18px; margin: 0; cursor:pointer;" />
+                </td>
+                <td style="padding: 12px 8px; text-align: right;">
+                  <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                    <button class="button primary btn-quick-save" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; display:inline-flex; align-items:center; justify-content:center;">Save</button>
+                    <button class="button ghost btn-quick-delete" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; border-color: var(--tomato); color: var(--tomato-dark); display:inline-flex; align-items:center; justify-content:center;">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      function handleQuickSave(name, trElement) {
+        const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
+        const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
+        const availVal = trElement.querySelector(".avail-checkbox").checked;
+
+        const inventory = readInventory();
+        const item = inventory.find((x) => x.name === name);
+        if (item) {
+          item.price = priceVal;
+          item.stock = stockVal;
+          item.available = availVal;
+          saveInventory(inventory);
+          showToast(`Updated ${name}`);
+          renderInventory();
+        }
+      }
+
+      function handleQuickDelete(name) {
+        if (!confirm(`Are you sure you want to delete "${name}" from the inventory menu?`)) return;
+        const inventory = readInventory();
+        const filtered = inventory.filter((x) => x.name !== name);
+        saveInventory(filtered);
+        showToast(`Deleted ${name}`);
+        renderInventory();
+      }
+
+      function addNewItem(e) {
+        e.preventDefault();
+        const name = document.querySelector("#new-item-name").value.trim();
+        const category = document.querySelector("#new-item-category").value;
+        const type = document.querySelector("#new-item-type").value;
+        const desc = document.querySelector("#new-item-desc").value.trim();
+        const price = Number(document.querySelector("#new-item-price").value) || 0;
+        const stock = Number(document.querySelector("#new-item-stock").value) || 0;
+
+        const inventory = readInventory();
+        if (inventory.some((x) => x.name.toLowerCase() === name.toLowerCase())) {
+          alert("An item with this name already exists in catalog.");
+          return;
+        }
+
+        const newItem = {
+          name,
+          category,
+          type,
+          desc,
+          price,
+          stock,
+          available: true
+        };
+
+        inventory.push(newItem);
+        saveInventory(inventory);
+        showToast(`Added ${name} to catalog!`);
+        addItemForm.reset();
+        renderInventory();
+      }
+
+      function renderStockDeductions() {
+        const logContainer = document.querySelector("#stock-deductions-log");
+        if (!logContainer) return;
+
+        const orders = readOrders();
+        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const logs = [];
+        orders.forEach((order) => {
+          const items = order.items || order.cart || [];
+          items.forEach((item) => {
+            logs.push({
+              orderId: order.id,
+              date: new Date(order.createdAt).toLocaleString(),
+              name: item.name,
+              qty: item.qty,
+              total: item.price * item.qty,
+              status: order.status
+            });
+          });
+        });
+
+        if (logs.length === 0) {
+          logContainer.innerHTML = `<p style="color: var(--muted); margin: 0; font-style: italic;">No stock deductions recorded yet.</p>`;
+          return;
+        }
+
+        logContainer.innerHTML = logs
+          .map((log) => {
+            return `
+              <div style="padding: 10px; border: 1px solid var(--line); border-radius: 4px; background: #faf8f5; display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.72rem;">
+                  <span style="color: var(--cobalt); font-weight:900;">Order #${log.orderId.split("-")[2] || log.orderId}</span>
+                  <span style="color: var(--muted);">${log.date.split(",")[0]}</span>
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 750;">
+                  Deducted: <strong style="color: var(--tomato-dark);">${log.qty} x ${log.name}</strong>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--muted); text-transform: uppercase; font-weight: 850; margin-top: 2px;">
+                  Status: ${log.status}
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      async function bootAdmin() {
+        try {
+          await syncOrdersFromApi();
+        } catch (e) {
+          console.warn("Initial orders sync skipped:", e);
+        }
         renderOrders();
 
         // Listen for storage events (updates from other tabs)
         window.addEventListener("storage", (event) => {
           if (event.key === ALL_ORDERS_KEY || event.key === null) {
             renderOrders();
+            if (currentView === "inventory") renderStockDeductions();
+          }
+          if (event.key === INVENTORY_STORAGE_KEY || event.key === null) {
+            if (currentView === "inventory") renderInventory();
           }
         });
 
-        // Set up polling fallback to update time-dependent lists
-        window.setInterval(renderOrders, 4000);
+        // Poll so the admin dashboard stays updated across devices.
+        window.setInterval(async () => {
+          try {
+            await syncOrdersFromApi();
+          } catch {
+            // ignore network errors
+          }
+
+          renderOrders();
+
+          if (currentView === "inventory") {
+            try {
+              await syncInventoryFromApi();
+            } catch {
+              // ignore
+            }
+            renderInventory();
+            renderStockDeductions();
+          }
+        }, 4000);
 
         // Search trigger
         searchInput.addEventListener("input", (e) => {
@@ -557,11 +979,36 @@
 
         // Clear All trigger
         document.querySelector("#btn-clear-all").addEventListener("click", () => {
-          if (!confirm("Are you SURE you want to clear ALL orders from local storage? This cannot be undone!")) return;
+          if (!confirm("Are you SURE you want to clear ALL orders? This cannot be undone!")) return;
           saveOrders([]);
           renderOrders();
           showToast("All order logs cleared");
         });
+
+        // Inventory search trigger
+        inventorySearch.addEventListener("input", (e) => {
+          inventorySearchPhrase = e.target.value.trim().toLowerCase();
+          renderInventory();
+        });
+
+        // Inventory table quick save / delete triggers
+        inventoryTbody.addEventListener("click", (e) => {
+          const saveBtn = e.target.closest(".btn-quick-save");
+          if (saveBtn) {
+            const name = saveBtn.dataset.name;
+            const tr = saveBtn.closest("tr");
+            handleQuickSave(name, tr);
+            return;
+          }
+
+          const deleteBtn = e.target.closest(".btn-quick-delete");
+          if (deleteBtn) {
+            handleQuickDelete(deleteBtn.dataset.name);
+          }
+        });
+
+        // Add Catalog Item submit trigger
+        addItemForm.addEventListener("submit", addNewItem);
       }
 
       bootAdmin();

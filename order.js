@@ -1,6 +1,8 @@
 const CART_STORAGE_KEY = "r-pizza-cart";
 const LAST_ORDER_KEY = "r-pizza-last-order";
 const RESTAURANT_WHATSAPP = "916301045696";
+const ORDERS_API_URL = "/api/orders";
+const INVENTORY_API_URL = "/api/inventory";
 
 const checkoutItems = document.querySelector("#checkout-items");
 const summaryCount = document.querySelector("#summary-count");
@@ -25,6 +27,37 @@ function showToast(message) {
   toast.classList.add("show");
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+async function syncInventoryFromApi() {
+  const res = await fetch(INVENTORY_API_URL, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Inventory sync failed (${res.status})`);
+  const inventory = await res.json();
+  if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+  return inventory;
+}
+
+async function placeOrderOnApi(payload) {
+  const res = await fetch(ORDERS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "Failed to place order");
+  return data;
+}
+
+async function patchOrderStatusOnApi({ id, status }) {
+  const res = await fetch(ORDERS_API_URL, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ id, status }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "Failed to update order");
+  return data;
 }
 
 function readCart() {
@@ -278,21 +311,79 @@ function renderOrderHistory() {
     .join("");
 }
 
-function handleCancelOrder(orderId) {
+const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+
+function validateStockAvailability() {
+  try {
+    const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+    for (const cartItem of cart) {
+      const invItem = inventory.find((item) => item.name === cartItem.name);
+      if (!invItem || !invItem.available || invItem.stock < cartItem.qty) {
+        return {
+          available: false,
+          message: invItem 
+            ? `Sorry, only ${invItem.stock} of ${cartItem.name} are available in stock.`
+            : `Sorry, ${cartItem.name} is no longer available.`
+        };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return { available: true };
+}
+
+function deductInventoryStock(cartItems) {
+  try {
+    const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+    let updated = false;
+    
+    cartItems.forEach((cartItem) => {
+      const invItem = inventory.find((item) => item.name === cartItem.name);
+      if (invItem) {
+        invItem.stock = Math.max(0, invItem.stock - cartItem.qty);
+        updated = true;
+      }
+    });
+    
+    if (updated) {
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      // Notify other tabs immediately
+      window.dispatchEvent(new Event("storage"));
+    }
+  } catch (e) {
+    console.error("Inventory deduction failed:", e);
+  }
+}
+
+async function handleCancelOrder(orderId) {
   if (!confirm("Are you sure you want to cancel this order?")) return;
   const orders = readAllOrders();
   const order = orders.find((o) => o.id === orderId);
   if (order && order.status === "Pending") {
-    order.status = "Cancelled";
-    saveAllOrders(orders);
-    renderOrderHistory();
-    showToast("Order cancelled successfully");
-    // Trigger storage event manually for same-page listeners
-    window.dispatchEvent(new Event("storage"));
+    try {
+      const data = await patchOrderStatusOnApi({ id: orderId, status: "Cancelled" });
+      const updatedOrder = data?.order;
+      const inventory = data?.inventory;
+
+      if (Array.isArray(inventory)) {
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      }
+
+      const idx = orders.findIndex((o) => o.id === orderId);
+      if (idx >= 0 && updatedOrder) orders[idx] = updatedOrder;
+      else if (updatedOrder) orders.push(updatedOrder);
+
+      saveAllOrders(orders);
+      renderOrderHistory();
+      showToast("Order cancelled successfully");
+    } catch (e) {
+      showToast(String(e?.message || e || "Cancel failed"));
+    }
   }
 }
 
-function submitOrder(event) {
+async function submitOrder(event) {
   event.preventDefault();
   const { count, total } = cartStats();
   if (!count) {
@@ -302,29 +393,57 @@ function submitOrder(event) {
 
   if (!orderForm.reportValidity()) return;
 
+  // Validate stock before placing order (try to refresh inventory from server).
+  try {
+    await syncInventoryFromApi();
+  } catch {
+    // fall back to locally cached inventory
+  }
+
+  const validation = validateStockAvailability();
+  if (!validation.available) {
+    showToast(validation.message);
+    return;
+  }
+
   const details = customerDetails();
   const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
   const message = orderMessage(details, id);
 
-  const newOrder = {
-    cart,
-    items: cart,
-    createdAt: new Date().toISOString(),
-    details,
-    id,
-    total,
-    status: "Pending",
-  };
+  let placed;
+  try {
+    placed = await placeOrderOnApi({ id, details, cart, total });
+  } catch (e) {
+    showToast(String(e?.message || e || "Order placement failed"));
+    return;
+  }
 
-  localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(newOrder));
+  const serverOrder = placed?.order;
+  const serverInventory = placed?.inventory;
 
-  // Add to persistent orders list
+  if (serverInventory && Array.isArray(serverInventory)) {
+    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(serverInventory));
+  }
+
   const orders = readAllOrders();
-  orders.push(newOrder);
-  saveAllOrders(orders);
+  if (serverOrder?.id) {
+    const idx = orders.findIndex((o) => o.id === serverOrder.id);
+    if (idx >= 0) orders[idx] = serverOrder;
+    else orders.push(serverOrder);
+    saveAllOrders(orders);
+    localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(serverOrder));
 
-  orderNumber.textContent = id;
-  receiptPreview.textContent = `${details.name}, ${count} ${count === 1 ? "item" : "items"} · ${formatRupees(total)} · ${details.service}`;
+    orderNumber.textContent = serverOrder.id;
+    receiptPreview.textContent = `${details.name}, ${count} ${count === 1 ? "item" : "items"} · ${formatRupees(serverOrder.total ?? total)} · ${details.service}`;
+  } else {
+    // Should not happen; UI still tries to show a receipt.
+    localStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ id, details, total }));
+    receiptPreview.textContent = `${details.name}, ${count} ${count === 1 ? "item" : "items"} · ${formatRupees(total)} · ${details.service}`;
+    orderNumber.textContent = id;
+    orders.push({ id, details, total, status: "Pending" });
+    saveAllOrders(orders);
+  }
+
   sendWhatsapp.href = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
   confirmationBox.hidden = false;
   showToast("Order receipt created");

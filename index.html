@@ -137,7 +137,7 @@
 
           <div class="menu-layout">
             <div class="menu-grid" id="menu-grid" aria-live="polite"></div>
-            <aside class="order-panel reveal" aria-label="Order summary">
+            <aside class="order-panel reveal" id="cart-panel" aria-label="Order summary">
               <div class="order-header">
                 <span class="eyebrow">Order</span>
                 <strong id="cart-count">0 items</strong>
@@ -244,6 +244,15 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <button id="floating-cart" class="floating-cart" type="button" aria-label="Open cart" hidden>
+      <span class="floating-cart-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2ZM6.2 6l.8 4h12l1-5H6.2Zm-1.2-2h2l.4 2H21a1 1 0 0 1 1 1l-1.4 7.2a1 1 0 0 1-1 .8H8.2a1 1 0 0 1-1-.8L4.2 4H3a1 1 0 0 1-1-1 1 1 0 0 1 1-1h2Z" />
+        </svg>
+      </span>
+      <span class="floating-cart-count" id="floating-cart-count">0</span>
+    </button>
 
     <footer>
       <strong>R PIZZA AND MORE</strong>
