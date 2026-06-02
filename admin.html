@@ -956,8 +956,12 @@
           }
 
           if (currentView === "inventory") {
-            renderInventory();
-            renderStockDeductions();
+            // Don't re-render while the user is actively editing an input field
+            const isEditing = inventoryTbody.querySelector("input:focus, select:focus");
+            if (!isEditing) {
+              renderInventory();
+              renderStockDeductions();
+            }
           }
         }, 4000);
 
