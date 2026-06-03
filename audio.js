@@ -16,12 +16,25 @@
 
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        return;
+      }
     }
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
     }
   }
+
+  // Attempt to unlock audio context on first user interaction
+  const unlockAudio = () => {
+    initAudio();
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+  };
+  document.addEventListener('click', unlockAudio);
+  document.addEventListener('touchstart', unlockAudio);
 
   function toggleMute() {
     isMuted = !isMuted;
@@ -39,6 +52,9 @@
   function playTone(freq1, freq2, duration, type = "sine") {
     if (isMuted) return;
     initAudio();
+    
+    // Prevent queuing up sounds if the browser is blocking autoplay
+    if (!audioCtx || audioCtx.state === 'suspended') return;
     
     const osc1 = audioCtx.createOscillator();
     const osc2 = audioCtx.createOscillator();
