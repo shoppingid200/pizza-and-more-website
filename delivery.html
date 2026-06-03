@@ -386,7 +386,7 @@
                   const response = await fetch(ORDERS_API_URL, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "accept-delivery", id, partner: currentDeliveryUser })
+                    body: JSON.stringify({ action: "accept-delivery", id, partner: localStorage.getItem("r-pizza-admin-username") || "" })
                   });
                   const data = await response.json();
                   
