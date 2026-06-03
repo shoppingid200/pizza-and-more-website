@@ -207,11 +207,8 @@
           .map((order) => {
             const date = new Date(order.createdAt).toLocaleString();
             
-            // If dispatched but not accepted, show as Preparing to the customer
+            // Show actual status (Out for Delivery) directly
             let displayStatus = order.status;
-            if (displayStatus === "Out for Delivery" && !order.partnerAccepted) {
-              displayStatus = "Preparing";
-            }
             
             const statusClass = `status-${displayStatus.toLowerCase().replace(/\s+/g, "-")}`;
 
