@@ -700,14 +700,11 @@
           "Near Station Road, Tajpur, Bihar",
           "Gandhi Chowk, Samastipur Road, Tajpur"
         ];
-        const mockPizzas = [
-          { name: "Fresh veggie", price: 179, category: "Veg Specials" },
-          { name: "Peppy Paneer", price: 209, category: "Paneer Pizzas" },
-          { name: "Farmhouse", price: 209, category: "Veg Specials" },
-          { name: "Margherita", price: 99, category: "Classic Veg" },
-          { name: "Chicken dominator", price: 249, category: "Non Veg" },
-          { name: "Loaded veg", price: 79, category: "Burgers & More" }
-        ];
+        const availableItems = readInventory().filter(item => item.available && item.stock > 0);
+        if (availableItems.length === 0) {
+          showToast("No available items in inventory to mock an order!");
+          return;
+        }
 
         const name = mockNames[Math.floor(Math.random() * mockNames.length)];
         const phone = mockPhones[Math.floor(Math.random() * mockPhones.length)];
@@ -720,7 +717,7 @@
         let total = 0;
         
         for (let i = 0; i < numItems; i++) {
-          const item = mockPizzas[Math.floor(Math.random() * mockPizzas.length)];
+          const item = availableItems[Math.floor(Math.random() * availableItems.length)];
           const qty = Math.floor(Math.random() * 2) + 1;
           const existing = selectedItems.find(x => x.name === item.name);
           if (existing) {
