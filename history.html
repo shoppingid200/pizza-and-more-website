@@ -396,10 +396,9 @@
         });
 
         // Initial load
-        try {
-          await syncOrdersFromApi();
-          renderOrderHistory();
-        } catch (err) {}
+        syncOrdersFromApi()
+          .then(() => renderOrderHistory())
+          .catch(() => renderOrderHistory());
 
         // Auto-refresh every 3s
         setInterval(async () => {
