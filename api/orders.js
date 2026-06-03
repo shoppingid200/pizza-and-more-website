@@ -198,13 +198,18 @@ module.exports = async (req, res) => {
       order.status = status;
 
       // Generate a 6-digit delivery code when order goes "Out for Delivery"
-      if (status === "Out for Delivery" && prevStatus !== "Out for Delivery" && !order.deliveryCode) {
-        order.deliveryCode = String(Math.floor(100000 + Math.random() * 900000));
-      }
-      
-      // Save delivery partner if assigned
-      if (status === "Out for Delivery" && body.deliveryPartner) {
-        order.deliveryPartner = String(body.deliveryPartner).trim();
+      if (status === "Out for Delivery" && prevStatus !== "Out for Delivery") {
+        if (!order.deliveryCode) {
+          order.deliveryCode = String(Math.floor(100000 + Math.random() * 900000));
+        }
+        order.partnerAccepted = false;
+        
+        // Save delivery partner if assigned
+        if (body.deliveryPartner) {
+          order.deliveryPartner = String(body.deliveryPartner).trim();
+        } else {
+          order.deliveryPartner = ""; // Ensure it's clear for Any Partner
+        }
       }
 
       // If an order is cancelled, restore stock once (only on transition to Cancelled).
@@ -247,6 +252,46 @@ module.exports = async (req, res) => {
     if (req.method === "PUT") {
       const body = await readJsonBody(req);
       const action = String(body?.action || "").trim();
+
+      // ── ACCEPT DELIVERY ORDER ──
+      if (action === "accept-delivery") {
+        const id = String(body?.id || "").trim();
+        const partner = String(body?.partner || "").trim();
+
+        if (!id || !partner) {
+          return res.status(400).json({ message: "Order ID and partner name are required" });
+        }
+
+        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
+        const idx = orders.findIndex((o) => o?.id === id);
+
+        if (idx === -1) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+
+        const order = orders[idx];
+
+        if (order.status !== "Out for Delivery") {
+          return res.status(409).json({ message: "Order is not available for delivery" });
+        }
+
+        // Check if already claimed/assigned to someone else
+        if (order.deliveryPartner && order.deliveryPartner !== partner) {
+          return res.status(409).json({ message: "Order is assigned to another partner" });
+        }
+        
+        // Check if already accepted
+        if (order.partnerAccepted) {
+          return res.status(409).json({ message: "Order has already been accepted" });
+        }
+
+        order.deliveryPartner = partner;
+        order.partnerAccepted = true;
+        orders[idx] = order;
+        await redis.set(ORDERS_KEY, orders);
+
+        return res.status(200).json({ message: "Order claimed successfully", order });
+      }
 
       // ── VERIFY DELIVERY OTP ──
       if (action === "verify-otp") {

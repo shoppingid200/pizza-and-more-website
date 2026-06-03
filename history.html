@@ -206,7 +206,14 @@
         historyList.innerHTML = filtered
           .map((order) => {
             const date = new Date(order.createdAt).toLocaleString();
-            const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
+            
+            // If dispatched but not accepted, show as Preparing to the customer
+            let displayStatus = order.status;
+            if (displayStatus === "Out for Delivery" && !order.partnerAccepted) {
+              displayStatus = "Preparing";
+            }
+            
+            const statusClass = `status-${displayStatus.toLowerCase().replace(/\s+/g, "-")}`;
 
             const itemsHtml = (order.items || order.cart || [])
               .map((item) => {
@@ -217,9 +224,9 @@
                 if (isCancelled) {
                   itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(217, 45, 32, 0.1); color: var(--tomato-dark); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Cancelled</span>`;
                   textStyle = 'text-decoration: line-through; opacity: 0.6;';
-                } else if (order.status === "Out for Delivery") {
+                } else if (displayStatus === "Out for Delivery") {
                   itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(37, 211, 102, 0.1); color: #25D366; border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivering</span>`;
-                } else if (order.status === "Fulfilled") {
+                } else if (displayStatus === "Fulfilled") {
                   itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(18, 128, 92, 0.1); color: var(--basil); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivered</span>`;
                 }
                 
@@ -234,8 +241,8 @@
 
             // Delivery Code Section
             let deliveryCodeHtml = "";
-            if (order.deliveryCode && (order.status === "Out for Delivery" || order.status === "Fulfilled")) {
-              const isActive = order.status === "Out for Delivery";
+            if (order.deliveryCode && (displayStatus === "Out for Delivery" || displayStatus === "Fulfilled")) {
+              const isActive = displayStatus === "Out for Delivery";
               deliveryCodeHtml = `
                 <div class="delivery-code-card ${isActive ? 'active' : 'used'}">
                   <div class="delivery-code-header">
@@ -287,7 +294,9 @@
                     <strong>Order #${order.id}</strong>
                     <div class="history-card-date">${date}</div>
                   </div>
-                  <span class="status-badge ${statusClass}">${order.status}</span>
+                  <div class="history-status">
+                    <span class="status-badge ${statusClass}">${displayStatus}</span>
+                  </div>
                 </div>
                 
                 ${timelineHtml}

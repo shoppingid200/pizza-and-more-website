@@ -27,6 +27,9 @@
       </nav>
       <div style="display:flex;align-items:center;gap:12px;">
         <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
+        <button id="mute-alerts-btn" type="button" style="background:var(--paper);border:1px solid var(--line);cursor:pointer;color:var(--ink);font-weight:850;font-size:0.85rem;padding:6px 12px;border-radius:4px;" title="Mute/Unmute Alerts">
+          🔊 Alerts On
+        </button>
         <button class="nav-call" id="logout-btn" type="button" style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
           Logout
         </button>
@@ -259,6 +262,7 @@
       <span>Secret Dashboard · Samastipur, Bihar</span>
     </footer>
 
+    <script src="audio.js"></script>
     <script>
       const AUTH_API = "/api/auth";
       const SESSION_KEY = "r-pizza-admin-session";
@@ -313,6 +317,14 @@
           setTimeout(() => guard.remove(), 400);
         }
       })();
+
+      // ── MUTE ALERTS ──
+      document.getElementById('mute-alerts-btn')?.addEventListener('click', (e) => {
+        if (window.AudioEngine) {
+          const isMuted = window.AudioEngine.toggleMute();
+          e.target.textContent = isMuted ? "🔇 Alerts Off" : "🔊 Alerts On";
+        }
+      });
 
       // ── LOGOUT ──
       document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -383,29 +395,7 @@
         saveOrders(apiOrders);
       }
 
-      // Play chime when a new order comes in
-      function playNewOrderSound() {
-        try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const playNote = (freq, startTime, duration) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = "sine";
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0, startTime);
-            gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-          };
-          playNote(523.25, audioCtx.currentTime, 0.4); // C5
-          playNote(659.25, audioCtx.currentTime + 0.15, 0.5); // E5
-        } catch (e) {
-          console.warn("Audio warning:", e);
-        }
-      }
+      // Old playNewOrderSound removed. Using audio.js now.
 
       function updateDashboardStats(orders) {
         let revenue = 0;
@@ -438,15 +428,22 @@
         
         updateDashboardStats(orders);
 
-        // Check if a new order came in
+        // Check if a new order came in for toast
         if (orders.length > lastKnownOrderCount) {
           if (lastKnownOrderCount > 0) {
-            playNewOrderSound();
             showToast("New order received!");
           }
           lastKnownOrderCount = orders.length;
         } else if (orders.length < lastKnownOrderCount) {
           lastKnownOrderCount = orders.length;
+        }
+
+        // Handle Audio Alerts for Pending Orders
+        const hasPending = orders.some(o => o.status === "Pending");
+        if (hasPending) {
+          if (window.AudioEngine) window.AudioEngine.playAdminRing();
+        } else {
+          if (window.AudioEngine) window.AudioEngine.stopAdminRing();
         }
 
         // Sort descending by date
@@ -571,6 +568,15 @@
               `;
             }
 
+            let statusBadgeContent = order.status;
+            if (order.status === "Out for Delivery") {
+              if (order.partnerAccepted) {
+                statusBadgeContent = `Out for Delivery ✓ (Accepted by ${order.deliveryPartner})`;
+              } else {
+                statusBadgeContent = `Out for Delivery ⏳ (Waiting for Partner)`;
+              }
+            }
+
             return `
               <article class="admin-order-card ${cardStatusClass}">
                 <header class="admin-card-header">
@@ -578,7 +584,7 @@
                     <strong>Order #${order.id}</strong>
                     <span>Ordered: ${date}</span>
                   </div>
-                  <span class="status-badge ${statusClass}">${order.status}</span>
+                  <span class="status-badge ${statusClass}">${statusBadgeContent}</span>
                 </header>
 
                 <div class="admin-card-content">
