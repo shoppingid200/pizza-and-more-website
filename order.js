@@ -655,6 +655,32 @@ function bootOrderPage() {
       phoneTick.style.opacity = e.target.value.length === 10 ? "1" : "0";
     });
   }
+
+  // Auto-fill address based on pincode
+  const pincodeInput = document.getElementById("address-pincode");
+  if (pincodeInput) {
+    pincodeInput.addEventListener("input", async (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+      if (e.target.value.length === 6) {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${e.target.value}`);
+          const data = await res.json();
+          if (data && data[0] && data[0].Status === "Success") {
+            const postOffice = data[0].PostOffice[0];
+            const cityInput = document.getElementById("address-city");
+            const stateInput = document.getElementById("address-state");
+            
+            if (cityInput && !cityInput.value) cityInput.value = postOffice.District;
+            if (stateInput && !stateInput.value) stateInput.value = postOffice.State;
+            
+            showToast("Address details auto-filled!");
+          }
+        } catch(err) {
+          console.error("Pincode API failed", err);
+        }
+      }
+    });
+  }
 }
 
 bootOrderPage();
