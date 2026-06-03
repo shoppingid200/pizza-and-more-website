@@ -74,6 +74,7 @@ module.exports = async (req, res) => {
       sessions.push({
         token,
         username: user.username,
+        role: user.role || "admin",
         createdAt: new Date().toISOString(),
       });
 
@@ -84,6 +85,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         token,
         username: user.username,
+        role: user.role || "admin",
         message: "Login successful",
       });
     }
@@ -116,15 +118,21 @@ module.exports = async (req, res) => {
         return res.status(409).json({ message: "Username already exists" });
       }
 
+      const role = String(body.role || "admin").trim();
+      if (role !== "admin" && role !== "delivery") {
+        return res.status(400).json({ message: "Role must be 'admin' or 'delivery'" });
+      }
+
       users.push({
         username,
         password,
+        role,
         createdAt: new Date().toISOString(),
       });
 
       await redis.set(USERS_KEY, users);
 
-      return res.status(201).json({ message: `User "${username}" created successfully` });
+      return res.status(201).json({ message: `${role === "delivery" ? "Delivery partner" : "Admin"} "${username}" created successfully` });
     }
 
     // ── VERIFY SESSION ──
@@ -139,7 +147,7 @@ module.exports = async (req, res) => {
         return res.status(401).json({ valid: false, message: "Session expired or invalid" });
       }
 
-      return res.status(200).json({ valid: true, username: session.username });
+      return res.status(200).json({ valid: true, username: session.username, role: session.role || "admin" });
     }
 
     // ── LOGOUT ──
@@ -196,7 +204,7 @@ module.exports = async (req, res) => {
       }
 
       const users = (await redis.get(USERS_KEY)) || [];
-      const usernames = users.map((u) => ({ username: u.username, createdAt: u.createdAt }));
+      const usernames = users.map((u) => ({ username: u.username, role: u.role || "admin", createdAt: u.createdAt }));
 
       return res.status(200).json({ users: usernames });
     }

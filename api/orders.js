@@ -239,6 +239,52 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
+    if (req.method === "PUT") {
+      const body = await readJsonBody(req);
+      const action = String(body?.action || "").trim();
+
+      // ── VERIFY DELIVERY OTP ──
+      if (action === "verify-otp") {
+        const id = String(body?.id || "").trim();
+        const otp = String(body?.otp || "").trim();
+
+        if (!id || !otp) {
+          return res.status(400).json({ message: "Order ID and OTP are required" });
+        }
+
+        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
+        const idx = orders.findIndex((o) => o?.id === id);
+
+        if (idx === -1) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+
+        const order = orders[idx];
+
+        if (order.status !== "Out for Delivery") {
+          return res.status(409).json({ message: "Order is not out for delivery" });
+        }
+
+        if (!order.deliveryCode) {
+          return res.status(409).json({ message: "No delivery code assigned to this order" });
+        }
+
+        if (order.deliveryCode !== otp) {
+          return res.status(403).json({ message: "Incorrect OTP. Please try again." });
+        }
+
+        // OTP matches — mark as Fulfilled
+        order.status = "Fulfilled";
+        order.fulfilledAt = new Date().toISOString();
+        orders[idx] = order;
+        await redis.set(ORDERS_KEY, orders);
+
+        return res.status(200).json({ message: "Delivery verified! Order fulfilled.", order });
+      }
+
+      return res.status(400).json({ message: "Unknown PUT action" });
+    }
+
     return res.status(405).json({ message: "Method not allowed" });
   } catch (e) {
     return res.status(500).json({ message: "Orders endpoint failed", error: String(e?.message || e) });

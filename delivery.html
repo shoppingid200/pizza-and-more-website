@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delivery Dashboard | R Pizza and More</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .delivery-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        margin-top: 24px;
+      }
+      .otp-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--line);
+      }
+      .otp-input-group {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .otp-input-group input {
+        flex: 1;
+        min-height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        text-align: center;
+      }
+      .otp-input-group input:focus {
+        border-color: var(--tomato);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.08);
+      }
+      .verify-btn {
+        min-height: 40px;
+        padding: 0 16px;
+        background: var(--tomato);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 850;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+      }
+      .verify-btn:hover {
+        background: var(--tomato-dark);
+        transform: translateY(-1px);
+      }
+      .verify-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+    </style>
+  </head>
+  <body class="admin-body">
+    <!-- Auth Guard -->
+    <div id="auth-guard" style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
+      <span class="brand-mark" style="width:56px;height:56px;font-size:1.6rem;margin-bottom:16px;display:flex;align-items:center;justify-content:center;">R</span>
+      <p style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">Verifying access...</p>
+    </div>
+
+    <header class="topbar">
+      <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
+        <span class="brand-mark">R</span>
+        <span>
+          <strong>R PIZZA AND MORE</strong>
+          <small>Delivery Portal</small>
+        </span>
+      </a>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
+        <button class="nav-call" id="logout-btn" type="button" style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-shell" style="max-width: 1200px; margin: 0 auto;">
+      <section class="admin-header">
+        <div class="admin-title-area">
+          <h1 id="admin-main-title">Active Deliveries</h1>
+          <p id="admin-main-subtitle">Manage your current deliveries and verify customer OTPs.</p>
+        </div>
+      </section>
+
+      <div class="delivery-grid" id="deliveries-container" aria-live="polite">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const AUTH_API = "/api/auth";
+      const ORDERS_API_URL = "/api/orders";
+      const SESSION_KEY = "r-pizza-admin-session";
+
+      // ── AUTH GUARD ──
+      (async function guardDelivery() {
+        const guard = document.getElementById("auth-guard");
+        const token = localStorage.getItem(SESSION_KEY);
+        const role = localStorage.getItem("r-pizza-admin-role");
+
+        if (!token) {
+          window.location.replace("login.html");
+          return;
+        }
+
+        try {
+          const res = await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "verify", token }),
+          });
+          const data = await res.json();
+
+          if (!data.valid) {
+            localStorage.removeItem(SESSION_KEY);
+            window.location.replace("login.html");
+            return;
+          }
+
+          // Show username
+          const label = document.getElementById("admin-user-label");
+          if (label) label.textContent = `Partner: ${data.username}`;
+
+          // Hide guard
+          guard.style.opacity = "0";
+          guard.style.visibility = "hidden";
+          setTimeout(() => guard.remove(), 400);
+
+          // Initial load
+          loadDeliveries();
+          // Poll for updates
+          setInterval(loadDeliveries, 5000);
+
+        } catch {
+          // Offline fallback
+          guard.style.opacity = "0";
+          guard.style.visibility = "hidden";
+          setTimeout(() => guard.remove(), 400);
+          loadDeliveries();
+        }
+      })();
+
+      // ── LOGOUT ──
+      document.getElementById("logout-btn").addEventListener("click", async () => {
+        const token = localStorage.getItem(SESSION_KEY);
+        try {
+          await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "logout", token }),
+          });
+        } catch {}
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem("r-pizza-admin-role");
+        window.location.replace("login.html");
+      });
+
+      const toast = document.getElementById("toast");
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 3000);
+      }
+
+      function formatRupees(value) {
+        return `₹${value}`;
+      }
+
+      async function loadDeliveries() {
+        try {
+          const res = await fetch(`${ORDERS_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+          if (!res.ok) return;
+          const allOrders = await res.json();
+          if (!Array.isArray(allOrders)) return;
+
+          const deliveriesContainer = document.getElementById("deliveries-container");
+          
+          // Only show orders that are currently "Out for Delivery"
+          const deliveries = allOrders.filter(o => o.status === "Out for Delivery");
+
+          if (deliveries.length === 0) {
+            deliveriesContainer.innerHTML = `
+              <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: var(--cream); border: 1px solid var(--line); border-radius: 12px; color: var(--muted);">
+                <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.6;">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <h3 style="margin: 0 0 8px; color: var(--ink);">No Active Deliveries</h3>
+                <p style="margin: 0;">You're all caught up. Waiting for new orders to be dispatched...</p>
+              </div>
+            `;
+            return;
+          }
+
+          deliveries.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+          deliveriesContainer.innerHTML = deliveries.map(order => {
+            const cleanPhone = (order.details.phone || "").replace(/[^0-9+]/g, "");
+            const date = new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let mapEmbedHTML = "";
+            if (order.details.latitude && order.details.longitude) {
+              const query = `${order.details.latitude},${order.details.longitude}`;
+              mapEmbedHTML = `
+                <div style="margin-top: 12px;">
+                  <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed" width="100%" height="140" style="border:1px solid var(--line); border-radius:8px; display:block;" allowfullscreen="" loading="lazy"></iframe>
+                  <a href="https://www.google.com/maps?q=${encodeURIComponent(query)}" target="_blank" style="color: var(--cobalt); font-size: 0.8rem; font-weight: 850; text-decoration: underline; display: inline-block; margin-top: 4px;">Open Navigation</a>
+                </div>
+              `;
+            } else if (order.details.address) {
+              mapEmbedHTML = `
+                <div style="margin-top: 12px;">
+                  <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(order.details.address)}&z=16&output=embed" width="100%" height="140" style="border:1px solid var(--line); border-radius:8px; display:block;" allowfullscreen="" loading="lazy"></iframe>
+                  <a href="https://www.google.com/maps?q=${encodeURIComponent(order.details.address)}" target="_blank" style="color: var(--cobalt); font-size: 0.8rem; font-weight: 850; text-decoration: underline; display: inline-block; margin-top: 4px;">Open Navigation</a>
+                </div>
+              `;
+            }
+
+            return `
+              <article class="admin-order-card status-card-out-for-delivery" style="display: flex; flex-direction: column;">
+                <header class="admin-card-header">
+                  <div class="admin-card-header-left">
+                    <strong>Order #${order.id.split('-').pop()}</strong>
+                    <span>Ordered: ${date}</span>
+                  </div>
+                  <span class="status-badge status-out-for-delivery">En Route</span>
+                </header>
+
+                <div class="admin-card-content" style="flex: 1;">
+                  <div class="admin-client-info">
+                    <div class="admin-info-block">
+                      <label>Customer</label>
+                      <div style="font-weight: 800; font-size: 1.1rem; color: var(--ink);">${order.details.name}</div>
+                      <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <a href="tel:${cleanPhone}" class="button primary" style="min-height: 32px; padding: 0 12px; font-size: 0.8rem; border-radius: 6px;">Call</a>
+                        <a href="https://wa.me/${cleanPhone}" target="_blank" class="button ghost" style="min-height: 32px; padding: 0 12px; font-size: 0.8rem; border-color: rgba(18,128,92,0.3); color: var(--basil); border-radius: 6px;">WhatsApp</a>
+                      </div>
+                    </div>
+                    
+                    <div class="admin-info-block">
+                      <label>Address</label>
+                      <div class="address" style="font-size: 0.95rem;">${order.details.address}</div>
+                    </div>
+
+                    ${mapEmbedHTML}
+
+                    <div class="admin-info-block">
+                      <label>Payment To Collect</label>
+                      <div style="font-weight: 850; font-size: 1.1rem; color: ${order.details.payment === 'Cash' ? 'var(--tomato-dark)' : 'var(--basil)'};">
+                        ${formatRupees(order.total)} (${order.details.payment})
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="otp-section">
+                  <label style="font-size: 0.8rem; font-weight: 850; color: var(--muted); text-transform: uppercase;">Customer OTP Verification</label>
+                  <p style="font-size: 0.85rem; color: var(--ink); margin: 4px 0 0 0;">Ask the customer for their 6-digit delivery code.</p>
+                  
+                  <form class="otp-form" data-id="${order.id}">
+                    <div class="otp-input-group">
+                      <input type="text" name="otp" placeholder="000000" maxlength="6" pattern="\\d{6}" required autocomplete="off" />
+                      <button type="submit" class="verify-btn">Verify</button>
+                    </div>
+                  </form>
+                </div>
+              </article>
+            `;
+          }).join("");
+
+          // Attach OTP verify listeners
+          document.querySelectorAll('.otp-form').forEach(form => {
+            form.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const id = form.dataset.id;
+              const otp = form.otp.value.trim();
+              const btn = form.querySelector('.verify-btn');
+              
+              btn.disabled = true;
+              btn.textContent = "Checking...";
+
+              try {
+                const response = await fetch(ORDERS_API_URL, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "verify-otp", id, otp })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                  showToast(data.message || "Invalid OTP");
+                  btn.disabled = false;
+                  btn.textContent = "Verify";
+                  form.otp.value = "";
+                  form.otp.focus();
+                  return;
+                }
+
+                showToast("✅ Delivery Verified & Order Fulfilled!");
+                // Remove from view immediately for snappy UX
+                form.closest('.admin-order-card').style.display = 'none';
+                // Reload in background
+                setTimeout(loadDeliveries, 1000);
+                
+              } catch (err) {
+                showToast("Network error. Try again.");
+                btn.disabled = false;
+                btn.textContent = "Verify";
+              }
+            });
+          });
+
+        } catch (err) {
+          console.error("Deliveries fetch error:", err);
+        }
+      }
+    </script>
+  </body>
+</html>

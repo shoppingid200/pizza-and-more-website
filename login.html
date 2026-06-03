@@ -338,11 +338,17 @@
           <button class="login-submit" type="submit" id="login-btn">Sign In</button>
         </form>
 
-        <!-- REGISTER FORM -->
         <form class="login-form" id="register-form" style="display: none;">
           <div class="login-field">
             <label for="reg-master-key">Master Key</label>
             <input id="reg-master-key" type="password" placeholder="Enter the master key" required />
+          </div>
+          <div class="login-field">
+            <label for="reg-role">Role</label>
+            <select id="reg-role" style="min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--paper);color:var(--ink);">
+              <option value="admin">Admin</option>
+              <option value="delivery">Delivery Partner</option>
+            </select>
           </div>
           <div class="login-field">
             <label for="reg-username">New Username</label>
@@ -397,7 +403,7 @@
           });
           const data = await res.json();
           if (data.valid) {
-            window.location.href = "admin.html";
+            window.location.href = data.role === "delivery" ? "delivery.html" : "admin.html";
           }
         } catch {
           // Ignore, show login
@@ -454,9 +460,10 @@
           }
 
           localStorage.setItem(SESSION_KEY, data.token);
+          localStorage.setItem("r-pizza-admin-role", data.role || "admin");
           showMessage("Login successful! Redirecting...", "success");
           setTimeout(() => {
-            window.location.href = "admin.html";
+            window.location.href = data.role === "delivery" ? "delivery.html" : "admin.html";
           }, 600);
         } catch (err) {
           showMessage("Network error. Please try again.", "error");
@@ -481,7 +488,7 @@
           const res = await fetch(AUTH_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "register", masterKey, username, password }),
+            body: JSON.stringify({ action: "register", masterKey, username, password, role: document.getElementById("reg-role").value }),
           });
           const data = await res.json();
 
@@ -559,7 +566,7 @@
             ${users.map(u => `
               <div class="user-item">
                 <div class="user-item-info">
-                  <strong>${u.username}</strong>
+                  <strong>${u.username} <span style="font-size:0.68rem;padding:2px 8px;border-radius:999px;font-weight:900;margin-left:6px;${u.role === 'delivery' ? 'background:rgba(121,40,202,0.1);color:#7928ca;' : 'background:rgba(18,128,92,0.1);color:var(--basil);'}">${u.role === 'delivery' ? 'Delivery' : 'Admin'}</span></strong>
                   <small>Added ${new Date(u.createdAt).toLocaleDateString()}</small>
                 </div>
                 <button class="user-delete-btn" data-username="${u.username}" type="button">Remove</button>
