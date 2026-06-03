@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="admin-body">
+    <!-- Auth Guard: shown while checking session -->
+    <div id="auth-guard" style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
+      <span class="brand-mark" style="width:56px;height:56px;font-size:1.6rem;margin-bottom:16px;display:flex;align-items:center;justify-content:center;">R</span>
+      <p style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">Verifying access...</p>
+    </div>
+
     <header class="topbar">
       <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
         <span class="brand-mark">R</span>
@@ -19,8 +25,11 @@
         <a href="index.html">View Shop</a>
         <a href="order.html">Order Page</a>
       </nav>
-      <div class="nav-call" style="background: var(--basil-dark);">
-        Admin Mode
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
+        <button class="nav-call" id="logout-btn" type="button" style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
+          Logout
+        </button>
       </div>
     </header>
 
@@ -243,6 +252,65 @@
     </footer>
 
     <script>
+      const AUTH_API = "/api/auth";
+      const SESSION_KEY = "r-pizza-admin-session";
+
+      // ── AUTH GUARD ──
+      (async function guardAdmin() {
+        const guard = document.getElementById("auth-guard");
+        const token = localStorage.getItem(SESSION_KEY);
+
+        if (!token) {
+          window.location.replace("login.html");
+          return;
+        }
+
+        try {
+          const res = await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "verify", token }),
+          });
+          const data = await res.json();
+
+          if (!data.valid) {
+            localStorage.removeItem(SESSION_KEY);
+            window.location.replace("login.html");
+            return;
+          }
+
+          // Show username in header
+          const label = document.getElementById("admin-user-label");
+          if (label) label.textContent = `Logged in as ${data.username}`;
+
+          // Hide guard
+          guard.style.opacity = "0";
+          guard.style.visibility = "hidden";
+          setTimeout(() => guard.remove(), 400);
+        } catch {
+          // Network error - allow through if token exists (offline mode)
+          guard.style.opacity = "0";
+          guard.style.visibility = "hidden";
+          setTimeout(() => guard.remove(), 400);
+        }
+      })();
+
+      // ── LOGOUT ──
+      document.getElementById("logout-btn").addEventListener("click", async () => {
+        const token = localStorage.getItem(SESSION_KEY);
+        try {
+          await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "logout", token }),
+          });
+        } catch {
+          // Ignore network errors
+        }
+        localStorage.removeItem(SESSION_KEY);
+        window.location.replace("login.html");
+      });
+
       const ALL_ORDERS_KEY = "r-pizza-all-orders";
       const RESTAURANT_WHATSAPP = "916301045696";
       const ORDERS_API_URL = "/api/orders";
