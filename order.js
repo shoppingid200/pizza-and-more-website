@@ -409,6 +409,21 @@ async function submitOrder(event) {
   }
 
   const details = customerDetails();
+  
+  // Save profile for future orders
+  const formData = new FormData(orderForm);
+  const profile = {
+    customerName: formData.get("customerName") || "",
+    customerPhone: formData.get("customerPhone") || "",
+    addrPincode: formData.get("addrPincode") || "",
+    addrState: formData.get("addrState") || "",
+    addrCity: formData.get("addrCity") || "",
+    addrHouse: formData.get("addrHouse") || "",
+    addrArea: formData.get("addrArea") || "",
+    addrLandmark: formData.get("addrLandmark") || "",
+  };
+  localStorage.setItem("r-pizza-saved-profile", JSON.stringify(profile));
+
   const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
   const message = orderMessage(details, id);
 
@@ -613,6 +628,27 @@ function bootOrderPage() {
   // Format phone field and show green tick on 10 digits
   const phoneInput = document.getElementById("customer-phone");
   const phoneTick = document.getElementById("phone-valid-tick");
+  
+  // Load saved profile
+  try {
+    const saved = JSON.parse(localStorage.getItem("r-pizza-saved-profile"));
+    if (saved) {
+      if (document.getElementById("customer-name")) document.getElementById("customer-name").value = saved.customerName || "";
+      if (phoneInput) document.getElementById("customer-phone").value = saved.customerPhone || "";
+      if (document.getElementById("address-pincode")) document.getElementById("address-pincode").value = saved.addrPincode || "";
+      if (document.getElementById("address-state")) document.getElementById("address-state").value = saved.addrState || "";
+      if (document.getElementById("address-city")) document.getElementById("address-city").value = saved.addrCity || "";
+      if (document.getElementById("address-house")) document.getElementById("address-house").value = saved.addrHouse || "";
+      if (document.getElementById("address-area")) document.getElementById("address-area").value = saved.addrArea || "";
+      if (document.getElementById("address-landmark")) document.getElementById("address-landmark").value = saved.addrLandmark || "";
+      
+      // trigger phone validation
+      if (saved.customerPhone && saved.customerPhone.length === 10 && phoneTick) {
+        phoneTick.style.opacity = "1";
+      }
+    }
+  } catch(e) {}
+
   if (phoneInput && phoneTick) {
     phoneInput.addEventListener("input", (e) => {
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
