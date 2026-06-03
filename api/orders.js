@@ -1,4 +1,8 @@
-const { kv } = require("@vercel/kv");
+const { Redis } = require("@upstash/redis");
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
+});
 
 const ORDERS_KEY = "r-pizza-and-more:orders";
 const INVENTORY_KEY = "r-pizza-and-more:inventory";
@@ -56,10 +60,10 @@ function buildDefaultInventory() {
 }
 
 async function ensureSeededInventory() {
-  const existing = await kv.get(INVENTORY_KEY);
+  const existing = await redis.get(INVENTORY_KEY);
   if (Array.isArray(existing)) return existing;
   const seeded = buildDefaultInventory();
-  await kv.set(INVENTORY_KEY, seeded);
+  await redis.set(INVENTORY_KEY, seeded);
   return seeded;
 }
 
@@ -110,7 +114,7 @@ module.exports = async (req, res) => {
   if (req.method === "OPTIONS") return res.status(200).end();
 
   try {
-    const ordersExisting = (await kv.get(ORDERS_KEY)) || [];
+    const ordersExisting = (await redis.get(ORDERS_KEY)) || [];
 
     if (req.method === "GET") {
       return res.status(200).json(Array.isArray(ordersExisting) ? ordersExisting : []);
@@ -169,8 +173,8 @@ module.exports = async (req, res) => {
       };
 
       const nextOrders = Array.isArray(ordersExisting) ? [...ordersExisting, order] : [order];
-      await kv.set(ORDERS_KEY, nextOrders);
-      await kv.set(INVENTORY_KEY, inventory);
+      await redis.set(ORDERS_KEY, nextOrders);
+      await redis.set(INVENTORY_KEY, inventory);
 
       return res.status(201).json({ order, inventory });
     }
@@ -218,8 +222,8 @@ module.exports = async (req, res) => {
       }
 
       orders[idx] = order;
-      await kv.set(ORDERS_KEY, orders);
-      await kv.set(INVENTORY_KEY, inventory);
+      await redis.set(ORDERS_KEY, orders);
+      await redis.set(INVENTORY_KEY, inventory);
 
       return res.status(200).json({ order, inventory });
     }
@@ -231,7 +235,7 @@ module.exports = async (req, res) => {
 
       const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
       const nextOrders = orders.filter((o) => o?.id !== id);
-      await kv.set(ORDERS_KEY, nextOrders);
+      await redis.set(ORDERS_KEY, nextOrders);
       return res.status(200).json({ ok: true });
     }
 

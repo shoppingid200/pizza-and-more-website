@@ -1,4 +1,8 @@
-const { kv } = require("@vercel/kv");
+const { Redis } = require("@upstash/redis");
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
+});
 
 const INVENTORY_KEY = "r-pizza-and-more:inventory";
 
@@ -60,10 +64,10 @@ function buildDefaultInventory() {
 }
 
 async function ensureSeeded() {
-  const existing = await kv.get(INVENTORY_KEY);
+  const existing = await redis.get(INVENTORY_KEY);
   if (Array.isArray(existing)) return existing;
   const seeded = buildDefaultInventory();
-  await kv.set(INVENTORY_KEY, seeded);
+  await redis.set(INVENTORY_KEY, seeded);
   return seeded;
 }
 
@@ -131,7 +135,7 @@ module.exports = async (req, res) => {
           available: Boolean(x.available),
         }));
 
-      await kv.set(INVENTORY_KEY, normalized);
+      await redis.set(INVENTORY_KEY, normalized);
       return res.status(200).json(normalized);
     }
 
