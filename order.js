@@ -293,78 +293,7 @@ async function syncOrdersFromApi() {
   return merged;
 }
 
-function renderOrderHistory() {
-  const historyList = document.querySelector("#order-history-list");
-  if (!historyList) return;
 
-  const orders = readAllOrders();
-  // Sort by newest first
-  orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  if (orders.length === 0) {
-    historyList.innerHTML = `<p class="empty-cart">No orders placed from this browser yet.</p>`;
-    return;
-  }
-
-  historyList.innerHTML = orders
-    .map((order) => {
-      const date = new Date(order.createdAt).toLocaleString();
-      const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
-
-      const itemsText = order.items
-        ? order.items.map((item) => `${item.qty} x ${item.name}`).join(", ")
-        : order.cart
-          ? order.cart.map((item) => `${item.qty} x ${item.name}`).join(", ")
-          : "No items";
-
-      const canCancel = order.status === "Pending";
-      const cancelBtn = canCancel
-        ? `<button type="button" class="button ghost cancel-order-btn" data-order-id="${order.id}">Cancel Order</button>`
-        : "";
-
-      const customerPhone = order.details.phone || "N/A";
-      const customerAddress = order.details.address || "N/A";
-
-      return `
-        <div class="history-order-card" data-order-status="${order.status}">
-          <div class="history-card-header">
-            <div>
-              <strong>Order ID: ${order.id}</strong>
-              <div class="history-card-date">${date}</div>
-            </div>
-            <span class="status-badge ${statusClass}">${order.status}</span>
-          </div>
-          
-          <div class="history-card-body">
-            <div class="history-info-row">
-              <strong>Items:</strong> <span>${itemsText}</span>
-            </div>
-            <div class="history-info-row">
-              <strong>Total:</strong> <strong style="color: var(--tomato-dark);">${formatRupees(order.total)}</strong>
-            </div>
-            <div class="history-info-row">
-              <strong>Phone:</strong> <span>${customerPhone}</span>
-            </div>
-            <div class="history-info-row">
-              <strong>Address:</strong> <span>${customerAddress}</span>
-            </div>
-            ${order.details.notes ? `
-            <div class="history-info-row">
-              <strong>Notes:</strong> <span>${order.details.notes}</span>
-            </div>` : ""}
-          </div>
-          
-          <div class="history-card-actions">
-            <a class="button primary text-sm" href="https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(orderMessage(order.details, order.id))}" target="_blank" rel="noreferrer" style="min-height: 36px; height: 36px; padding: 0 16px; font-size: 0.82rem; margin-right: 8px;">
-              Send on WhatsApp
-            </a>
-            ${cancelBtn}
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-}
 
 const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
 
@@ -518,7 +447,7 @@ async function submitOrder(event) {
     confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
-  renderOrderHistory();
+
 }
 
 function bootScrollAnimations() {
@@ -545,7 +474,6 @@ function bootScrollAnimations() {
 
 function bootOrderPage() {
   renderCart();
-  renderOrderHistory();
   bootScrollAnimations();
 
   checkoutItems.addEventListener("click", (event) => {
@@ -657,35 +585,13 @@ function bootOrderPage() {
     });
   }
 
-  // Handle cancellation click
-  const historyList = document.querySelector("#order-history-list");
-  if (historyList) {
-    historyList.addEventListener("click", (event) => {
-      const cancelBtn = event.target.closest(".cancel-order-btn");
-      if (cancelBtn) {
-        handleCancelOrder(cancelBtn.dataset.orderId);
-      }
-    });
-  }
 
-  // Live storage event listener to automatically sync changes from admin.html
-  window.addEventListener("storage", (event) => {
-    if (event.key === ALL_ORDERS_KEY || event.key === null) {
-      renderOrderHistory();
-    }
-  });
+
+
 
   orderForm.addEventListener("submit", submitOrder);
 
-  // Poll for order status updates from admin every 5 seconds
-  window.setInterval(async () => {
-    try {
-      await syncOrdersFromApi();
-      renderOrderHistory();
-    } catch {
-      // ignore network errors
-    }
-  }, 5000);
+
 }
 
 bootOrderPage();

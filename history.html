@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Track your R Pizza and More orders, view order history, and get delivery codes."
+    />
+    <title>Order History | R Pizza and More</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="checkout-body">
+    <header class="topbar">
+      <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
+        <span class="brand-mark">R</span>
+        <span>
+          <strong>R PIZZA AND MORE</strong>
+          <small>Order History</small>
+        </span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html#menu">Menu</a>
+        <a href="order.html">Order</a>
+        <a href="history.html" aria-current="page">My Orders</a>
+        <a href="index.html#visit">Visit</a>
+      </nav>
+      <a class="nav-call" href="order.html" aria-label="Place new order">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 4h14c.6 0 1 .4 1 1v15l-3-1.5-3 1.5-3-1.5L8 20l-3-1.5V5c0-.6.4-1 1-1Zm3 4v2h8V8H8Zm0 4v2h8v-2H8Z" />
+        </svg>
+        New Order
+      </a>
+    </header>
+
+    <main class="checkout-page">
+      <section class="checkout-shell" aria-labelledby="history-page-title">
+        <div class="checkout-heading reveal">
+          <span class="eyebrow">Your Orders</span>
+          <h1 id="history-page-title">Order History</h1>
+          <p>Track your orders, view delivery codes, and manage past orders.</p>
+        </div>
+
+        <!-- Status Filter Tabs -->
+        <div class="history-filters reveal" id="history-filters">
+          <button class="history-filter-tab active" data-filter="All">All</button>
+          <button class="history-filter-tab" data-filter="Pending">Pending</button>
+          <button class="history-filter-tab" data-filter="Preparing">Preparing</button>
+          <button class="history-filter-tab" data-filter="Out for Delivery">Delivery</button>
+          <button class="history-filter-tab" data-filter="Fulfilled">Completed</button>
+          <button class="history-filter-tab" data-filter="Cancelled">Cancelled</button>
+        </div>
+
+        <!-- Orders List -->
+        <div id="order-history-list" class="order-history-list reveal">
+          <div class="history-loading">
+            <div class="history-loading-spinner"></div>
+            <p>Loading your orders...</p>
+          </div>
+        </div>
+
+        <!-- Empty State CTA -->
+        <div id="history-empty-cta" class="history-empty-state reveal" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="history-empty-icon">
+            <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          <h2>No orders yet</h2>
+          <p>You haven't placed any orders from this browser. Start ordering delicious pizza now!</p>
+          <a href="order.html" class="button primary" style="min-width: 180px;">Place Your First Order</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer>
+      <strong>R PIZZA AND MORE</strong>
+      <span>Order History · Tajpur, Samastipur · ₹1-200</span>
+    </footer>
+
+    <script>
+      const CART_STORAGE_KEY = "r-pizza-cart";
+      const ALL_ORDERS_KEY = "r-pizza-all-orders";
+      const RESTAURANT_WHATSAPP = "916301045696";
+      const ORDERS_API_URL = "/api/orders";
+      const INVENTORY_API_URL = "/api/inventory";
+
+      const toast = document.querySelector("#toast");
+      const historyList = document.querySelector("#order-history-list");
+      const emptyCta = document.querySelector("#history-empty-cta");
+      const filterTabs = document.querySelector("#history-filters");
+
+      let currentFilter = "All";
+
+      function formatRupees(value) {
+        return `₹${value}`;
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function readAllOrders() {
+        try {
+          return JSON.parse(localStorage.getItem(ALL_ORDERS_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveAllOrders(orders) {
+        localStorage.setItem(ALL_ORDERS_KEY, JSON.stringify(orders));
+      }
+
+      async function syncOrdersFromApi() {
+        const res = await fetch(`${ORDERS_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`Orders sync failed (${res.status})`);
+        const apiOrders = await res.json();
+        if (!Array.isArray(apiOrders)) return;
+
+        const localOrders = readAllOrders();
+        const localIds = new Set(localOrders.map(o => o.id));
+        
+        const merged = localOrders.map(localOrder => {
+          const serverOrder = apiOrders.find(o => o.id === localOrder.id);
+          return serverOrder || localOrder;
+        });
+        
+        saveAllOrders(merged);
+        return merged;
+      }
+
+      async function patchOrderStatusOnApi({ id, status }) {
+        const res = await fetch(ORDERS_API_URL, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ id, status }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || data?.message || "Failed to update order");
+        return data;
+      }
+
+      async function handleCancelOrder(orderId) {
+        if (!confirm("Are you sure you want to cancel this order?")) return;
+        const orders = readAllOrders();
+        const order = orders.find((o) => o.id === orderId);
+        if (order && order.status === "Pending") {
+          try {
+            const data = await patchOrderStatusOnApi({ id: orderId, status: "Cancelled" });
+            const updatedOrder = data?.order;
+            const idx = orders.findIndex((o) => o.id === orderId);
+            if (idx >= 0 && updatedOrder) orders[idx] = updatedOrder;
+            saveAllOrders(orders);
+            renderOrderHistory();
+            showToast("Order cancelled successfully");
+          } catch (e) {
+            showToast(String(e?.message || e || "Cancel failed"));
+          }
+        }
+      }
+
+      function getStatusTimeline(status) {
+        const steps = ["Pending", "Preparing", "Out for Delivery", "Fulfilled"];
+        const currentIdx = steps.indexOf(status);
+        if (status === "Cancelled") {
+          return steps.map((step, i) => ({
+            label: step === "Fulfilled" ? "Delivered" : step,
+            active: false,
+            cancelled: true,
+          }));
+        }
+        return steps.map((step, i) => ({
+          label: step === "Fulfilled" ? "Delivered" : step === "Out for Delivery" ? "Out for Delivery" : step,
+          active: i <= currentIdx,
+          current: i === currentIdx,
+        }));
+      }
+
+      function renderOrderHistory() {
+        const orders = readAllOrders();
+        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const filtered = currentFilter === "All" ? orders : orders.filter(o => o.status === currentFilter);
+
+        if (orders.length === 0) {
+          historyList.innerHTML = "";
+          emptyCta.hidden = false;
+          return;
+        }
+
+        emptyCta.hidden = true;
+
+        if (filtered.length === 0) {
+          historyList.innerHTML = `
+            <div class="history-empty-filter">
+              <p>No <strong>${currentFilter}</strong> orders found.</p>
+            </div>
+          `;
+          return;
+        }
+
+        historyList.innerHTML = filtered
+          .map((order) => {
+            const date = new Date(order.createdAt).toLocaleString();
+            const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
+
+            const itemsHtml = (order.items || order.cart || [])
+              .map((item) => `
+                <div class="history-item-row">
+                  <span class="history-item-name">${item.qty} × ${item.name}</span>
+                  <span class="history-item-price">${formatRupees(item.price * item.qty)}</span>
+                </div>
+              `)
+              .join("");
+
+            // Delivery Code Section
+            let deliveryCodeHtml = "";
+            if (order.deliveryCode && (order.status === "Out for Delivery" || order.status === "Fulfilled")) {
+              const isActive = order.status === "Out for Delivery";
+              deliveryCodeHtml = `
+                <div class="delivery-code-card ${isActive ? 'active' : 'used'}">
+                  <div class="delivery-code-header">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; flex-shrink: 0;">
+                      <path fill="currentColor" d="${isActive 
+                        ? 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z' 
+                        : 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z'}"/>
+                    </svg>
+                    <span>${isActive ? 'Your Delivery Code' : 'Delivery Verified'}</span>
+                  </div>
+                  <div class="delivery-code-value">${order.deliveryCode.split('').join(' ')}</div>
+                  <p class="delivery-code-hint">${isActive 
+                    ? 'Share this code with the delivery person to confirm your order' 
+                    : 'Order was successfully delivered and verified'}</p>
+                </div>
+              `;
+            }
+
+            // Status Timeline
+            const timeline = getStatusTimeline(order.status);
+            const isCancelled = order.status === "Cancelled";
+            const timelineHtml = isCancelled ? `
+              <div class="history-timeline cancelled">
+                <div class="timeline-cancelled-badge">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px;">
+                    <path fill="currentColor" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
+                  </svg>
+                  Order Cancelled
+                </div>
+              </div>
+            ` : `
+              <div class="history-timeline">
+                ${timeline.map((step, i) => `
+                  <div class="timeline-step ${step.active ? 'active' : ''} ${step.current ? 'current' : ''}">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-label">${step.label}</span>
+                  </div>
+                  ${i < timeline.length - 1 ? `<div class="timeline-connector ${step.active && timeline[i + 1]?.active ? 'active' : ''}"></div>` : ''}
+                `).join('')}
+              </div>
+            `;
+
+            const canCancel = order.status === "Pending";
+
+            return `
+              <div class="history-order-card" data-order-status="${order.status}">
+                <div class="history-card-header">
+                  <div>
+                    <strong>Order #${order.id}</strong>
+                    <div class="history-card-date">${date}</div>
+                  </div>
+                  <span class="status-badge ${statusClass}">${order.status}</span>
+                </div>
+                
+                ${timelineHtml}
+                ${deliveryCodeHtml}
+                
+                <div class="history-card-body">
+                  <div class="history-items-section">
+                    <label class="history-section-label">Order Items</label>
+                    ${itemsHtml}
+                    <div class="history-item-total">
+                      <span>Total</span>
+                      <strong>${formatRupees(order.total)}</strong>
+                    </div>
+                  </div>
+                  
+                  <div class="history-details-section">
+                    <div class="history-detail-chip">
+                      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                      ${order.details.name}
+                    </div>
+                    <div class="history-detail-chip">
+                      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path fill="currentColor" d="M6.6 10.8c1.5 3 3.8 5.3 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1v3.5c0 .6-.4 1-1 1C10.6 21.5 2.5 13.4 2.5 3.7c0-.6.4-1 1-1H7c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1l-2.1 2.2Z"/></svg>
+                      ${order.details.phone}
+                    </div>
+                    <div class="history-detail-chip">
+                      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                      ${order.details.service} · ${order.details.time}
+                    </div>
+                    ${order.details.address ? `
+                    <div class="history-detail-chip">
+                      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path fill="currentColor" d="M12 2.5c3.9 0 7 3.1 7 7 0 5.4-7 12-7 12s-7-6.6-7-12c0-3.9 3.1-7 7-7Zm0 9.7c1.5 0 2.7-1.2 2.7-2.7S13.5 6.8 12 6.8 9.3 8 9.3 9.5s1.2 2.7 2.7 2.7Z"/></svg>
+                      ${order.details.address}
+                    </div>
+                    ` : ''}
+                    ${order.details.notes ? `
+                    <div class="history-detail-chip" style="font-style: italic;">
+                      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                      ${order.details.notes}
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+                
+                <div class="history-card-actions">
+                  <a class="button ghost history-action-btn" href="https://wa.me/${RESTAURANT_WHATSAPP}" target="_blank" rel="noreferrer" style="color: #25D366; border-color: rgba(37, 211, 102, 0.3);">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" style="width:16px; height:16px; margin-right: 6px;">
+                      <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.66-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                    </svg>
+                    WhatsApp
+                  </a>
+                  ${canCancel ? `
+                  <button type="button" class="button ghost history-action-btn cancel-order-btn" data-order-id="${order.id}" style="color: var(--tomato-dark); border-color: var(--tomato);">
+                    Cancel Order
+                  </button>
+                  ` : ''}
+                  <a class="button primary history-action-btn" href="order.html">
+                    Reorder
+                  </a>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function bootPage() {
+        // Scroll animations
+        const reveals = document.querySelectorAll(".reveal");
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.02 }
+        );
+        reveals.forEach((el) => observer.observe(el));
+        setTimeout(() => reveals.forEach((el) => el.classList.add("is-visible")), 100);
+
+        // Filter tabs
+        filterTabs.addEventListener("click", (e) => {
+          const tab = e.target.closest(".history-filter-tab");
+          if (!tab) return;
+          currentFilter = tab.dataset.filter;
+          filterTabs.querySelectorAll(".history-filter-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          renderOrderHistory();
+        });
+
+        // Cancel button delegation
+        historyList.addEventListener("click", (e) => {
+          const cancelBtn = e.target.closest(".cancel-order-btn");
+          if (cancelBtn) handleCancelOrder(cancelBtn.dataset.orderId);
+        });
+
+        // Initial sync + render
+        syncOrdersFromApi()
+          .then(() => renderOrderHistory())
+          .catch(() => renderOrderHistory());
+
+        // Poll for status updates every 5 seconds
+        setInterval(async () => {
+          try {
+            await syncOrdersFromApi();
+            renderOrderHistory();
+          } catch {
+            // ignore network errors
+          }
+        }, 5000);
+
+        // Live storage event for cross-tab sync
+        window.addEventListener("storage", (event) => {
+          if (event.key === ALL_ORDERS_KEY || event.key === null) {
+            renderOrderHistory();
+          }
+        });
+      }
+
+      bootPage();
+    </script>
+  </body>
+</html>

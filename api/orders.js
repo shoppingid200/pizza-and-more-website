@@ -193,6 +193,11 @@ module.exports = async (req, res) => {
       const prevStatus = order.status;
       order.status = status;
 
+      // Generate a 6-digit delivery code when order goes "Out for Delivery"
+      if (status === "Out for Delivery" && prevStatus !== "Out for Delivery" && !order.deliveryCode) {
+        order.deliveryCode = String(Math.floor(100000 + Math.random() * 900000));
+      }
+
       // If an order is cancelled, restore stock once (only on transition to Cancelled).
       // Note: once an order is Fulfilled, we should not restore inventory.
       if (status === "Cancelled" && prevStatus !== "Cancelled") {
