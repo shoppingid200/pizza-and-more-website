@@ -209,12 +209,27 @@
             const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
 
             const itemsHtml = (order.items || order.cart || [])
-              .map((item) => `
-                <div class="history-item-row">
-                  <span class="history-item-name">${item.qty} × ${item.name}</span>
-                  <span class="history-item-price">${formatRupees(item.price * item.qty)}</span>
-                </div>
-              `)
+              .map((item) => {
+                const isCancelled = item.cancelled;
+                let itemStatusBadge = '';
+                let textStyle = '';
+                
+                if (isCancelled) {
+                  itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(217, 45, 32, 0.1); color: var(--tomato-dark); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Cancelled</span>`;
+                  textStyle = 'text-decoration: line-through; opacity: 0.6;';
+                } else if (order.status === "Out for Delivery") {
+                  itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(37, 211, 102, 0.1); color: #25D366; border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivering</span>`;
+                } else if (order.status === "Fulfilled") {
+                  itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(18, 128, 92, 0.1); color: var(--basil); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivered</span>`;
+                }
+                
+                return `
+                  <div class="history-item-row" style="${textStyle} align-items: center;">
+                    <span class="history-item-name" style="display:flex; align-items:center;">${item.qty} × ${item.name} ${itemStatusBadge}</span>
+                    <span class="history-item-price">${formatRupees(item.price * item.qty)}</span>
+                  </div>
+                `;
+              })
               .join("");
 
             // Delivery Code Section

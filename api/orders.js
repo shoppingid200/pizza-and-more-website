@@ -287,6 +287,66 @@ module.exports = async (req, res) => {
         return res.status(200).json({ message: "Delivery verified! Order fulfilled.", order });
       }
 
+      // ── CANCEL SPECIFIC ITEM ──
+      if (action === "cancel-item") {
+        const id = String(body?.id || "").trim();
+        const itemName = String(body?.itemName || "").trim();
+
+        if (!id || !itemName) {
+          return res.status(400).json({ message: "Order ID and item name are required" });
+        }
+
+        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
+        const idx = orders.findIndex((o) => o?.id === id);
+
+        if (idx === -1) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+
+        const order = orders[idx];
+
+        if (order.status === "Fulfilled" || order.status === "Cancelled") {
+          return res.status(409).json({ message: "Cannot modify items in a fulfilled or cancelled order" });
+        }
+
+        const items = Array.isArray(order.items) ? order.items : (Array.isArray(order.cart) ? order.cart : []);
+        const itemIdx = items.findIndex(it => it.name === itemName);
+
+        if (itemIdx === -1) {
+          return res.status(404).json({ message: "Item not found in this order" });
+        }
+
+        const targetItem = items[itemIdx];
+
+        if (targetItem.cancelled) {
+          return res.status(409).json({ message: "Item is already cancelled" });
+        }
+
+        // Cancel item and reduce total
+        targetItem.cancelled = true;
+        const itemCost = Number(targetItem.price || 0) * Number(targetItem.qty || 1);
+        order.total = Math.max(0, order.total - itemCost);
+
+        // Turn off item in inventory
+        const inventory = await ensureSeededInventory();
+        const invItem = inventory.find(x => x.name === itemName);
+        if (invItem) {
+          invItem.available = false;
+        }
+
+        // Check if ALL items are cancelled
+        const allCancelled = items.every(it => it.cancelled);
+        if (allCancelled) {
+          order.status = "Cancelled";
+        }
+
+        orders[idx] = order;
+        await redis.set(ORDERS_KEY, orders);
+        await redis.set(INVENTORY_KEY, inventory);
+
+        return res.status(200).json({ message: `Item ${itemName} cancelled`, order, inventory });
+      }
+
       return res.status(400).json({ message: "Unknown PUT action" });
     }
 

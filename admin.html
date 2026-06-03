@@ -489,18 +489,25 @@
             const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
             const cardStatusClass = `status-card-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
 
-            const itemsText = order.items
-              ? order.items.map((item) => `
-                  <div class="admin-item-row">
-                    <span>${item.qty} x ${item.name}</span>
-                    <span class="price">${formatRupees(item.price * item.qty)}</span>
-                  </div>`).join("")
-              : order.cart
-              ? order.cart.map((item) => `
-                  <div class="admin-item-row">
-                    <span>${item.qty} x ${item.name}</span>
-                    <span class="price">${formatRupees(item.price * item.qty)}</span>
-                  </div>`).join("")
+            const allItems = order.items || order.cart || [];
+            const isOrderActive = !["Fulfilled", "Cancelled"].includes(order.status);
+            
+            const itemsText = allItems.length > 0 
+              ? allItems.map((item) => {
+                  const isCancelled = item.cancelled;
+                  const itemStyle = isCancelled ? 'text-decoration: line-through; opacity: 0.6;' : '';
+                  const cancelBtn = (isOrderActive && !isCancelled) 
+                    ? `<button class="admin-cancel-item-btn" data-order-id="${order.id}" data-item-name="${item.name}" style="background:none; border:none; color:var(--tomato); cursor:pointer; font-size:1rem; padding:0 4px;" title="Cancel this item">×</button>` 
+                    : '';
+                  
+                  return `
+                    <div class="admin-item-row" style="${itemStyle} display:flex; align-items:center;">
+                      <div style="flex:1;">${item.qty} x ${item.name}</div>
+                      <span class="price">${formatRupees(item.price * item.qty)}</span>
+                      ${cancelBtn}
+                    </div>
+                  `;
+                }).join("")
               : "No items";
 
             // Action Buttons based on state
@@ -638,6 +645,32 @@
             `;
           })
           .join("");
+      }
+
+      async function handleCancelItem(orderId, itemName) {
+        if (!confirm(`Are you sure you want to cancel the item "${itemName}"? This will mark it out of stock.`)) return;
+        
+        try {
+          const res = await fetch(ORDERS_API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ action: "cancel-item", id: orderId, itemName }),
+          });
+          if (!res.ok) throw new Error(`Cancel item failed (${res.status})`);
+          
+          await syncOrdersFromApi();
+          try { await syncInventoryFromApi(); } catch {}
+          
+          renderOrders();
+          if (currentView === "inventory") {
+            renderInventory();
+            renderStockDeductions();
+          }
+          showToast(`Item ${itemName} cancelled`);
+        } catch (e) {
+          console.error(e);
+          showToast(`⚠️ Failed to cancel item: ${e.message}`);
+        }
       }
 
       async function handleAction(orderId, action, deliveryPartner = "") {
@@ -1108,6 +1141,12 @@
 
         // Order card action button triggers
         ordersList.addEventListener("click", (e) => {
+          const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
+          if (cancelItemBtn) {
+            handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
+            return;
+          }
+
           const btn = e.target.closest("[data-action]");
           if (!btn) return;
           
