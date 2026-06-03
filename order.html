@@ -59,9 +59,14 @@
                 <input id="customer-name" name="customerName" type="text" autocomplete="name" required />
               </label>
               <label class="field">
-                <span>Phone</span>
-                <input id="customer-phone" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel"
-                  pattern="[0-9+\-\s]{8,16}" required />
+                <span>Phone (10 digits)</span>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input id="customer-phone" name="customerPhone" type="tel" inputmode="numeric" autocomplete="tel"
+                    pattern="\d{10}" maxlength="10" placeholder="e.g. 9876543210" required style="width: 100%; padding-right: 40px;" />
+                  <svg id="phone-valid-tick" viewBox="0 0 24 24" style="position: absolute; right: 12px; width: 20px; height: 20px; color: var(--basil); opacity: 0; transition: opacity 0.2s;" aria-hidden="true">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
               </label>
             </div>
           </section>
@@ -102,9 +107,33 @@
               <span class="panel-step">3</span>
               <h2 id="address-title">Delivery Address</h2>
             </div>
-            <label class="field">
-              <span>Address or landmark (Required)</span>
-              <textarea id="customer-address" name="customerAddress" rows="4" required></textarea>
+            <div class="field-grid">
+              <label class="field">
+                <span>Pincode (Required)</span>
+                <input id="address-pincode" name="addrPincode" type="tel" inputmode="numeric" pattern="\d{6}" maxlength="6" required />
+              </label>
+              <label class="field">
+                <span>State (Required)</span>
+                <input id="address-state" name="addrState" type="text" required />
+              </label>
+            </div>
+            <div class="field-grid" style="margin-top: 12px;">
+              <label class="field">
+                <span>Town/City/District (Required)</span>
+                <input id="address-city" name="addrCity" type="text" required />
+              </label>
+            </div>
+            <label class="field" style="margin-top: 12px;">
+              <span>Flat, House no., Building, Company, Apartment (Required)</span>
+              <input id="address-house" name="addrHouse" type="text" required />
+            </label>
+            <label class="field" style="margin-top: 12px;">
+              <span>Area, Street, Sector, Village (Required)</span>
+              <input id="address-area" name="addrArea" type="text" required />
+            </label>
+            <label class="field" style="margin-top: 12px;">
+              <span>Landmark (Optional)</span>
+              <input id="address-landmark" name="addrLandmark" type="text" placeholder="E.g. near Apollo Hospital" />
             </label>
           </section>
 

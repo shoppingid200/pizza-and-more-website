@@ -77,9 +77,6 @@
       </a>
       <div style="display:flex;align-items:center;gap:12px;">
         <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
-        <button id="mute-alerts-btn" type="button" style="background:var(--paper);border:1px solid var(--line);cursor:pointer;color:var(--ink);font-weight:850;font-size:0.85rem;padding:6px 12px;border-radius:4px;" title="Mute/Unmute Alerts">
-          🔊 Alerts On
-        </button>
         <button class="nav-call" id="logout-btn" type="button" style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
           Logout
         </button>
@@ -101,7 +98,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="audio.js"></script>
+
     <script>
       const AUTH_API = "/api/auth";
       const ORDERS_API_URL = "/api/orders";
@@ -155,13 +152,7 @@
         }
       })();
 
-      // ── MUTE ALERTS ──
-      document.getElementById('mute-alerts-btn')?.addEventListener('click', (e) => {
-        if (window.AudioEngine) {
-          const isMuted = window.AudioEngine.toggleMute();
-          e.target.textContent = isMuted ? "🔇 Alerts Off" : "🔊 Alerts On";
-        }
-      });
+
 
       // ── LOGOUT ──
       document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -190,6 +181,8 @@
         return `₹${value}`;
       }
 
+      const localRevealedOrders = new Set();
+
       async function loadDeliveries() {
         try {
           const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
@@ -206,17 +199,7 @@
           
           const deliveries = [...unassigned, ...assignedToMe];
 
-          // Handle Audio Alerts
-          const unacceptedUnassigned = unassigned.filter(o => !o.partnerAccepted);
-          const unacceptedAssignedToMe = assignedToMe.filter(o => !o.partnerAccepted);
 
-          if (unacceptedUnassigned.length > 0) {
-            if (window.AudioEngine) window.AudioEngine.playDeliveryPing(); // Continuous ping
-          } else if (unacceptedAssignedToMe.length > 0) {
-            if (window.AudioEngine) window.AudioEngine.playDeliveryPing(30000); // 30s timeout ping
-          } else {
-            if (window.AudioEngine) window.AudioEngine.stopDeliveryPing();
-          }
 
           if (deliveries.length === 0) {
             deliveriesContainer.innerHTML = `
@@ -262,15 +245,15 @@
               `;
             }
 
-            const isAccepted = !!order.partnerAccepted;
+            const isRevealed = localRevealedOrders.has(order.id);
 
             let actionSectionHTML = "";
-            if (!isAccepted) {
+            if (!isRevealed) {
               actionSectionHTML = `
                 <div class="otp-section" style="text-align: center; background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2);">
                   <label style="font-size: 0.85rem; font-weight: 850; color: var(--basil); text-transform: uppercase;">Available Delivery</label>
                   <p style="font-size: 0.85rem; color: var(--ink); margin: 4px 0 12px 0;">This order is ready to be picked up.</p>
-                  <button class="button primary accept-order-btn" data-id="${order.id}" style="width: 100%;">Deliver</button>
+                  <button type="button" class="button primary reveal-otp-btn" data-id="${order.id}" style="width: 100%;">Deliver</button>
                 </div>
               `;
             } else {
@@ -375,34 +358,11 @@
               });
             });
 
-            // Attach Accept Order listeners
-            document.querySelectorAll('.accept-order-btn').forEach(btn => {
-              btn.addEventListener('click', async (e) => {
-                const id = btn.dataset.id;
-                btn.disabled = true;
-                btn.textContent = "Accepting...";
-                
-                try {
-                  const response = await fetch(ORDERS_API_URL, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "accept-delivery", id, partner: localStorage.getItem("r-pizza-admin-username") || "" })
-                  });
-                  const data = await response.json();
-                  
-                  if (!response.ok) {
-                    showToast(data.message || "Failed to claim order. Someone else may have taken it.");
-                    loadDeliveries();
-                    return;
-                  }
-                  
-                  showToast("Order accepted!");
-                  loadDeliveries();
-                } catch (err) {
-                  showToast("Network error. Try again.");
-                  btn.disabled = false;
-                  btn.textContent = "Accept Order";
-                }
+            // Attach Reveal OTP listeners
+            document.querySelectorAll('.reveal-otp-btn').forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                localRevealedOrders.add(btn.dataset.id);
+                loadDeliveries(); // Re-render to show OTP form and stop pinging
               });
             });
           }

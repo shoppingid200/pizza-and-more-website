@@ -67,7 +67,7 @@
 
     // Soft attack and decay
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.05);
     gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
     osc1.connect(gainNode);

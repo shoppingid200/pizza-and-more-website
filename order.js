@@ -131,8 +131,26 @@ function changeQty(name, delta) {
 
 function customerDetails() {
   const formData = new FormData(orderForm);
+  
+  const house = String(formData.get("addrHouse") || "").trim();
+  const area = String(formData.get("addrArea") || "").trim();
+  const landmark = String(formData.get("addrLandmark") || "").trim();
+  const city = String(formData.get("addrCity") || "").trim();
+  const state = String(formData.get("addrState") || "").trim();
+  const pincode = String(formData.get("addrPincode") || "").trim();
+  
+  let fullAddress = "";
+  if (house) {
+    fullAddress = `${house}, ${area}`;
+    if (landmark) fullAddress += `, Landmark: ${landmark}`;
+    fullAddress += `, ${city}, ${state} - ${pincode}`;
+  } else {
+    // Fallback if they somehow bypassed it
+    fullAddress = String(formData.get("customerAddress") || "").trim();
+  }
+
   return {
-    address: String(formData.get("customerAddress") || "").trim(),
+    address: fullAddress,
     latitude: String(formData.get("latitude") || "").trim(),
     longitude: String(formData.get("longitude") || "").trim(),
     mapLink: String(formData.get("mapLink") || "").trim(),
@@ -592,6 +610,15 @@ function bootOrderPage() {
   orderForm.addEventListener("submit", submitOrder);
 
 
+  // Format phone field and show green tick on 10 digits
+  const phoneInput = document.getElementById("customer-phone");
+  const phoneTick = document.getElementById("phone-valid-tick");
+  if (phoneInput && phoneTick) {
+    phoneInput.addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+      phoneTick.style.opacity = e.target.value.length === 10 ? "1" : "0";
+    });
+  }
 }
 
 bootOrderPage();
