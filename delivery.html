@@ -205,7 +205,14 @@
 
           deliveries.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-          deliveriesContainer.innerHTML = deliveries.map(order => {
+          // Prevent layout thrashing and losing focus while typing OTP
+          const activeEl = document.activeElement;
+          const isTyping = activeEl && activeEl.tagName === "INPUT" && activeEl.name === "otp";
+          if (isTyping) {
+            return; // Skip this refresh cycle so they can finish typing
+          }
+
+          const newHTML = deliveries.map(order => {
             const cleanPhone = (order.details.phone || "").replace(/[^0-9+]/g, "");
             const date = new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
@@ -279,47 +286,49 @@
             `;
           }).join("");
 
-          // Attach OTP verify listeners
-          document.querySelectorAll('.otp-form').forEach(form => {
-            form.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const id = form.dataset.id;
-              const otp = form.otp.value.trim();
-              const btn = form.querySelector('.verify-btn');
-              
-              btn.disabled = true;
-              btn.textContent = "Checking...";
+          if (deliveriesContainer.innerHTML !== newHTML) {
+            deliveriesContainer.innerHTML = newHTML;
 
-              try {
-                const response = await fetch(ORDERS_API_URL, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "verify-otp", id, otp })
-                });
-                const data = await response.json();
+            // Attach OTP verify listeners
+            document.querySelectorAll('.otp-form').forEach(form => {
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = form.dataset.id;
+                const otp = form.otp.value.trim();
+                const btn = form.querySelector('.verify-btn');
+                
+                btn.disabled = true;
+                btn.textContent = "Checking...";
 
-                if (!response.ok) {
-                  showToast(data.message || "Invalid OTP");
+                try {
+                  const response = await fetch(ORDERS_API_URL, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "verify-otp", id, otp })
+                  });
+                  const data = await response.json();
+
+                  if (!response.ok) {
+                    showToast(data.message || "Invalid OTP");
+                    btn.disabled = false;
+                    btn.textContent = "Verify";
+                    form.otp.value = "";
+                    form.otp.focus();
+                    return;
+                  }
+
+                  showToast("✅ Delivery Verified & Order Fulfilled!");
+                  form.closest('.admin-order-card').style.display = 'none';
+                  setTimeout(loadDeliveries, 1000);
+                  
+                } catch (err) {
+                  showToast("Network error. Try again.");
                   btn.disabled = false;
                   btn.textContent = "Verify";
-                  form.otp.value = "";
-                  form.otp.focus();
-                  return;
                 }
-
-                showToast("✅ Delivery Verified & Order Fulfilled!");
-                // Remove from view immediately for snappy UX
-                form.closest('.admin-order-card').style.display = 'none';
-                // Reload in background
-                setTimeout(loadDeliveries, 1000);
-                
-              } catch (err) {
-                showToast("Network error. Try again.");
-                btn.disabled = false;
-                btn.textContent = "Verify";
-              }
+              });
             });
-          });
+          }
 
         } catch (err) {
           console.error("Deliveries fetch error:", err);
