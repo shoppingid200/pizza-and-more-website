@@ -1562,6 +1562,22 @@ footer strong {
   background: var(--ink);
   color: #fff;
 }
+.admin-tab.tab-low-stock {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--pending);
+}
+.admin-tab.tab-low-stock.active {
+  background: var(--pending);
+  color: #fff;
+}
+.admin-tab.tab-out-stock {
+  background: rgba(217, 45, 32, 0.1);
+  color: var(--tomato-dark);
+}
+.admin-tab.tab-out-stock.active {
+  background: var(--tomato-dark);
+  color: #fff;
+}
 .admin-search-wrapper {
   min-height: 44px;
   display: flex;
