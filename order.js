@@ -428,20 +428,20 @@ async function submitOrder(event) {
     saveAllOrders(orders);
   }
 
-  sendWhatsapp.href = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+
   confirmationBox.hidden = false;
   
   const overlay = document.getElementById("order-success-overlay");
   if (overlay) {
     document.getElementById("success-order-id").textContent = `Order #${serverOrder?.id || id}`;
-    document.getElementById("success-whatsapp-btn").href = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+
     
     overlay.hidden = false;
     
-    document.getElementById("success-close-btn").onclick = () => {
+    setTimeout(() => {
       overlay.hidden = true;
       confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    };
+    }, 3000);
   } else {
     showToast("Order receipt created");
     confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
