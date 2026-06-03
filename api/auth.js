@@ -209,6 +209,23 @@ module.exports = async (req, res) => {
       return res.status(200).json({ users: usernames });
     }
 
+    // ── LIST DELIVERY PARTNERS (requires any valid token) ──
+    if (action === "list-delivery") {
+      const token = String(body.token || "").trim();
+      if (!token) return res.status(401).json({ message: "Token is required" });
+
+      const sessions = (await redis.get(SESSIONS_KEY)) || [];
+      const isValid = sessions.some((s) => s.token === token);
+      if (!isValid) return res.status(401).json({ message: "Invalid session" });
+
+      const users = (await redis.get(USERS_KEY)) || [];
+      const deliveryPartners = users
+        .filter((u) => u.role === "delivery")
+        .map((u) => u.username);
+
+      return res.status(200).json({ deliveryPartners });
+    }
+
     return res.status(400).json({ message: "Unknown action. Use: login, register, verify, logout, delete, list" });
   } catch (e) {
     return res.status(500).json({ message: "Auth endpoint failed", error: String(e?.message || e) });

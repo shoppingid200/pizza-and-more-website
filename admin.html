@@ -159,12 +159,20 @@
           <section class="admin-panel-card" style="padding: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
               <h2 style="margin: 0; font-size: 1.5rem;">Inventory Items Registry</h2>
-              <label class="admin-search-wrapper" style="width: 240px; margin: 0;">
-                <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
-                  <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                </svg>
-                <input id="inventory-search" type="search" placeholder="Search inventory..." autocomplete="off" />
-              </label>
+              
+              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <div id="inventory-filter-tabs" style="display: flex; gap: 6px;">
+                  <button class="admin-tab active" data-filter="All" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">All</button>
+                  <button class="admin-tab" data-filter="Low Stock" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.1); color: var(--pending);">Low Stock</button>
+                  <button class="admin-tab" data-filter="Out of Stock" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: rgba(217, 45, 32, 0.1); color: var(--tomato-dark);">Out of Stock</button>
+                </div>
+                <label class="admin-search-wrapper" style="width: 240px; margin: 0;">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                  <input id="inventory-search" type="search" placeholder="Search inventory..." autocomplete="off" />
+                </label>
+              </div>
             </div>
             
             <div style="overflow-x: auto;">
@@ -287,6 +295,17 @@
           guard.style.opacity = "0";
           guard.style.visibility = "hidden";
           setTimeout(() => guard.remove(), 400);
+
+          // Fetch delivery partners
+          try {
+            const dpRes = await fetch(AUTH_API, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "list-delivery", token }),
+            });
+            const dpData = await dpRes.json();
+            if (dpData.deliveryPartners) deliveryPartnersList = dpData.deliveryPartners;
+          } catch (e) {}
         } catch {
           // Network error - allow through if token exists (offline mode)
           guard.style.opacity = "0";
@@ -324,6 +343,7 @@
       let currentFilter = "All";
       let searchPhrase = "";
       let lastKnownOrderCount = 0;
+      let deliveryPartnersList = [];
 
       function formatRupees(value) {
         return `₹${value}`;
@@ -491,10 +511,19 @@
                 <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}">Cancel</button>
               `;
             } else if (order.status === "Preparing") {
+              const partnerOptions = deliveryPartnersList.map(p => `<option value="${p}">${p}</option>`).join("");
               actionsHTML = `
-                <button class="admin-action-btn delivery-btn" data-action="Out for Delivery" data-id="${order.id}">Send to Deliver</button>
-                <button class="admin-action-btn fulfill-btn" data-action="Fulfilled" data-id="${order.id}">Fulfill</button>
-                <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}">Cancel</button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <select id="delivery-select-${order.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--line); flex: 1; font-size: 0.85rem; background: #fff;">
+                    <option value="">Any Partner</option>
+                    ${partnerOptions}
+                  </select>
+                  <button class="admin-action-btn delivery-btn" data-action="Out for Delivery" data-id="${order.id}">Dispatch</button>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                  <button class="admin-action-btn fulfill-btn" data-action="Fulfilled" data-id="${order.id}" style="flex:1;">Fulfill</button>
+                  <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}" style="flex:1;">Cancel</button>
+                </div>
               `;
             } else if (order.status === "Out for Delivery") {
               actionsHTML = `
@@ -611,7 +640,7 @@
           .join("");
       }
 
-      async function handleAction(orderId, action) {
+      async function handleAction(orderId, action, deliveryPartner = "") {
         if (action === "Delete") {
           if (!confirm(`Are you sure you want to delete order #${orderId} from logs?`)) return;
           try {
@@ -629,10 +658,15 @@
           }
         } else {
           try {
+            const payload = { id: orderId, status: action };
+            if (action === "Out for Delivery" && deliveryPartner) {
+              payload.deliveryPartner = deliveryPartner;
+            }
+
             const res = await fetch(ORDERS_API_URL, {
               method: "PATCH",
               headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({ id: orderId, status: action }),
+              body: JSON.stringify(payload),
             });
             if (!res.ok) throw new Error(`Update failed (${res.status})`);
             const data = await res.json().catch(() => ({}));
@@ -774,6 +808,7 @@
       const addItemForm = document.querySelector("#add-item-form");
 
       let inventorySearchPhrase = "";
+      let inventoryFilter = "All";
 
       function readInventory() {
         try {
@@ -826,10 +861,19 @@
         const search = inventorySearchPhrase.toLowerCase();
 
         const filtered = inventory.filter((item) => {
-          return !search || 
+          const matchSearch = !search || 
             item.name.toLowerCase().includes(search) || 
             item.category.toLowerCase().includes(search) || 
             item.type.toLowerCase().includes(search);
+            
+          const isOutOfStock = item.stock <= 0 || !item.available;
+          const isLowStock = item.stock > 0 && item.stock < 10;
+          
+          let matchFilter = true;
+          if (inventoryFilter === "Low Stock") matchFilter = isLowStock;
+          if (inventoryFilter === "Out of Stock") matchFilter = isOutOfStock;
+          
+          return matchSearch && matchFilter;
         });
 
         if (filtered.length === 0) {
@@ -1069,7 +1113,14 @@
         ordersList.addEventListener("click", (e) => {
           const btn = e.target.closest("[data-action]");
           if (!btn) return;
-          handleAction(btn.dataset.id, btn.dataset.action);
+          
+          let deliveryPartner = "";
+          if (btn.dataset.action === "Out for Delivery") {
+            const select = document.getElementById(`delivery-select-${btn.dataset.id}`);
+            if (select) deliveryPartner = select.value;
+          }
+          
+          handleAction(btn.dataset.id, btn.dataset.action, deliveryPartner);
         });
 
         // Mock Order Generator trigger
@@ -1097,6 +1148,17 @@
         // Inventory search trigger
         inventorySearch.addEventListener("input", (e) => {
           inventorySearchPhrase = e.target.value.trim().toLowerCase();
+          renderInventory();
+        });
+
+        // Inventory filter triggers
+        document.getElementById("inventory-filter-tabs").addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn) return;
+          
+          document.querySelectorAll("#inventory-filter-tabs button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          inventoryFilter = btn.dataset.filter;
           renderInventory();
         });
 

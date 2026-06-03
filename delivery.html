@@ -186,9 +186,13 @@
           if (!Array.isArray(allOrders)) return;
 
           const deliveriesContainer = document.getElementById("deliveries-container");
+          const myUsername = localStorage.getItem("r-pizza-admin-username") || "";
           
-          // Only show orders that are currently "Out for Delivery"
-          const deliveries = allOrders.filter(o => o.status === "Out for Delivery");
+          // Only show orders that are currently "Out for Delivery" AND (unassigned OR assigned to me)
+          const deliveries = allOrders.filter(o => 
+            o.status === "Out for Delivery" && 
+            (!o.deliveryPartner || o.deliveryPartner === myUsername)
+          );
 
           if (deliveries.length === 0) {
             deliveriesContainer.innerHTML = `
@@ -249,6 +253,7 @@
                     <div class="admin-info-block">
                       <label>Customer</label>
                       <div style="font-weight: 800; font-size: 1.1rem; color: var(--ink);">${order.details.name}</div>
+                      <div style="font-size: 0.9rem; color: var(--muted); margin-top: 2px;">${order.details.phone}</div>
                       <div style="display: flex; gap: 8px; margin-top: 8px;">
                         <a href="tel:${cleanPhone}" class="button primary" style="min-height: 32px; padding: 0 12px; font-size: 0.8rem; border-radius: 6px;">Call</a>
                         <a href="https://wa.me/${cleanPhone}" target="_blank" class="button ghost" style="min-height: 32px; padding: 0 12px; font-size: 0.8rem; border-color: rgba(18,128,92,0.3); color: var(--basil); border-radius: 6px;">WhatsApp</a>

@@ -201,6 +201,11 @@ module.exports = async (req, res) => {
       if (status === "Out for Delivery" && prevStatus !== "Out for Delivery" && !order.deliveryCode) {
         order.deliveryCode = String(Math.floor(100000 + Math.random() * 900000));
       }
+      
+      // Save delivery partner if assigned
+      if (status === "Out for Delivery" && body.deliveryPartner) {
+        order.deliveryPartner = String(body.deliveryPartner).trim();
+      }
 
       // If an order is cancelled, restore stock once (only on transition to Cancelled).
       // Note: once an order is Fulfilled, we should not restore inventory.

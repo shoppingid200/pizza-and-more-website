@@ -461,6 +461,7 @@
 
           localStorage.setItem(SESSION_KEY, data.token);
           localStorage.setItem("r-pizza-admin-role", data.role || "admin");
+          localStorage.setItem("r-pizza-admin-username", data.username);
           showMessage("Login successful! Redirecting...", "success");
           setTimeout(() => {
             window.location.href = data.role === "delivery" ? "delivery.html" : "admin.html";
