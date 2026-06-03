@@ -109,9 +109,13 @@ function generateOrderId() {
 module.exports = async (req, res) => {
   setCors(res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-
   if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (req.method === "GET") {
+    res.setHeader("Cache-Control", "public, s-maxage=3, stale-while-revalidate=5");
+  } else {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  }
 
   try {
     const ordersExisting = (await redis.get(ORDERS_KEY)) || [];

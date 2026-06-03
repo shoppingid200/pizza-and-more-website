@@ -143,8 +143,8 @@
 
           // Initial load
           loadDeliveries();
-          // Poll for updates
-          setInterval(loadDeliveries, 5000);
+          // Poll for updates every 3 seconds
+          setInterval(loadDeliveries, 3000);
 
         } catch {
           // Offline fallback
@@ -192,7 +192,7 @@
 
       async function loadDeliveries() {
         try {
-          const res = await fetch(`${ORDERS_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+          const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
           if (!res.ok) return;
           const allOrders = await res.json();
           if (!Array.isArray(allOrders)) return;

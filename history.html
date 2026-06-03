@@ -116,7 +116,7 @@
       }
 
       async function syncOrdersFromApi() {
-        const res = await fetch(`${ORDERS_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+        const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`Orders sync failed (${res.status})`);
         const apiOrders = await res.json();
         if (!Array.isArray(apiOrders)) return;
@@ -395,20 +395,19 @@
           if (cancelBtn) handleCancelOrder(cancelBtn.dataset.orderId);
         });
 
-        // Initial sync + render
-        syncOrdersFromApi()
-          .then(() => renderOrderHistory())
-          .catch(() => renderOrderHistory());
+        // Initial load
+        try {
+          await syncOrdersFromApi();
+          renderOrderHistory();
+        } catch (err) {}
 
-        // Poll for status updates every 5 seconds
+        // Auto-refresh every 3s
         setInterval(async () => {
           try {
             await syncOrdersFromApi();
             renderOrderHistory();
-          } catch {
-            // ignore network errors
-          }
-        }, 5000);
+          } catch (err) {}
+        }, 3000);
 
         // Live storage event for cross-tab sync
         window.addEventListener("storage", (event) => {
