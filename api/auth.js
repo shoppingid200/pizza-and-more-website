@@ -153,8 +153,55 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({ message: "Logged out successfully" });
     }
+    // ── DELETE USER (requires master key) ──
+    if (action === "delete") {
+      const masterKey = String(body.masterKey || "").trim();
+      const username = String(body.username || "").trim();
 
-    return res.status(400).json({ message: "Unknown action. Use: login, register, verify, logout" });
+      if (!masterKey || !username) {
+        return res.status(400).json({ message: "Master key and username are required" });
+      }
+
+      if (masterKey !== MASTER_KEY) {
+        return res.status(403).json({ message: "Invalid master key" });
+      }
+
+      const users = (await redis.get(USERS_KEY)) || [];
+      const filtered = users.filter((u) => u.username.toLowerCase() !== username.toLowerCase());
+
+      if (filtered.length === users.length) {
+        return res.status(404).json({ message: `User "${username}" not found` });
+      }
+
+      await redis.set(USERS_KEY, filtered);
+
+      // Also remove their sessions
+      const sessions = (await redis.get(SESSIONS_KEY)) || [];
+      const cleanSessions = sessions.filter((s) => s.username.toLowerCase() !== username.toLowerCase());
+      await redis.set(SESSIONS_KEY, cleanSessions);
+
+      return res.status(200).json({ message: `User "${username}" removed successfully` });
+    }
+
+    // ── LIST USERS (requires master key) ──
+    if (action === "list") {
+      const masterKey = String(body.masterKey || "").trim();
+
+      if (!masterKey) {
+        return res.status(400).json({ message: "Master key is required" });
+      }
+
+      if (masterKey !== MASTER_KEY) {
+        return res.status(403).json({ message: "Invalid master key" });
+      }
+
+      const users = (await redis.get(USERS_KEY)) || [];
+      const usernames = users.map((u) => ({ username: u.username, createdAt: u.createdAt }));
+
+      return res.status(200).json({ users: usernames });
+    }
+
+    return res.status(400).json({ message: "Unknown action. Use: login, register, verify, logout, delete, list" });
   } catch (e) {
     return res.status(500).json({ message: "Auth endpoint failed", error: String(e?.message || e) });
   }

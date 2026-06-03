@@ -241,6 +241,71 @@
         border-radius: 6px;
         border: 1px dashed rgba(255, 211, 107, 0.4);
       }
+
+      .user-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .user-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        animation: cardEntry 0.3s ease;
+      }
+
+      .user-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .user-item-info strong {
+        font-size: 0.9rem;
+        color: var(--ink);
+      }
+
+      .user-item-info small {
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .user-delete-btn {
+        min-height: 32px;
+        padding: 0 14px;
+        border: 1px solid var(--tomato);
+        background: transparent;
+        color: var(--tomato-dark);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 850;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .user-delete-btn:hover {
+        background: var(--tomato);
+        color: #fff;
+        transform: translateY(-2px);
+      }
+
+      .user-delete-btn:active {
+        transform: translateY(2px) scale(0.95);
+        transition: transform 0.1s ease;
+      }
+
+      .user-list-empty {
+        text-align: center;
+        padding: 20px;
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-style: italic;
+      }
     </style>
   </head>
   <body>
@@ -255,6 +320,7 @@
         <div class="login-tabs">
           <button class="login-tab active" id="tab-login" type="button">Sign In</button>
           <button class="login-tab" id="tab-register" type="button">Add User</button>
+          <button class="login-tab" id="tab-manage" type="button">Manage</button>
         </div>
 
         <div id="login-message" class="login-message"></div>
@@ -290,6 +356,17 @@
           <button class="login-submit" type="submit" id="register-btn">Create Account</button>
         </form>
 
+        <!-- MANAGE USERS FORM -->
+        <div class="login-form" id="manage-form" style="display: none;">
+          <div class="login-field">
+            <label for="manage-master-key">Master Key</label>
+            <input id="manage-master-key" type="password" placeholder="Enter the master key" />
+          </div>
+          <button class="login-submit" type="button" id="load-users-btn">Load Users</button>
+          <p class="master-key-note">Enter the master key to view and remove admin users.</p>
+          <div id="user-list-container"></div>
+        </div>
+
         <div class="login-footer">
           <a href="index.html">← Back to website</a>
         </div>
@@ -302,8 +379,10 @@
 
       const tabLogin = document.getElementById("tab-login");
       const tabRegister = document.getElementById("tab-register");
+      const tabManage = document.getElementById("tab-manage");
       const loginForm = document.getElementById("login-form");
       const registerForm = document.getElementById("register-form");
+      const manageForm = document.getElementById("manage-form");
       const msgBox = document.getElementById("login-message");
 
       // Check if already logged in
@@ -325,22 +404,18 @@
         }
       })();
 
-      // Tab switching
-      tabLogin.addEventListener("click", () => {
-        tabLogin.classList.add("active");
-        tabRegister.classList.remove("active");
-        loginForm.style.display = "grid";
-        registerForm.style.display = "none";
+      function setActiveTab(activeTab) {
+        [tabLogin, tabRegister, tabManage].forEach(t => t.classList.remove("active"));
+        activeTab.classList.add("active");
+        loginForm.style.display = activeTab === tabLogin ? "grid" : "none";
+        registerForm.style.display = activeTab === tabRegister ? "grid" : "none";
+        manageForm.style.display = activeTab === tabManage ? "grid" : "none";
         hideMessage();
-      });
+      }
 
-      tabRegister.addEventListener("click", () => {
-        tabRegister.classList.add("active");
-        tabLogin.classList.remove("active");
-        registerForm.style.display = "grid";
-        loginForm.style.display = "none";
-        hideMessage();
-      });
+      tabLogin.addEventListener("click", () => setActiveTab(tabLogin));
+      tabRegister.addEventListener("click", () => setActiveTab(tabRegister));
+      tabManage.addEventListener("click", () => setActiveTab(tabManage));
 
       function showMessage(text, type) {
         msgBox.textContent = text;
@@ -432,6 +507,102 @@
           btn.textContent = "Create Account";
         }
       });
+
+      // MANAGE USERS
+      const loadUsersBtn = document.getElementById("load-users-btn");
+      const userListContainer = document.getElementById("user-list-container");
+
+      loadUsersBtn.addEventListener("click", async () => {
+        const masterKey = document.getElementById("manage-master-key").value;
+        if (!masterKey) {
+          showMessage("Enter the master key first", "error");
+          return;
+        }
+
+        loadUsersBtn.disabled = true;
+        loadUsersBtn.textContent = "Loading...";
+        hideMessage();
+
+        try {
+          const res = await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "list", masterKey }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showMessage(data.message || "Failed to load users", "error");
+            loadUsersBtn.disabled = false;
+            loadUsersBtn.textContent = "Load Users";
+            return;
+          }
+
+          renderUserList(data.users, masterKey);
+          loadUsersBtn.disabled = false;
+          loadUsersBtn.textContent = "Refresh List";
+        } catch {
+          showMessage("Network error. Please try again.", "error");
+          loadUsersBtn.disabled = false;
+          loadUsersBtn.textContent = "Load Users";
+        }
+      });
+
+      function renderUserList(users, masterKey) {
+        if (!users || users.length === 0) {
+          userListContainer.innerHTML = `<div class="user-list-empty">No admin users found. Add one from the "Add User" tab.</div>`;
+          return;
+        }
+
+        userListContainer.innerHTML = `
+          <div class="user-list">
+            ${users.map(u => `
+              <div class="user-item">
+                <div class="user-item-info">
+                  <strong>${u.username}</strong>
+                  <small>Added ${new Date(u.createdAt).toLocaleDateString()}</small>
+                </div>
+                <button class="user-delete-btn" data-username="${u.username}" type="button">Remove</button>
+              </div>
+            `).join("")}
+          </div>
+        `;
+
+        // Attach delete handlers
+        userListContainer.querySelectorAll(".user-delete-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const username = btn.dataset.username;
+            if (!confirm(`Are you sure you want to remove "${username}"? They will be logged out immediately.`)) return;
+
+            btn.disabled = true;
+            btn.textContent = "Removing...";
+
+            try {
+              const res = await fetch(AUTH_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "delete", masterKey, username }),
+              });
+              const data = await res.json();
+
+              if (!res.ok) {
+                showMessage(data.message || "Failed to remove user", "error");
+                btn.disabled = false;
+                btn.textContent = "Remove";
+                return;
+              }
+
+              showMessage(data.message, "success");
+              // Re-fetch the list
+              loadUsersBtn.click();
+            } catch {
+              showMessage("Network error. Please try again.", "error");
+              btn.disabled = false;
+              btn.textContent = "Remove";
+            }
+          });
+        });
+      }
     </script>
   </body>
 </html>
