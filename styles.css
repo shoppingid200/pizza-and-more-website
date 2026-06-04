@@ -903,7 +903,7 @@ h1 {
 
 .choice-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1292,6 +1292,10 @@ footer strong {
     min-height: 320px;
     height: 60vw;
   }
+
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -1347,6 +1351,29 @@ footer strong {
     padding: 36px 0 54px;
   }
 
+  .menu-section,
+  .visit-section {
+    padding: 48px 0;
+  }
+
+  .reviews-section {
+    padding: 40px 0;
+  }
+
+  .menu-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .form-panel,
+  .admin-stat-card {
+    padding: 16px;
+  }
+
+  .admin-shell {
+    padding: 24px 0 60px;
+  }
+
   .checkout-shell {
     width: min(100% - 32px, 1180px);
   }
@@ -1358,7 +1385,7 @@ footer strong {
   .menu-grid,
   .review-metrics,
   .field-grid,
-  .choice-grid {
+  .admin-stats-grid {
     grid-template-columns: 1fr;
   }
 
