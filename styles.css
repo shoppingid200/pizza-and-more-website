@@ -1308,13 +1308,24 @@ footer strong {
 
   .topbar nav {
     grid-column: 1 / -1;
-    justify-content: space-between;
+    justify-content: flex-start;
     order: 3;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .topbar nav::-webkit-scrollbar {
+    display: none;
   }
 
   .topbar nav a {
     min-width: 0;
-    flex: 1;
+    flex: 0 0 auto;
+    padding: 0 12px;
+    white-space: nowrap;
+    font-size: 0.9rem;
   }
 
   .brand-lockup small {
