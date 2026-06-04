@@ -38,22 +38,12 @@
 
     <main id="home">
       <section class="hero" aria-labelledby="hero-title">
-        <canvas id="pizza-scene" aria-hidden="true"></canvas>
         <div class="hero-noise" aria-hidden="true"></div>
         <div class="hero-inner">
           <div class="hero-copy reveal">
-            <div class="rating-row">
-              <span class="rating-badge">3.8</span>
-              <span class="stars" aria-label="3.8 out of 5 stars">★★★★<span>★</span></span>
-              <span>52 Google ratings</span>
-              <span>₹1-200</span>
-            </div>
-            <h1 id="hero-title">R PIZZA AND MORE</h1>
-            <p class="hindi-name">आर पिज़्ज़ा एंड मोरे</p>
-            <p class="hero-text">
-              Fast food restaurant in Tajpur serving loaded veg pizzas, paneer specials,
-              chicken favorites, and quick bites from AGARWAL COMPLEX 0005.
-            </p>
+            <span class="eyebrow hero-eyebrow">Est. Tajpur, Bihar</span>
+            <h1 id="hero-title">R PIZZA<br><span class="hero-accent">&amp; MORE</span></h1>
+            <p class="hero-text typewriter" id="hero-typewriter"></p>
             <div class="hero-actions">
               <a class="button primary" href="#menu">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -73,33 +63,10 @@
                 Directions
               </a>
             </div>
-            <div class="service-grid" aria-label="Available services">
-              <span>Dine-in</span>
-              <span>Drive-through</span>
-              <span>No-contact delivery</span>
-              <span>Opens 11 AM</span>
-            </div>
           </div>
-
-          <aside class="quick-ticket reveal" aria-label="Quick order highlights">
-            <div class="ticket-top">
-              <span>Today at Tajpur</span>
-              <strong>Popular Picks</strong>
-            </div>
-            <button class="quick-add" type="button" data-add-item="Margherita">
-              <span>Margherita</span>
-              <strong>₹99</strong>
-            </button>
-            <button class="quick-add" type="button" data-add-item="Peppy Paneer">
-              <span>Peppy Paneer</span>
-              <strong>₹209</strong>
-            </button>
-            <button class="quick-add" type="button" data-add-item="Chicken dominator">
-              <span>Chicken Dominator</span>
-              <strong>₹249</strong>
-            </button>
-            <a class="ticket-call" href="order.html">Start order</a>
-          </aside>
+          <div class="hero-visual">
+            <canvas id="pizza-scene" aria-hidden="true"></canvas>
+          </div>
         </div>
       </section>
 
@@ -260,6 +227,22 @@
       <span>Fast food restaurant · Tajpur, Samastipur · ₹1-200</span>
     </footer>
 
+    <script>
+      (function() {
+        const text = "Serving loaded veg pizzas, paneer specials, chicken favorites, and quick bites — straight from AGARWAL COMPLEX 0005, Tajpur.";
+        const el = document.getElementById("hero-typewriter");
+        if (!el) return;
+        let i = 0;
+        function type() {
+          if (i <= text.length) {
+            el.textContent = text.slice(0, i);
+            i++;
+            setTimeout(type, 32);
+          }
+        }
+        setTimeout(type, 600);
+      })();
+    </script>
     <script src="app.js"></script>
   </body>
 </html>

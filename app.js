@@ -743,7 +743,7 @@ function bootCanvasFallback(canvas) {
     const rect = canvas.getBoundingClientRect();
     ctx.clearRect(0, 0, rect.width, rect.height);
 
-    const cx = rect.width * (window.innerWidth < 760 ? 0.5 : 0.72) + state.pointerX * 24;
+    const cx = rect.width * 0.5 + state.pointerX * 24;
     const cy = rect.height * (window.innerWidth < 760 ? 0.2 : 0.5) + state.pointerY * 16;
     const radius = Math.max(150, Math.min(rect.width, rect.height) * 0.32);
     const spin = time * 0.00035;
@@ -890,13 +890,13 @@ function buildThreePizza(THREE, canvas) {
   function render(time) {
     const rect = canvas.getBoundingClientRect();
     const mobile = window.innerWidth < 760;
-    group.position.x = mobile ? 0 : 2.05;
+    group.position.x = 0;
     group.position.y = mobile ? 0.22 : -0.06;
     group.rotation.x = -0.36 + state.pointerY * 0.18;
     group.rotation.y = time * 0.00038 + state.pointerX * 0.26;
     group.rotation.z = Math.sin(time * 0.001) * 0.035;
-    group.scale.setScalar(mobile ? 0.72 : 0.95);
-    camera.position.z = mobile ? 8.4 : 7.4;
+    group.scale.setScalar(mobile ? 0.8 : 1.15);
+    camera.position.z = 7.4;
     renderer.setViewport(0, 0, rect.width, rect.height);
     renderer.render(scene, camera);
     state.frame += 1;
