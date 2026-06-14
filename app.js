@@ -235,42 +235,39 @@ const menuItems = [
 const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
 const INVENTORY_API_URL = "/api/inventory";
 
-window.INVENTORY_CACHE = [];
-
-async function initializeInventoryFromDefaults() {
+function initializeInventoryFromDefaults() {
+  // Only used as an absolute fallback when both the API and localStorage are empty.
   const items = menuItems.map(item => ({
     ...item,
     stock: 50,
     available: true
   }));
-  window.INVENTORY_CACHE = items;
-  await window.idb.clear('inventory');
-  await window.idb.putAll('inventory', items);
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
 }
+// Do NOT call initializeInventoryFromDefaults here; bootMenu handles it.
 
 function readInventory() {
-  return window.INVENTORY_CACHE;
+  try {
+    return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
 }
 
-async function saveInventory(inventory) {
-  window.INVENTORY_CACHE = inventory;
-  await window.idb.clear('inventory');
-  await window.idb.putAll('inventory', inventory);
+function saveInventory(inventory) {
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
 }
 
 async function syncInventoryFromApi() {
-  try {
-    const idbItems = await window.idb.getAll('inventory');
-    if (idbItems && idbItems.length > 0) {
-      window.INVENTORY_CACHE = idbItems;
-      return idbItems;
-    }
-  } catch (e) {
-    console.error("IDB load failed:", e);
+  const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || data?.message || `Inventory sync failed (${res.status})`);
   }
-  
-  await initializeInventoryFromDefaults();
-  return window.INVENTORY_CACHE;
+  const inventory = await res.json();
+  if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+  saveInventory(inventory);
+  return inventory;
 }
 
 const menuGrid = document.querySelector("#menu-grid");
@@ -311,13 +308,15 @@ function readStoredCart() {
 }
 
 function saveCart() {
-  const items = [...cart.values()].map(({ item, qty }) => ({
+  const items = [...cart.entries()].map(([cartKey, { item, qty, variation }]) => ({
+    cartKey,
     category: item.category,
     desc: item.desc,
     name: item.name,
-    price: item.price,
+    price: variation && item.variations ? (item.variations.find(v => v.name === variation) || {}).price || item.price : item.price,
     qty,
     type: item.type,
+    variation: variation || null,
   }));
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 }
@@ -329,7 +328,8 @@ function restoreCart() {
     const qty = Number(entry.qty) || 0;
     if (item.name && qty > 0 && item.available && item.stock > 0) {
       const finalQty = Math.min(qty, item.stock);
-      cart.set(item.name, { item, qty: finalQty });
+      const cartKey = entry.cartKey || (entry.variation ? `${entry.name}||${entry.variation}` : entry.name);
+      cart.set(cartKey, { item, qty: finalQty, variation: entry.variation || null });
     }
   });
   saveCart();
@@ -384,16 +384,18 @@ function renderMenu() {
     .map(
       (item) => {
         const isOutOfStock = item.stock <= 0 || item.available === false;
+        const hasVariations = item.variations && item.variations.length > 0;
+        const hasImage = item.image && item.image.length > 0;
         
-        let actionControl = "";
-        let priceDisplay = "";
-        
+        let priceDisplay = '';
+        let actionControl = '';
+
         if (isOutOfStock) {
-          actionControl = `<span class="status-badge status-cancelled" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
           priceDisplay = `<span class="item-price">${formatRupees(item.price)}</span>`;
-        } else if (item.variations && item.variations.length > 0) {
-          priceDisplay = `<select class="var-select" data-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.85rem; padding: 4px 8px; color: var(--ink);">
-            ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name} - ${formatRupees(v.price)}</option>`).join('')}
+          actionControl = `<span class="status-badge status-cancelled" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
+        } else if (hasVariations) {
+          priceDisplay = `<select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 160px;">
+            ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name} · ${formatRupees(v.price)}</option>`).join('')}
           </select>`;
           actionControl = `<button class="add-button" type="button" data-add-var-item="${item.name}" aria-label="Add ${item.name}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" /></svg>
@@ -405,18 +407,16 @@ function renderMenu() {
             </button>`;
         }
 
-        const imageHTML = item.image 
-          ? `<div style="width: 100%; height: 180px; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; margin-bottom: 12px; background: #eee;">
-               <img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
-             </div>` 
+        const imageHTML = hasImage
+          ? `<div style="width:100%;height:160px;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;background:#eee;"><img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" loading="lazy"></div>`
           : '';
 
         return `
-          <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}" style="padding: 0;">
+          <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}" style="${hasImage ? 'padding:0;' : ''}">
             ${imageHTML}
-            <div style="padding: ${item.image ? '0 16px 16px 16px' : '16px'};">
-              <div class="item-top" style="align-items: center; margin-bottom: 8px;">
-                <h3 class="item-name" style="margin-bottom:0;">${item.name}</h3>
+            <div style="padding:${hasImage ? '12px 16px 16px' : '0'};">
+              <div class="item-top">
+                <h3 class="item-name">${item.name}</h3>
                 ${priceDisplay}
               </div>
               <p class="item-desc">${item.desc}</p>
@@ -432,13 +432,13 @@ function renderMenu() {
     .join("");
 }
 
-function addItem(name, variationName = null) {
+function addItem(name, variationName) {
   const inventory = readInventory();
   const item = inventory.find((entry) => entry.name === name);
   if (!item) return;
 
-  const cartKey = variationName ? `${name}|${variationName}` : name;
-  const existing = cart.get(cartKey) || { item, qty: 0, variation: variationName };
+  const cartKey = variationName ? `${name}||${variationName}` : name;
+  const existing = cart.get(cartKey) || { item, qty: 0, variation: variationName || null };
   
   if (existing.qty >= item.stock) {
     showToast(`Sorry, only ${item.stock} available in stock.`);
@@ -457,29 +457,37 @@ function changeQty(cartKey, delta) {
   
   if (delta > 0) {
     const inventory = readInventory();
-    const item = inventory.find((entry) => entry.name === name);
+    const item = inventory.find((entry) => entry.name === line.item.name);
     if (item && line.qty >= item.stock) {
-      showToast(`Sorry, only ${item.stock} of ${item.name} are available in stock.`);
+      showToast(`Sorry, only ${item.stock} available in stock.`);
       return;
     }
   }
 
   line.qty += delta;
   if (line.qty <= 0) {
-    cart.delete(name);
+    cart.delete(cartKey);
   } else {
-    cart.set(name, line);
+    cart.set(cartKey, line);
   }
   renderCart();
+}
+
+function getItemPrice(line) {
+  const { item, variation } = line;
+  if (variation && item.variations) {
+    const v = item.variations.find(x => x.name === variation);
+    if (v) return v.price;
+  }
+  return item.price;
 }
 
 function cartStats() {
   let total = 0;
   let count = 0;
-  cart.forEach(({ item, qty, variation }) => {
-    const price = variation && item.variations ? item.variations.find(v => v.name === variation).price : item.price;
-    total += price * qty;
-    count += qty;
+  cart.forEach((line) => {
+    total += getItemPrice(line) * line.qty;
+    count += line.qty;
   });
   return { total, count };
 }
@@ -502,19 +510,19 @@ function renderCart() {
 
   cartLines.innerHTML = [...cart.entries()]
     .map(
-      ([cartKey, { item, qty, variation }]) => {
-        const price = variation && item.variations ? item.variations.find(v => v.name === variation).price : item.price;
-        const title = variation ? `${item.name} (${variation})` : item.name;
+      ([cartKey, line]) => {
+        const price = getItemPrice(line);
+        const title = line.variation ? `${line.item.name} (${line.variation})` : line.item.name;
         return `
       <div class="cart-line">
-        <span>${title}<br><small>${formatRupees(price)} x ${qty}</small></span>
+        <span>${title}<br><small>${formatRupees(price)} x ${line.qty}</small></span>
         <div class="qty-controls" aria-label="${title} quantity controls">
-          <button type="button" data-qty-item="${cartKey}" data-qty-delta="-1" aria-label="Remove one ${title}">-</button>
-          <strong>${qty}</strong>
-          <button type="button" data-qty-item="${cartKey}" data-qty-delta="1" aria-label="Add one ${title}">+</button>
+          <button type="button" data-qty-item="${cartKey}" data-qty-delta="-1" aria-label="Remove one">-</button>
+          <strong>${line.qty}</strong>
+          <button type="button" data-qty-item="${cartKey}" data-qty-delta="1" aria-label="Add one">+</button>
         </div>
       </div>
-    `
+    `;
       }
     )
     .join("");
@@ -523,20 +531,18 @@ function renderCart() {
 function reconcileCartWithInventory(inventory) {
   let changed = false;
   cart.forEach((line, cartKey) => {
-    const { item, qty, variation } = line;
-    const inv = inventory.find((x) => x.name === item.name);
+    const inv = inventory.find((x) => x.name === line.item.name);
     if (!inv || !inv.available || inv.stock <= 0) {
       cart.delete(cartKey);
       changed = true;
       return;
     }
-    if (qty > inv.stock) {
-      cart.set(cartKey, { item: inv, qty: inv.stock, variation });
+    if (line.qty > inv.stock) {
+      cart.set(cartKey, { ...line, item: inv, qty: inv.stock });
       changed = true;
       return;
     }
-    // Keep reference in sync
-    cart.set(cartKey, { item: inv, qty, variation });
+    cart.set(cartKey, { ...line, item: inv });
   });
   return changed;
 }
@@ -544,9 +550,10 @@ function reconcileCartWithInventory(inventory) {
 function orderText() {
   const { total, count } = cartStats();
   if (!count) return "No items selected.";
-  const lines = [...cart.values()].map(({ item, qty, variation }) => {
-    const price = variation && item.variations ? item.variations.find(v => v.name === variation).price : item.price;
-    return `${qty} x ${item.name}${variation ? ' (' + variation + ')' : ''} - ${formatRupees(price * qty)}`;
+  const lines = [...cart.values()].map((line) => {
+    const price = getItemPrice(line);
+    const label = line.variation ? `${line.item.name} (${line.variation})` : line.item.name;
+    return `${line.qty} x ${label} - ${formatRupees(price * line.qty)}`;
   });
   return `R Pizza and More order\n${lines.join("\n")}\nTotal: ${formatRupees(total)}`;
 }
@@ -570,7 +577,16 @@ async function copyOrder() {
 }
 
 async function bootMenu() {
-  await syncInventoryFromApi();
+  // Load latest inventory from the API (single source of truth).
+  try {
+    await syncInventoryFromApi();
+  } catch (e) {
+    console.warn("Inventory sync skipped:", e);
+    // If API failed AND localStorage is empty, seed with hardcoded defaults.
+    if (!localStorage.getItem(INVENTORY_STORAGE_KEY) || readInventory().length === 0) {
+      initializeInventoryFromDefaults();
+    }
+  }
 
   restoreCart();
   renderTabs();
@@ -596,10 +612,9 @@ async function bootMenu() {
 
     const addVarBtn = event.target.closest("[data-add-var-item]");
     if (addVarBtn) {
-      const itemName = addVarBtn.dataset.addVarItem;
       const card = addVarBtn.closest('.menu-card');
       const select = card.querySelector('.var-select');
-      addItem(itemName, select.value);
+      addItem(addVarBtn.dataset.addVarItem, select.value);
       return;
     }
 
@@ -646,14 +661,14 @@ async function bootMenu() {
       
       let cartChanged = false;
       const inventory = readInventory();
-      cart.forEach((line, name) => {
-        const item = inventory.find((entry) => entry.name === name);
+      cart.forEach((line, cartKey) => {
+        const item = inventory.find((entry) => entry.name === line.item.name);
         if (!item || !item.available || item.stock <= 0) {
-          cart.delete(name);
+          cart.delete(cartKey);
           cartChanged = true;
         } else if (line.qty > item.stock) {
           line.qty = item.stock;
-          cart.set(name, line);
+          cart.set(cartKey, line);
           cartChanged = true;
         }
       });

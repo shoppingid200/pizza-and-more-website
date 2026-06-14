@@ -129,15 +129,27 @@ module.exports = async (req, res) => {
       // Basic validation: ensure required fields exist.
       const normalized = inventory
         .filter((x) => x && typeof x.name === "string")
-        .map((x) => ({
-          name: String(x.name),
-          category: String(x.category || ""),
-          type: String(x.type || ""),
-          desc: String(x.desc || ""),
-          price: Number(x.price) || 0,
-          stock: Number(x.stock) || 0,
-          available: Boolean(x.available),
-        }));
+        .map((x) => {
+          const obj = {
+            name: String(x.name),
+            category: String(x.category || ""),
+            type: String(x.type || ""),
+            desc: String(x.desc || ""),
+            price: Number(x.price) || 0,
+            stock: Number(x.stock) || 0,
+            available: Boolean(x.available),
+          };
+          if (Array.isArray(x.variations) && x.variations.length > 0) {
+            obj.variations = x.variations.map((v) => ({
+              name: String(v.name || ""),
+              price: Number(v.price) || 0,
+            }));
+          }
+          if (typeof x.image === "string" && x.image.length > 0) {
+            obj.image = x.image;
+          }
+          return obj;
+        });
 
       await redis.set(INVENTORY_KEY, normalized);
       return res.status(200).json(normalized);
