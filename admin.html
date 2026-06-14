@@ -229,11 +229,27 @@
                   <span style="font-size: 0.75rem; font-weight: 850;">Description</span>
                   <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..." style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
                 </label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <label class="field" style="gap: 4px;">
-                    <span style="font-size: 0.75rem; font-weight: 850;">Price (₹)</span>
-                    <input type="number" id="new-item-price" min="0" required placeholder="120" style="min-height: 38px; padding: 0 10px;" />
-                  </label>
+                <label class="field" style="gap: 4px;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Item Image</span>
+                  <input type="file" id="new-item-image" accept="image/*" style="padding: 6px; font-size: 0.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: 4px;" />
+                </label>
+                
+                <div style="border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; font-weight: 850;">Variations (Sizes / Weights)</span>
+                    <button type="button" id="add-variation-btn" style="background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">+ Add Option</button>
+                  </div>
+                  <div id="variations-container" style="display: grid; gap: 8px;">
+                    <!-- Default single price option -->
+                    <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center;">
+                      <input type="text" class="var-name" placeholder="Name (e.g. Regular)" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" required />
+                      <input type="number" class="var-price" placeholder="Price (₹)" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" required />
+                      <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                   <label class="field" style="gap: 4px;">
                     <span style="font-size: 0.75rem; font-weight: 850;">Stock Level</span>
                     <input type="number" id="new-item-stock" min="0" required placeholder="30" style="min-height: 38px; padding: 0 10px;" />
@@ -262,6 +278,7 @@
       <span>Secret Dashboard · Samastipur, Bihar</span>
     </footer>
 
+    <script src="idb.js"></script>
     <script src="audio.js"></script>
     <script>
       const AUTH_API = "/api/auth";
@@ -857,49 +874,31 @@
       let inventoryFilter = "All";
 
       function readInventory() {
-        try {
-          return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
-        } catch {
-          return [];
-        }
-      }
-
-      function saveInventoryLocal(inventory) {
-        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-        window.dispatchEvent(new Event("storage"));
+        return window.INVENTORY_CACHE || [];
       }
 
       async function saveInventory(inventory) {
-        // Update UI immediately.
-        saveInventoryLocal(inventory);
-
-        // Persist globally (admin changes should affect all visitors).
-        try {
-          const res = await fetch(INVENTORY_API_URL, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ inventory }),
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
-          }
-        } catch (e) {
-          console.error("Inventory persist failed:", e);
-          showToast(`⚠️ Failed to save to server: ${e.message}`);
+        window.INVENTORY_CACHE = inventory;
+        if (window.idb) {
+          await window.idb.clear('inventory');
+          await window.idb.putAll('inventory', inventory);
         }
+        renderInventory();
       }
 
       async function syncInventoryFromApi() {
-        const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || data?.message || `Inventory sync failed (${res.status})`);
+        try {
+          if (window.idb) {
+            const idbItems = await window.idb.getAll('inventory');
+            if (idbItems && idbItems.length > 0) {
+              window.INVENTORY_CACHE = idbItems;
+              return idbItems;
+            }
+          }
+        } catch (e) {
+          console.error("IDB load failed:", e);
         }
-        const inventory = await res.json();
-        if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
-        saveInventoryLocal(inventory);
-        return inventory;
+        return readInventory();
       }
 
       function renderInventory() {
@@ -1012,8 +1011,27 @@
         const category = document.querySelector("#new-item-category").value;
         const type = document.querySelector("#new-item-type").value;
         const desc = document.querySelector("#new-item-desc").value.trim();
-        const price = Number(document.querySelector("#new-item-price").value) || 0;
         const stock = Number(document.querySelector("#new-item-stock").value) || 0;
+
+        const imageFile = document.querySelector("#new-item-image").files[0];
+        let imageBase64 = null;
+        if (imageFile) {
+          imageBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target.result);
+            reader.readAsDataURL(imageFile);
+          });
+        }
+
+        const variations = Array.from(document.querySelectorAll('.variation-row')).map(row => ({
+          name: row.querySelector('.var-name').value.trim(),
+          price: Number(row.querySelector('.var-price').value) || 0
+        }));
+
+        if (variations.length === 0) {
+          alert("Please add at least one variation/price.");
+          return;
+        }
 
         const inventory = readInventory();
         if (inventory.some((x) => x.name.toLowerCase() === name.toLowerCase())) {
@@ -1026,17 +1044,52 @@
           category,
           type,
           desc,
-          price,
+          price: variations[0].price, // Fallback for backward compatibility
+          variations,
+          image: imageBase64,
           stock,
           available: true
         };
 
-        inventory.push(newItem);
+        inventory.unshift(newItem);
         await saveInventory(inventory);
-        showToast(`Added ${name} to catalog!`);
-        addItemForm.reset();
-        renderInventory();
+        
+        e.target.reset();
+        document.getElementById('variations-container').innerHTML = `
+          <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center;">
+            <input type="text" class="var-name" placeholder="Name (e.g. Regular)" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" required />
+            <input type="number" class="var-price" placeholder="Price (₹)" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" required />
+            <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
+          </div>
+        `;
+        attachVarRowListeners();
+        showToast("New item added to catalog.");
       }
+
+      function attachVarRowListeners() {
+        document.querySelectorAll('.remove-var-btn').forEach(btn => {
+          btn.onclick = (ev) => {
+            const rows = document.querySelectorAll('.variation-row');
+            if(rows.length > 1) ev.target.closest('.variation-row').remove();
+            else alert("You must have at least one variation/price.");
+          };
+        });
+      }
+
+      document.getElementById('add-variation-btn').addEventListener('click', () => {
+        const container = document.getElementById('variations-container');
+        const row = document.createElement('div');
+        row.className = 'variation-row';
+        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center;';
+        row.innerHTML = `
+          <input type="text" class="var-name" placeholder="Name (e.g. 1kg)" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" required />
+          <input type="number" class="var-price" placeholder="Price (₹)" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" required />
+          <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
+        `;
+        container.appendChild(row);
+        attachVarRowListeners();
+      });
+      attachVarRowListeners();
 
       function renderStockDeductions() {
         const logContainer = document.querySelector("#stock-deductions-log");
