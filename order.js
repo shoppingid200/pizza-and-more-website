@@ -428,18 +428,42 @@ async function submitOrder(event) {
     }
   };
 
-  // Validate stock before placing order (try to refresh inventory from server).
+  // Fetch fresh inventory and auto-remove any out-of-stock items from cart
   try {
     await syncInventoryFromApi();
   } catch {
     // fall back to locally cached inventory
   }
 
-  const validation = validateStockAvailability();
-  if (!validation.available) {
-    showToast(validation.message);
-    restoreBtn();
-    return;
+  // Auto-remove out-of-stock items right before placing the order
+  try {
+    const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+    const invMap = new Map(inventory.map(i => [i.name, i]));
+    const removedItems = [];
+    cart = cart.filter(item => {
+      const inv = invMap.get(item.name);
+      if (!inv || !inv.available || inv.stock <= 0) {
+        removedItems.push(item.name);
+        return false;
+      }
+      // Also cap qty to available stock
+      if (inv.stock < item.qty) {
+        item.qty = inv.stock;
+      }
+      return true;
+    });
+    if (removedItems.length > 0) {
+      saveCart();
+      renderCart();
+      showToast(`Removed out-of-stock: ${removedItems.join(", ")}`);
+      // If cart is now empty, stop the order
+      if (cart.length === 0) {
+        restoreBtn();
+        return;
+      }
+    }
+  } catch {
+    // ignore
   }
 
   const details = customerDetails();
