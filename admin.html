@@ -1,494 +1,534 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard | R Pizza and More</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body class="admin-body">
-    <!-- Auth Guard: shown while checking session -->
-    <div id="auth-guard" style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
-      <img src="images/logo.jpg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="R Logo">
-      <p style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">Verifying access...</p>
-    </div>
 
-    <header class="topbar">
-      <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
-        <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
-        <span>
-          <strong>R PIZZA AND MORE</strong>
-          <small>Admin Portal</small>
-        </span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <a href="index.html">View Shop</a>
-        <a href="order.html">Order Page</a>
-      </nav>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
-        <button id="mute-alerts-btn" type="button" style="background:var(--paper);border:1px solid var(--line);cursor:pointer;color:var(--ink);font-weight:850;font-size:0.85rem;padding:6px 12px;border-radius:4px;" title="Mute/Unmute Alerts">
-          🔊 Alerts On
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | R Pizza and More</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="admin-body">
+  <!-- Auth Guard: shown while checking session -->
+  <div id="auth-guard"
+    style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
+    <img src="images/logo.jpg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="R Logo">
+    <p
+      style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">
+      Verifying access...</p>
+  </div>
+
+  <header class="topbar">
+    <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
+      <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
+      <span>
+        <strong>R PIZZA AND MORE</strong>
+        <small>Admin Portal</small>
+      </span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">View Shop</a>
+      <a href="order.html">Order Page</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="admin-user-label" style="font-size:0.8rem;font-weight:700;color:var(--muted);"></span>
+      <button id="mute-alerts-btn" type="button"
+        style="background:var(--paper);border:1px solid var(--line);cursor:pointer;color:var(--ink);font-weight:850;font-size:0.85rem;padding:6px 12px;border-radius:4px;"
+        title="Mute/Unmute Alerts">
+        🔊 Alerts On
+      </button>
+      <button class="nav-call" id="logout-btn" type="button"
+        style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <section class="admin-header">
+      <div class="admin-title-area">
+        <h1 id="admin-main-title">Admin Dashboard</h1>
+        <p id="admin-main-subtitle">Manage customer orders, track sales, and process fulfillments.</p>
+      </div>
+      <div class="admin-view-switcher" style="display: flex; gap: 10px; margin-top: 18px; width: 100%;">
+        <button class="button primary" id="tab-orders-view" type="button"
+          style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;">
+          Orders Dashboard
         </button>
-        <button class="nav-call" id="logout-btn" type="button" style="background:var(--tomato-dark);cursor:pointer;border:none;color:#fff;font-weight:850;font-size:0.85rem;">
-          Logout
+        <button class="button ghost" id="tab-inventory-view" type="button"
+          style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
+          Inventory Manager
         </button>
       </div>
-    </header>
+    </section>
 
-    <main class="admin-shell">
-      <section class="admin-header">
-        <div class="admin-title-area">
-          <h1 id="admin-main-title">Admin Dashboard</h1>
-          <p id="admin-main-subtitle">Manage customer orders, track sales, and process fulfillments.</p>
+    <!-- VIEW 1: ORDERS DASHBOARD -->
+    <div id="orders-view-container">
+      <!-- Dashboard Stats -->
+      <section class="admin-stats-grid" id="stats-grid">
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon revenue">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z" />
+            </svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">Total Revenue</span>
+            <strong class="admin-stat-val" id="stat-revenue">₹0</strong>
+          </div>
         </div>
-        <div class="admin-view-switcher" style="display: flex; gap: 10px; margin-top: 18px; width: 100%;">
-          <button class="button primary" id="tab-orders-view" type="button" style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;">
-            Orders Dashboard
-          </button>
-          <button class="button ghost" id="tab-inventory-view" type="button" style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
-            Inventory Manager
-          </button>
+
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon pending">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+            </svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">Pending</span>
+            <strong class="admin-stat-val" id="stat-pending">0</strong>
+          </div>
+        </div>
+
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background: #f6f0fe; color: #7928ca;">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 8H4V6h16v2zm-2-6H6v2h12V2zm2 10H4v2h16v-2zm-2 6H6v2h12v-2z" />
+            </svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">Active (Prep/Delivery)</span>
+            <strong class="admin-stat-val" id="stat-active">0</strong>
+          </div>
+        </div>
+
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon completed">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+            </svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">Completed</span>
+            <strong class="admin-stat-val" id="stat-completed">0</strong>
+          </div>
         </div>
       </section>
 
-      <!-- VIEW 1: ORDERS DASHBOARD -->
-      <div id="orders-view-container">
-        <!-- Dashboard Stats -->
-        <section class="admin-stats-grid" id="stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon revenue">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z"/>
-              </svg>
-            </div>
-            <div class="admin-stat-info">
-              <span class="admin-stat-label">Total Revenue</span>
-              <strong class="admin-stat-val" id="stat-revenue">₹0</strong>
+      <!-- Dashboard Controls -->
+      <section class="admin-controls">
+        <div class="admin-tabs" id="filter-tabs">
+          <button class="admin-tab active" data-filter="All">All Orders</button>
+          <button class="admin-tab" data-filter="Pending">Pending</button>
+          <button class="admin-tab" data-filter="Preparing">Preparing</button>
+          <button class="admin-tab" data-filter="Out for Delivery">Delivery</button>
+          <button class="admin-tab" data-filter="Fulfilled">Fulfilled</button>
+          <button class="admin-tab" data-filter="Cancelled">Cancelled</button>
+        </div>
+
+        <label class="admin-search-wrapper">
+          <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
+            <path
+              d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+          </svg>
+          <input id="admin-search" type="search" placeholder="Search customer, phone..." autocomplete="off" />
+        </label>
+      </section>
+
+      <!-- Grid Layout -->
+      <div class="admin-grid-layout">
+        <!-- Orders List -->
+        <section class="admin-orders-list" id="admin-orders-list" aria-live="polite">
+          <!-- Rendered dynamically -->
+        </section>
+
+        <!-- Sidebar Actions -->
+        <aside class="admin-sidebar">
+          <div class="admin-panel-card">
+            <h3>Quick Utilities</h3>
+            <div class="admin-utility-grid">
+              <button class="button primary admin-sidebar-action" id="btn-mock-order" type="button">
+                Generate Mock Order
+              </button>
+              <button class="button ghost admin-sidebar-action" id="btn-clear-all" type="button"
+                style="color: var(--tomato-dark); border-color: var(--tomato);">
+                Clear All Orders
+              </button>
             </div>
           </div>
 
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon pending">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-              </svg>
-            </div>
-            <div class="admin-stat-info">
-              <span class="admin-stat-label">Pending</span>
-              <strong class="admin-stat-val" id="stat-pending">0</strong>
+          <div class="admin-panel-card" style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
+            <strong>Information Panel</strong>
+            <p style="margin: 8px 0 0 0;">
+              Orders and inventory are stored on the server (Vercel KV). When someone places an order from the website,
+              it should appear here automatically.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- VIEW 2: INVENTORY MANAGER -->
+    <div id="inventory-view-container" style="display: none;">
+      <div class="admin-grid-layout">
+        <!-- Inventory Table Panel -->
+        <section class="admin-panel-card" style="padding: 24px; min-width: 0;">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <h2 style="margin: 0; font-size: 1.5rem;">Inventory Items Registry</h2>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div id="inventory-filter-tabs" style="display: flex; gap: 6px;">
+                <button class="admin-tab active" data-filter="All"
+                  style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">All</button>
+                <button class="admin-tab tab-low-stock" data-filter="Low Stock"
+                  style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">Low Stock</button>
+                <button class="admin-tab tab-out-stock" data-filter="Out of Stock"
+                  style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">Out of Stock</button>
+              </div>
+              <label class="admin-search-wrapper" style="width: 240px; margin: 0;">
+                <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
+                  <path
+                    d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                </svg>
+                <input id="inventory-search" type="search" placeholder="Search inventory..." autocomplete="off" />
+              </label>
             </div>
           </div>
 
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon" style="background: #f6f0fe; color: #7928ca;">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 8H4V6h16v2zm-2-6H6v2h12V2zm2 10H4v2h16v-2zm-2 6H6v2h12v-2z"/>
-              </svg>
-            </div>
-            <div class="admin-stat-info">
-              <span class="admin-stat-label">Active (Prep/Delivery)</span>
-              <strong class="admin-stat-val" id="stat-active">0</strong>
-            </div>
-          </div>
-
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon completed">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-            </div>
-            <div class="admin-stat-info">
-              <span class="admin-stat-label">Completed</span>
-              <strong class="admin-stat-val" id="stat-completed">0</strong>
-            </div>
+          <div style="overflow-x: auto; width: 100%;">
+            <table id="inventory-table"
+              style="width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+              <thead>
+                <tr
+                  style="border-bottom: 2px solid var(--ink); font-weight: 900; color: var(--muted); font-size: 0.78rem; text-transform: uppercase;">
+                  <th style="padding: 10px 8px;">Item Details</th>
+                  <th style="padding: 10px 8px; width: 100px;">Price (₹)</th>
+                  <th style="padding: 10px 8px; width: 110px;">Stock</th>
+                  <th style="padding: 10px 8px; width: 80px;">Active</th>
+                  <th style="padding: 10px 8px; width: 140px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-tbody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <!-- Dashboard Controls -->
-        <section class="admin-controls">
-          <div class="admin-tabs" id="filter-tabs">
-            <button class="admin-tab active" data-filter="All">All Orders</button>
-            <button class="admin-tab" data-filter="Pending">Pending</button>
-            <button class="admin-tab" data-filter="Preparing">Preparing</button>
-            <button class="admin-tab" data-filter="Out for Delivery">Delivery</button>
-            <button class="admin-tab" data-filter="Fulfilled">Fulfilled</button>
-            <button class="admin-tab" data-filter="Cancelled">Cancelled</button>
+        <!-- Sidebar Actions for Catalog Management -->
+        <aside class="admin-sidebar">
+          <!-- Add Item Form -->
+          <div class="admin-panel-card">
+            <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top:0;">Add New Item</h3>
+            <form id="add-item-form" style="display: grid; gap: 12px;">
+              <label class="field" style="gap: 4px;">
+                <span style="font-size: 0.75rem; font-weight: 850;">Item Name</span>
+                <input type="text" id="new-item-name" required placeholder="e.g. Garlic Bread"
+                  style="min-height: 38px; padding: 0 10px;" />
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <label class="field" style="gap: 4px;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Category</span>
+                  <select id="new-item-category" required style="min-height: 38px; padding: 0 8px;">
+                    <option value="Veg Specials">Veg Specials</option>
+                    <option value="Paneer Pizzas">Paneer Pizzas</option>
+                    <option value="Classic Veg">Classic Veg</option>
+                    <option value="Non Veg">Non Veg</option>
+                    <option value="Burgers & More">Burgers & More</option>
+                  </select>
+                </label>
+                <label class="field" style="gap: 4px;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Item Type</span>
+                  <select id="new-item-type" required style="min-height: 38px; padding: 0 8px;">
+                    <option value="Veg">Veg</option>
+                    <option value="Non Veg">Non Veg</option>
+                  </select>
+                </label>
+              </div>
+              <label class="field" style="gap: 4px;">
+                <span style="font-size: 0.75rem; font-weight: 850;">Description</span>
+                <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..."
+                  style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
+              </label>
+              <label class="field" style="gap: 4px;">
+                <span style="font-size: 0.75rem; font-weight: 850;">Item Image (Take Photo or Upload)</span>
+                <input type="file" id="new-item-image" accept="image/*"
+                  style="padding: 6px; font-size: 0.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: 4px;" />
+                <img id="new-item-image-preview"
+                  style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:4px;"
+                  alt="Preview" />
+              </label>
+              <div
+                style="border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.8rem; font-weight: 850;">Variations (Sizes / Weights)</span>
+                  <button type="button" id="add-variation-btn"
+                    style="background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">+
+                    Add</button>
+                </div>
+                <div id="variations-container" style="display: grid; gap: 8px;">
+                  <div class="variation-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
+                    <input type="text" class="var-name" placeholder="e.g. Regular"
+                      style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;"
+                      value="Regular" />
+                    <input type="number" class="var-price" placeholder="Price ₹" min="0"
+                      style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
+                    <button type="button" class="remove-var-btn"
+                      style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
+                  </div>
+                </div>
+              </div>
+              <label class="field" style="gap: 4px;">
+                <span style="font-size: 0.75rem; font-weight: 850;">Stock Level</span>
+                <input type="number" id="new-item-stock" min="0" required placeholder="30"
+                  style="min-height: 38px; padding: 0 10px;" />
+              </label>
+              <button class="button primary" type="submit"
+                style="width: 100%; min-height: 40px; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center;">Add
+                Catalog Item</button>
+            </form>
           </div>
 
-          <label class="admin-search-wrapper">
-            <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
-              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            </svg>
-            <input id="admin-search" type="search" placeholder="Search customer, phone..." autocomplete="off" />
-          </label>
-        </section>
-
-        <!-- Grid Layout -->
-        <div class="admin-grid-layout">
-          <!-- Orders List -->
-          <section class="admin-orders-list" id="admin-orders-list" aria-live="polite">
-            <!-- Rendered dynamically -->
-          </section>
-
-          <!-- Sidebar Actions -->
-          <aside class="admin-sidebar">
-            <div class="admin-panel-card">
-              <h3>Quick Utilities</h3>
-              <div class="admin-utility-grid">
-                <button class="button primary admin-sidebar-action" id="btn-mock-order" type="button">
-                  Generate Mock Order
-                </button>
-                <button class="button ghost admin-sidebar-action" id="btn-clear-all" type="button" style="color: var(--tomato-dark); border-color: var(--tomato);">
-                  Clear All Orders
-                </button>
-              </div>
+          <!-- Stock Deduction Audit Log -->
+          <div class="admin-panel-card">
+            <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 0; margin-bottom: 8px;">
+              Recent Stock Deductions</h3>
+            <div id="stock-deductions-log"
+              style="display: grid; gap: 8px; max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
+              <!-- Filled dynamically from user orders -->
             </div>
-
-            <div class="admin-panel-card" style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
-              <strong>Information Panel</strong>
-              <p style="margin: 8px 0 0 0;">
-                Orders and inventory are stored on the server (Vercel KV). When someone places an order from the website, it should appear here automatically.
-              </p>
-            </div>
-          </aside>
-        </div>
+          </div>
+        </aside>
       </div>
+    </div>
+  </main>
 
-      <!-- VIEW 2: INVENTORY MANAGER -->
-      <div id="inventory-view-container" style="display: none;">
-        <div class="admin-grid-layout">
-          <!-- Inventory Table Panel -->
-          <section class="admin-panel-card" style="padding: 24px; min-width: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-              <h2 style="margin: 0; font-size: 1.5rem;">Inventory Items Registry</h2>
-              
-              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <div id="inventory-filter-tabs" style="display: flex; gap: 6px;">
-                  <button class="admin-tab active" data-filter="All" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">All</button>
-                  <button class="admin-tab tab-low-stock" data-filter="Low Stock" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">Low Stock</button>
-                  <button class="admin-tab tab-out-stock" data-filter="Out of Stock" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">Out of Stock</button>
-                </div>
-                <label class="admin-search-wrapper" style="width: 240px; margin: 0;">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: var(--muted);">
-                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                  </svg>
-                  <input id="inventory-search" type="search" placeholder="Search inventory..." autocomplete="off" />
-                </label>
-              </div>
-            </div>
-            
-            <div style="overflow-x: auto; width: 100%;">
-              <table id="inventory-table" style="width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
-                <thead>
-                  <tr style="border-bottom: 2px solid var(--ink); font-weight: 900; color: var(--muted); font-size: 0.78rem; text-transform: uppercase;">
-                    <th style="padding: 10px 8px;">Item Details</th>
-                    <th style="padding: 10px 8px; width: 100px;">Price (₹)</th>
-                    <th style="padding: 10px 8px; width: 110px;">Stock</th>
-                    <th style="padding: 10px 8px; width: 80px;">Active</th>
-                    <th style="padding: 10px 8px; width: 140px; text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="inventory-tbody">
-                  <!-- Rendered dynamically -->
-                </tbody>
-              </table>
-            </div>
-          </section>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-          <!-- Sidebar Actions for Catalog Management -->
-          <aside class="admin-sidebar">
-            <!-- Add Item Form -->
-            <div class="admin-panel-card">
-              <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top:0;">Add New Item</h3>
-              <form id="add-item-form" style="display: grid; gap: 12px;">
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Item Name</span>
-                  <input type="text" id="new-item-name" required placeholder="e.g. Garlic Bread" style="min-height: 38px; padding: 0 10px;" />
-                </label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <label class="field" style="gap: 4px;">
-                    <span style="font-size: 0.75rem; font-weight: 850;">Category</span>
-                    <select id="new-item-category" required style="min-height: 38px; padding: 0 8px;">
-                      <option value="Veg Specials">Veg Specials</option>
-                      <option value="Paneer Pizzas">Paneer Pizzas</option>
-                      <option value="Classic Veg">Classic Veg</option>
-                      <option value="Non Veg">Non Veg</option>
-                      <option value="Burgers & More">Burgers & More</option>
-                    </select>
-                  </label>
-                  <label class="field" style="gap: 4px;">
-                    <span style="font-size: 0.75rem; font-weight: 850;">Item Type</span>
-                    <select id="new-item-type" required style="min-height: 38px; padding: 0 8px;">
-                      <option value="Veg">Veg</option>
-                      <option value="Non Veg">Non Veg</option>
-                    </select>
-                  </label>
-                </div>
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Description</span>
-                  <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..." style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
-                </label>
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Item Image (Take Photo or Upload)</span>
-                  <input type="file" id="new-item-image" accept="image/*" style="padding: 6px; font-size: 0.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: 4px;" />
-                  <img id="new-item-image-preview" style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:4px;" alt="Preview" />
-                </label>
-                <div style="border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 0.8rem; font-weight: 850;">Variations (Sizes / Weights)</span>
-                    <button type="button" id="add-variation-btn" style="background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">+ Add</button>
-                  </div>
-                  <div id="variations-container" style="display: grid; gap: 8px;">
-                    <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
-                      <input type="text" class="var-name" placeholder="e.g. Regular" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" />
-                      <input type="number" class="var-price" placeholder="Price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
-                      <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
-                    </div>
-                  </div>
-                </div>
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Stock Level</span>
-                  <input type="number" id="new-item-stock" min="0" required placeholder="30" style="min-height: 38px; padding: 0 10px;" />
-                </label>
-                <button class="button primary" type="submit" style="width: 100%; min-height: 40px; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center;">Add Catalog Item</button>
-              </form>
-            </div>
+  <footer>
+    <strong>R PIZZA AND MORE · ADMIN</strong>
+    <span>Secret Dashboard · Samastipur, Bihar</span>
+  </footer>
 
-            <!-- Stock Deduction Audit Log -->
-            <div class="admin-panel-card">
-              <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 0; margin-bottom: 8px;">Recent Stock Deductions</h3>
-              <div id="stock-deductions-log" style="display: grid; gap: 8px; max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
-                <!-- Filled dynamically from user orders -->
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </main>
+  <script src="audio.js"></script>
+  <script>
+    const AUTH_API = "/api/auth";
+    const SESSION_KEY = "r-pizza-admin-session";
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    // ── AUTH GUARD ──
+    (async function guardAdmin() {
+      const guard = document.getElementById("auth-guard");
+      const token = localStorage.getItem(SESSION_KEY);
 
-    <footer>
-      <strong>R PIZZA AND MORE · ADMIN</strong>
-      <span>Secret Dashboard · Samastipur, Bihar</span>
-    </footer>
+      if (!token) {
+        window.location.replace("login.html");
+        return;
+      }
 
-    <script src="audio.js"></script>
-    <script>
-      const AUTH_API = "/api/auth";
-      const SESSION_KEY = "r-pizza-admin-session";
+      try {
+        const res = await fetch(AUTH_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "verify", token }),
+        });
+        const data = await res.json();
 
-      // ── AUTH GUARD ──
-      (async function guardAdmin() {
-        const guard = document.getElementById("auth-guard");
-        const token = localStorage.getItem(SESSION_KEY);
-
-        if (!token) {
+        if (!data.valid) {
+          localStorage.removeItem(SESSION_KEY);
           window.location.replace("login.html");
           return;
         }
 
+        // Show username in header
+        const label = document.getElementById("admin-user-label");
+        if (label) label.textContent = `Logged in as ${data.username}`;
+
+        // Hide guard
+        guard.style.opacity = "0";
+        guard.style.visibility = "hidden";
+        setTimeout(() => guard.remove(), 400);
+
+        // Fetch delivery partners
         try {
-          const res = await fetch(AUTH_API, {
+          const dpRes = await fetch(AUTH_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "verify", token }),
+            body: JSON.stringify({ action: "list-delivery", token }),
           });
-          const data = await res.json();
+          const dpData = await dpRes.json();
+          if (dpData.deliveryPartners) deliveryPartnersList = dpData.deliveryPartners;
+        } catch (e) { }
+      } catch {
+        // Network error - allow through if token exists (offline mode)
+        guard.style.opacity = "0";
+        guard.style.visibility = "hidden";
+        setTimeout(() => guard.remove(), 400);
+      }
+    })();
 
-          if (!data.valid) {
-            localStorage.removeItem(SESSION_KEY);
-            window.location.replace("login.html");
-            return;
-          }
+    // ── MUTE ALERTS ──
+    document.getElementById('mute-alerts-btn')?.addEventListener('click', (e) => {
+      if (window.AudioEngine) {
+        const isMuted = window.AudioEngine.toggleMute();
+        e.target.textContent = isMuted ? "🔇 Alerts Off" : "🔊 Alerts On";
+      }
+    });
 
-          // Show username in header
-          const label = document.getElementById("admin-user-label");
-          if (label) label.textContent = `Logged in as ${data.username}`;
+    // ── LOGOUT ──
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      const token = localStorage.getItem(SESSION_KEY);
+      try {
+        await fetch(AUTH_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "logout", token }),
+        });
+      } catch {
+        // Ignore network errors
+      }
+      localStorage.removeItem(SESSION_KEY);
+      window.location.replace("login.html");
+    });
 
-          // Hide guard
-          guard.style.opacity = "0";
-          guard.style.visibility = "hidden";
-          setTimeout(() => guard.remove(), 400);
+    const ALL_ORDERS_KEY = "r-pizza-all-orders";
+    const RESTAURANT_WHATSAPP = "916301045696";
+    const ORDERS_API_URL = "/api/orders";
+    const INVENTORY_API_URL = "/api/inventory";
 
-          // Fetch delivery partners
-          try {
-            const dpRes = await fetch(AUTH_API, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "list-delivery", token }),
-            });
-            const dpData = await dpRes.json();
-            if (dpData.deliveryPartners) deliveryPartnersList = dpData.deliveryPartners;
-          } catch (e) {}
-        } catch {
-          // Network error - allow through if token exists (offline mode)
-          guard.style.opacity = "0";
-          guard.style.visibility = "hidden";
-          setTimeout(() => guard.remove(), 400);
-        }
-      })();
+    const ordersList = document.querySelector("#admin-orders-list");
+    const searchInput = document.querySelector("#admin-search");
+    const filterTabs = document.querySelector("#filter-tabs");
+    const toast = document.querySelector("#toast");
 
-      // ── MUTE ALERTS ──
-      document.getElementById('mute-alerts-btn')?.addEventListener('click', (e) => {
-        if (window.AudioEngine) {
-          const isMuted = window.AudioEngine.toggleMute();
-          e.target.textContent = isMuted ? "🔇 Alerts Off" : "🔊 Alerts On";
+    let currentFilter = "All";
+    let searchPhrase = "";
+    let lastKnownOrderCount = 0;
+    let deliveryPartnersList = [];
+
+    function formatRupees(value) {
+      return `₹${value}`;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function readOrders() {
+      try {
+        return JSON.parse(localStorage.getItem(ALL_ORDERS_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveOrders(orders) {
+      localStorage.setItem(ALL_ORDERS_KEY, JSON.stringify(orders));
+      // Trigger a storage event manually in case other tabs are listening
+      window.dispatchEvent(new Event("storage"));
+    }
+
+    async function syncOrdersFromApi() {
+      const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || data?.message || `Orders sync failed (${res.status})`);
+      }
+      const apiOrders = await res.json();
+      if (!Array.isArray(apiOrders)) return;
+
+      // The API is the single source of truth.
+      saveOrders(apiOrders);
+    }
+
+    // Poll for updates every 3 seconds
+    setInterval(async () => {
+      try {
+        await syncOrdersFromApi();
+        renderOrders();
+      } catch (e) {
+        console.error("Auto-sync failed", e);
+      }
+    }, 20000);
+
+    // Old playNewOrderSound removed. Using audio.js now.
+
+    function updateDashboardStats(orders) {
+      let revenue = 0;
+      let pending = 0;
+      let active = 0;
+      let completed = 0;
+
+      orders.forEach((o) => {
+        if (o.status === "Fulfilled") {
+          revenue += Number(o.total) || 0;
+          completed++;
+        } else if (o.status === "Pending") {
+          pending++;
+        } else if (o.status === "Preparing" || o.status === "Out for Delivery") {
+          active++;
         }
       });
 
-      // ── LOGOUT ──
-      document.getElementById("logout-btn").addEventListener("click", async () => {
-        const token = localStorage.getItem(SESSION_KEY);
-        try {
-          await fetch(AUTH_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "logout", token }),
-          });
-        } catch {
-          // Ignore network errors
+      document.querySelector("#stat-revenue").textContent = formatRupees(revenue);
+      document.querySelector("#stat-pending").textContent = pending;
+      document.querySelector("#stat-active").textContent = active;
+      document.querySelector("#stat-completed").textContent = completed;
+    }
+
+    function renderOrders() {
+      const rawOrders = readOrders();
+
+      // Filter out invalid orders to prevent TypeErrors
+      const orders = rawOrders.filter((o) => o && o.details && o.id);
+
+      updateDashboardStats(orders);
+
+      // Check if a new order came in for toast
+      if (orders.length > lastKnownOrderCount) {
+        if (lastKnownOrderCount > 0) {
+          showToast("New order received!");
         }
-        localStorage.removeItem(SESSION_KEY);
-        window.location.replace("login.html");
+        lastKnownOrderCount = orders.length;
+      } else if (orders.length < lastKnownOrderCount) {
+        lastKnownOrderCount = orders.length;
+      }
+
+      // Handle Audio Alerts for Pending Orders
+      const hasPending = orders.some(o => o.status === "Pending");
+      if (hasPending) {
+        if (window.AudioEngine) window.AudioEngine.playAdminRing();
+      } else {
+        if (window.AudioEngine) window.AudioEngine.stopAdminRing();
+      }
+
+      // Sort descending by date
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Filter
+      const filtered = orders.filter((o) => {
+        const statusMatch = currentFilter === "All" || o.status === currentFilter;
+        const name = o.details.name || "";
+        const phone = o.details.phone || "";
+        const address = o.details.address || "";
+        const id = o.id || "";
+
+        const searchMatch = !searchPhrase ||
+          name.toLowerCase().includes(searchPhrase) ||
+          phone.includes(searchPhrase) ||
+          address.toLowerCase().includes(searchPhrase) ||
+          id.toLowerCase().includes(searchPhrase);
+        return statusMatch && searchMatch;
       });
 
-      const ALL_ORDERS_KEY = "r-pizza-all-orders";
-      const RESTAURANT_WHATSAPP = "916301045696";
-      const ORDERS_API_URL = "/api/orders";
-      const INVENTORY_API_URL = "/api/inventory";
-
-      const ordersList = document.querySelector("#admin-orders-list");
-      const searchInput = document.querySelector("#admin-search");
-      const filterTabs = document.querySelector("#filter-tabs");
-      const toast = document.querySelector("#toast");
-
-      let currentFilter = "All";
-      let searchPhrase = "";
-      let lastKnownOrderCount = 0;
-      let deliveryPartnersList = [];
-
-      function formatRupees(value) {
-        return `₹${value}`;
-      }
-
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add("show");
-        window.clearTimeout(showToast.timer);
-        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
-      }
-
-      function readOrders() {
-        try {
-          return JSON.parse(localStorage.getItem(ALL_ORDERS_KEY)) || [];
-        } catch {
-          return [];
-        }
-      }
-
-      function saveOrders(orders) {
-        localStorage.setItem(ALL_ORDERS_KEY, JSON.stringify(orders));
-        // Trigger a storage event manually in case other tabs are listening
-        window.dispatchEvent(new Event("storage"));
-      }
-
-      async function syncOrdersFromApi() {
-        const res = await fetch(ORDERS_API_URL, { headers: { Accept: "application/json" } });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || data?.message || `Orders sync failed (${res.status})`);
-        }
-        const apiOrders = await res.json();
-        if (!Array.isArray(apiOrders)) return;
-
-        // The API is the single source of truth.
-        saveOrders(apiOrders);
-      }
-
-      // Poll for updates every 3 seconds
-      setInterval(async () => {
-        try {
-          await syncOrdersFromApi();
-          renderOrders();
-        } catch (e) {
-          console.error("Auto-sync failed", e);
-        }
-      }, 20000);
-
-      // Old playNewOrderSound removed. Using audio.js now.
-
-      function updateDashboardStats(orders) {
-        let revenue = 0;
-        let pending = 0;
-        let active = 0;
-        let completed = 0;
-
-        orders.forEach((o) => {
-          if (o.status === "Fulfilled") {
-            revenue += Number(o.total) || 0;
-            completed++;
-          } else if (o.status === "Pending") {
-            pending++;
-          } else if (o.status === "Preparing" || o.status === "Out for Delivery") {
-            active++;
-          }
-        });
-
-        document.querySelector("#stat-revenue").textContent = formatRupees(revenue);
-        document.querySelector("#stat-pending").textContent = pending;
-        document.querySelector("#stat-active").textContent = active;
-        document.querySelector("#stat-completed").textContent = completed;
-      }
-
-      function renderOrders() {
-        const rawOrders = readOrders();
-        
-        // Filter out invalid orders to prevent TypeErrors
-        const orders = rawOrders.filter((o) => o && o.details && o.id);
-        
-        updateDashboardStats(orders);
-
-        // Check if a new order came in for toast
-        if (orders.length > lastKnownOrderCount) {
-          if (lastKnownOrderCount > 0) {
-            showToast("New order received!");
-          }
-          lastKnownOrderCount = orders.length;
-        } else if (orders.length < lastKnownOrderCount) {
-          lastKnownOrderCount = orders.length;
-        }
-
-        // Handle Audio Alerts for Pending Orders
-        const hasPending = orders.some(o => o.status === "Pending");
-        if (hasPending) {
-          if (window.AudioEngine) window.AudioEngine.playAdminRing();
-        } else {
-          if (window.AudioEngine) window.AudioEngine.stopAdminRing();
-        }
-
-        // Sort descending by date
-        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        // Filter
-        const filtered = orders.filter((o) => {
-          const statusMatch = currentFilter === "All" || o.status === currentFilter;
-          const name = o.details.name || "";
-          const phone = o.details.phone || "";
-          const address = o.details.address || "";
-          const id = o.id || "";
-          
-          const searchMatch = !searchPhrase || 
-            name.toLowerCase().includes(searchPhrase) ||
-            phone.includes(searchPhrase) ||
-            address.toLowerCase().includes(searchPhrase) ||
-            id.toLowerCase().includes(searchPhrase);
-          return statusMatch && searchMatch;
-        });
-
-        if (filtered.length === 0) {
-          ordersList.innerHTML = `
+      if (filtered.length === 0) {
+        ordersList.innerHTML = `
             <div class="no-orders-banner">
               <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 48px; height: 48px; margin: 0 auto 12px; color: var(--muted); opacity: 0.6;">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
@@ -499,46 +539,46 @@
                 </div>
             </div>
           `;
-          return;
-        }
+        return;
+      }
 
-        ordersList.innerHTML = filtered
-          .map((order) => {
-            const date = new Date(order.createdAt).toLocaleString();
-            const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
-            const cardStatusClass = `status-card-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
+      ordersList.innerHTML = filtered
+        .map((order) => {
+          const date = new Date(order.createdAt).toLocaleString();
+          const statusClass = `status-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
+          const cardStatusClass = `status-card-${order.status.toLowerCase().replace(/\s+/g, "-")}`;
 
-            const allItems = order.items || order.cart || [];
-            const isOrderActive = !["Fulfilled", "Cancelled"].includes(order.status);
-            
-            const itemsText = allItems.length > 0 
-              ? allItems.map((item) => {
-                  const isCancelled = item.cancelled;
-                  const itemStyle = isCancelled ? 'text-decoration: line-through; opacity: 0.6;' : '';
-                  const cancelBtn = (isOrderActive && !isCancelled) 
-                    ? `<button class="admin-cancel-item-btn" data-order-id="${order.id}" data-item-name="${item.name}" style="background:none; border:none; color:var(--tomato); cursor:pointer; font-size:1rem; padding:0 4px;" title="Cancel this item">×</button>` 
-                    : '';
-                  
-                  return `
+          const allItems = order.items || order.cart || [];
+          const isOrderActive = !["Fulfilled", "Cancelled"].includes(order.status);
+
+          const itemsText = allItems.length > 0
+            ? allItems.map((item) => {
+              const isCancelled = item.cancelled;
+              const itemStyle = isCancelled ? 'text-decoration: line-through; opacity: 0.6;' : '';
+              const cancelBtn = (isOrderActive && !isCancelled)
+                ? `<button class="admin-cancel-item-btn" data-order-id="${order.id}" data-item-name="${item.name}" style="background:none; border:none; color:var(--tomato); cursor:pointer; font-size:1rem; padding:0 4px;" title="Cancel this item">×</button>`
+                : '';
+
+              return `
                     <div class="admin-item-row" style="${itemStyle} display:flex; align-items:center;">
                       <div style="flex:1;">${item.qty} x ${item.name}</div>
                       <span class="price">${formatRupees(item.price * item.qty)}</span>
                       ${cancelBtn}
                     </div>
                   `;
-                }).join("")
-              : "No items";
+            }).join("")
+            : "No items";
 
-            // Action Buttons based on state
-            let actionsHTML = "";
-            if (order.status === "Pending") {
-              actionsHTML = `
+          // Action Buttons based on state
+          let actionsHTML = "";
+          if (order.status === "Pending") {
+            actionsHTML = `
                 <button class="admin-action-btn prepare-btn" data-action="Preparing" data-id="${order.id}">Accept & Prepare</button>
                 <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}">Cancel</button>
               `;
-            } else if (order.status === "Preparing") {
-              const partnerOptions = deliveryPartnersList.map(p => `<option value="${p}">${p}</option>`).join("");
-              actionsHTML = `
+          } else if (order.status === "Preparing") {
+            const partnerOptions = deliveryPartnersList.map(p => `<option value="${p}">${p}</option>`).join("");
+            actionsHTML = `
                 <div style="display:flex; gap:8px; align-items:center;">
                   <select id="delivery-select-${order.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--line); flex: 1; font-size: 0.85rem; background: #fff;">
                     <option value="">Any Partner</option>
@@ -551,25 +591,25 @@
                   <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}" style="flex:1;">Cancel</button>
                 </div>
               `;
-            } else if (order.status === "Out for Delivery") {
-              actionsHTML = `
+          } else if (order.status === "Out for Delivery") {
+            actionsHTML = `
                 <button class="admin-action-btn fulfill-btn" data-action="Fulfilled" data-id="${order.id}">Fulfill</button>
                 <button class="admin-action-btn cancel-btn" data-action="Cancelled" data-id="${order.id}">Cancel</button>
               `;
-            } else {
-              // Fulfilled or Cancelled
-              actionsHTML = `
+          } else {
+            // Fulfilled or Cancelled
+            actionsHTML = `
                 <button class="admin-action-btn cancel-btn" data-action="Delete" data-id="${order.id}" style="background: #fbf9f4; color: var(--muted); border: 1px solid var(--line);">Delete Log</button>
               `;
-            }
+          }
 
-            const cleanPhone = (order.details.phone || "").replace(/[^0-9+]/g, "");
-            
-            // Render exact map location embed
-            let mapEmbedHTML = "";
-            if (order.details.latitude && order.details.longitude) {
-              const query = `${order.details.latitude},${order.details.longitude}`;
-              mapEmbedHTML = `
+          const cleanPhone = (order.details.phone || "").replace(/[^0-9+]/g, "");
+
+          // Render exact map location embed
+          let mapEmbedHTML = "";
+          if (order.details.latitude && order.details.longitude) {
+            const query = `${order.details.latitude},${order.details.longitude}`;
+            mapEmbedHTML = `
                 <div class="admin-info-block" style="margin-top: 10px;">
                   <label>Exact GPS Location Map</label>
                   <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed" width="100%" height="160" style="border:1px solid var(--line); border-radius:var(--radius); display:block; margin-top:6px;" allowfullscreen="" loading="lazy"></iframe>
@@ -578,8 +618,8 @@
                   </div>
                 </div>
               `;
-            } else if (order.details.address && order.details.service === "No-contact delivery") {
-              mapEmbedHTML = `
+          } else if (order.details.address && order.details.service === "No-contact delivery") {
+            mapEmbedHTML = `
                 <div class="admin-info-block" style="margin-top: 10px;">
                   <label>Exact Address Location Map</label>
                   <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(order.details.address)}&z=16&output=embed" width="100%" height="160" style="border:1px solid var(--line); border-radius:var(--radius); display:block; margin-top:6px;" allowfullscreen="" loading="lazy"></iframe>
@@ -588,18 +628,18 @@
                   </div>
                 </div>
               `;
-            }
+          }
 
-            let statusBadgeContent = order.status;
-            if (order.status === "Out for Delivery") {
-              if (order.partnerAccepted) {
-                statusBadgeContent = `Out for Delivery ✓ (Accepted by ${order.deliveryPartner})`;
-              } else {
-                statusBadgeContent = `Out for Delivery ⏳ (Waiting for Partner)`;
-              }
+          let statusBadgeContent = order.status;
+          if (order.status === "Out for Delivery") {
+            if (order.partnerAccepted) {
+              statusBadgeContent = `Out for Delivery ✓ (Accepted by ${order.deliveryPartner})`;
+            } else {
+              statusBadgeContent = `Out for Delivery ⏳ (Waiting for Partner)`;
             }
+          }
 
-            return `
+          return `
               <article class="admin-order-card ${cardStatusClass}">
                 <header class="admin-card-header">
                   <div class="admin-card-header-left">
@@ -643,9 +683,9 @@
                       <div style="margin-top: 6px;">
                         <span class="admin-delivery-code ${order.status === 'Fulfilled' ? 'verified' : ''}">
                           <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px;">
-                            <path fill="currentColor" d="${order.status === 'Fulfilled' 
-                              ? 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z' 
-                              : 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'}"/>
+                            <path fill="currentColor" d="${order.status === 'Fulfilled'
+                ? 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z'
+                : 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'}"/>
                           </svg>
                           ${order.deliveryCode}
                         </span>
@@ -671,331 +711,331 @@
                 </footer>
               </article>
             `;
-          })
-          .join("");
-      }
+        })
+        .join("");
+    }
 
-      async function handleCancelItem(orderId, itemName) {
-        if (!confirm(`Are you sure you want to cancel the item "${itemName}"? This will mark it out of stock.`)) return;
-        
-        try {
-          const res = await fetch(ORDERS_API_URL, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ action: "cancel-item", id: orderId, itemName }),
-          });
-          if (!res.ok) throw new Error(`Cancel item failed (${res.status})`);
-          
-          await syncOrdersFromApi();
-          try { await syncInventoryFromApi(); } catch {}
-          
-          renderOrders();
-          if (currentView === "inventory") {
-            renderInventory();
-            renderStockDeductions();
-          }
-          showToast(`Item ${itemName} cancelled`);
-        } catch (e) {
-          console.error(e);
-          showToast(`⚠️ Failed to cancel item: ${e.message}`);
-        }
-      }
+    async function handleCancelItem(orderId, itemName) {
+      if (!confirm(`Are you sure you want to cancel the item "${itemName}"? This will mark it out of stock.`)) return;
 
-      async function handleAction(orderId, action, deliveryPartner = "") {
-        if (action === "Delete") {
-          if (!confirm(`Are you sure you want to delete order #${orderId} from logs?`)) return;
-          try {
-            const res = await fetch(ORDERS_API_URL, {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({ id: orderId }),
-            });
-            if (!res.ok) throw new Error(`Delete failed (${res.status})`);
-            await syncOrdersFromApi();
-            showToast("Order log deleted");
-          } catch (e) {
-            console.error(e);
-            showToast(`⚠️ Failed to delete order: ${e.message}`);
-          }
-        } else {
-          try {
-            const payload = { id: orderId, status: action };
-            if (action === "Out for Delivery" && deliveryPartner) {
-              payload.deliveryPartner = deliveryPartner;
-            }
+      try {
+        const res = await fetch(ORDERS_API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ action: "cancel-item", id: orderId, itemName }),
+        });
+        if (!res.ok) throw new Error(`Cancel item failed (${res.status})`);
 
-            const res = await fetch(ORDERS_API_URL, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify(payload),
-            });
-            if (!res.ok) throw new Error(`Update failed (${res.status})`);
-            const data = await res.json().catch(() => ({}));
-            await syncOrdersFromApi();
-            // Also refresh inventory since cancellation restores stock
-            if (data?.inventory) {
-              saveInventoryLocal(data.inventory);
-            } else {
-              try { await syncInventoryFromApi(); } catch {}
-            }
-            showToast(`Order status updated to ${action}`);
-          } catch (e) {
-            console.error(e);
-            showToast(`⚠️ Failed to update order: ${e.message}`);
-          }
-        }
+        await syncOrdersFromApi();
+        try { await syncInventoryFromApi(); } catch { }
+
         renderOrders();
         if (currentView === "inventory") {
           renderInventory();
           renderStockDeductions();
         }
+        showToast(`Item ${itemName} cancelled`);
+      } catch (e) {
+        console.error(e);
+        showToast(`⚠️ Failed to cancel item: ${e.message}`);
       }
+    }
 
-      // Generate realistic mock order for testing
-      async function generateMockOrder() {
-        const mockNames = ["Rahul Kumar", "Anjali Singh", "Mohammad Saif", "Vikram Rathore", "Priya Sharma", "Aman Verma"];
-        const mockPhones = ["+91 9876543210", "+91 8765432109", "+91 7654321098", "+91 9123456789", "+91 9988776655"];
-        const mockAddresses = [
-          "Ward No. 5, Near Ram Mandir, Tajpur, Samastipur",
-          "Agarwal Complex Area, Tajpur Bazar Road",
-          "Near Station Road, Tajpur, Bihar",
-          "Gandhi Chowk, Samastipur Road, Tajpur"
-        ];
-        const availableItems = readInventory().filter(item => item.available && item.stock > 0);
-        if (availableItems.length === 0) {
-          showToast("No available items in inventory to mock an order!");
-          return;
-        }
-
-        const name = mockNames[Math.floor(Math.random() * mockNames.length)];
-        const phone = mockPhones[Math.floor(Math.random() * mockPhones.length)];
-        const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
-        const service = Math.random() > 0.3 ? "No-contact delivery" : "Dine-in";
-        const payment = Math.random() > 0.5 ? "UPI" : "Cash";
-        
-        const numItems = Math.floor(Math.random() * 3) + 1;
-        const selectedItems = [];
-        let total = 0;
-        
-        for (let i = 0; i < numItems; i++) {
-          const item = availableItems[Math.floor(Math.random() * availableItems.length)];
-          const qty = Math.floor(Math.random() * 2) + 1;
-          const existing = selectedItems.find(x => x.name === item.name);
-          if (existing) {
-            existing.qty += qty;
-          } else {
-            selectedItems.push({ name: item.name, price: item.price, category: item.category, qty: qty });
-          }
-        }
-        selectedItems.forEach(x => { total += x.price * x.qty; });
-
-        const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
-        const details = {
-          name, phone,
-          address: service === "No-contact delivery" ? address : "",
-          mapLink: service === "No-contact delivery" ? `https://www.google.com/maps?q=25.899200,85.679500` : "",
-          service, time: "As soon as possible", payment,
-          notes: Math.random() > 0.5 ? "Make it fresh and hot!" : ""
-        };
-
+    async function handleAction(orderId, action, deliveryPartner = "") {
+      if (action === "Delete") {
+        if (!confirm(`Are you sure you want to delete order #${orderId} from logs?`)) return;
         try {
           const res = await fetch(ORDERS_API_URL, {
-            method: "POST",
+            method: "DELETE",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ id, details, cart: selectedItems, total }),
+            body: JSON.stringify({ id: orderId }),
           });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data?.error || data?.message || "API rejected mock order");
-          }
+          if (!res.ok) throw new Error(`Delete failed (${res.status})`);
           await syncOrdersFromApi();
-          try { await syncInventoryFromApi(); } catch {}
-          renderOrders();
-          if (currentView === "inventory") { renderInventory(); renderStockDeductions(); }
-          showToast("Mock order generated!");
+          showToast("Order log deleted");
         } catch (e) {
           console.error(e);
-          showToast(`⚠️ Mock order failed: ${e.message}`);
+          showToast(`⚠️ Failed to delete order: ${e.message}`);
         }
-      }
-
-      // VIEW SWITCHING CONTROL
-      const btnOrdersView = document.querySelector("#tab-orders-view");
-      const btnInventoryView = document.querySelector("#tab-inventory-view");
-      const ordersContainer = document.querySelector("#orders-view-container");
-      const inventoryContainer = document.querySelector("#inventory-view-container");
-      
-      const adminMainTitle = document.querySelector("#admin-main-title");
-      const adminMainSubtitle = document.querySelector("#admin-main-subtitle");
-
-      let currentView = "orders";
-
-      function switchView(view) {
-        currentView = view;
-        if (view === "orders") {
-          btnOrdersView.className = "button primary";
-          btnInventoryView.className = "button ghost";
-          btnInventoryView.style.borderColor = "var(--line)";
-          ordersContainer.style.display = "block";
-          inventoryContainer.style.display = "none";
-          adminMainTitle.textContent = "Admin Dashboard";
-          adminMainSubtitle.textContent = "Manage customer orders, track sales, and process fulfillments.";
-          renderOrders();
-        } else {
-          btnOrdersView.className = "button ghost";
-          btnOrdersView.style.borderColor = "var(--line)";
-          btnInventoryView.className = "button primary";
-          ordersContainer.style.display = "none";
-          inventoryContainer.style.display = "block";
-          adminMainTitle.textContent = "Inventory Management";
-          adminMainSubtitle.textContent = "Manage menu pricing, stock availability, and catalog listings.";
-          syncInventoryFromApi()
-            .then(() => renderInventory())
-            .catch(() => renderInventory());
-          renderStockDeductions();
-        }
-      }
-
-      btnOrdersView.addEventListener("click", () => switchView("orders"));
-      btnInventoryView.addEventListener("click", () => switchView("inventory"));
-
-      // INVENTORY LOGIC
-      const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
-      const inventoryTbody = document.querySelector("#inventory-tbody");
-      const inventorySearch = document.querySelector("#inventory-search");
-      const addItemForm = document.querySelector("#add-item-form");
-
-      let inventorySearchPhrase = "";
-      let inventoryFilter = "All";
-
-      function readInventory() {
+      } else {
         try {
-          return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
-        } catch {
-          return [];
-        }
-      }
-
-      async function compressImage(file, maxDimension = 600, quality = 0.6) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-              let width = img.width;
-              let height = img.height;
-              if (width > height) {
-                if (width > maxDimension) {
-                  height *= maxDimension / width;
-                  width = maxDimension;
-                }
-              } else {
-                if (height > maxDimension) {
-                  width *= maxDimension / height;
-                  height = maxDimension;
-                }
-              }
-              const canvas = document.createElement('canvas');
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = (err) => reject(err);
-          };
-          reader.onerror = (err) => reject(err);
-        });
-      }
-
-      function saveInventoryLocal(inventory) {
-        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-        window.dispatchEvent(new Event("storage"));
-      }
-
-      async function saveInventory(inventory) {
-        // Update UI immediately.
-        saveInventoryLocal(inventory);
-
-        // Persist globally (admin changes should affect all visitors).
-        try {
-          const res = await fetch(INVENTORY_API_URL, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ inventory }),
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
+          const payload = { id: orderId, status: action };
+          if (action === "Out for Delivery" && deliveryPartner) {
+            payload.deliveryPartner = deliveryPartner;
           }
+
+          const res = await fetch(ORDERS_API_URL, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error(`Update failed (${res.status})`);
+          const data = await res.json().catch(() => ({}));
+          await syncOrdersFromApi();
+          // Also refresh inventory since cancellation restores stock
+          if (data?.inventory) {
+            saveInventoryLocal(data.inventory);
+          } else {
+            try { await syncInventoryFromApi(); } catch { }
+          }
+          showToast(`Order status updated to ${action}`);
         } catch (e) {
-          console.error("Inventory persist failed:", e);
-          showToast(`⚠️ Failed to save to server: ${e.message}`);
+          console.error(e);
+          showToast(`⚠️ Failed to update order: ${e.message}`);
         }
       }
+      renderOrders();
+      if (currentView === "inventory") {
+        renderInventory();
+        renderStockDeductions();
+      }
+    }
 
-      async function syncInventoryFromApi() {
-        const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+    // Generate realistic mock order for testing
+    async function generateMockOrder() {
+      const mockNames = ["Rahul Kumar", "Anjali Singh", "Mohammad Saif", "Vikram Rathore", "Priya Sharma", "Aman Verma"];
+      const mockPhones = ["+91 9876543210", "+91 8765432109", "+91 7654321098", "+91 9123456789", "+91 9988776655"];
+      const mockAddresses = [
+        "Ward No. 5, Near Ram Mandir, Tajpur, Samastipur",
+        "Agarwal Complex Area, Tajpur Bazar Road",
+        "Near Station Road, Tajpur, Bihar",
+        "Gandhi Chowk, Samastipur Road, Tajpur"
+      ];
+      const availableItems = readInventory().filter(item => item.available && item.stock > 0);
+      if (availableItems.length === 0) {
+        showToast("No available items in inventory to mock an order!");
+        return;
+      }
+
+      const name = mockNames[Math.floor(Math.random() * mockNames.length)];
+      const phone = mockPhones[Math.floor(Math.random() * mockPhones.length)];
+      const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
+      const service = Math.random() > 0.3 ? "No-contact delivery" : "Dine-in";
+      const payment = Math.random() > 0.5 ? "UPI" : "Cash";
+
+      const numItems = Math.floor(Math.random() * 3) + 1;
+      const selectedItems = [];
+      let total = 0;
+
+      for (let i = 0; i < numItems; i++) {
+        const item = availableItems[Math.floor(Math.random() * availableItems.length)];
+        const qty = Math.floor(Math.random() * 2) + 1;
+        const existing = selectedItems.find(x => x.name === item.name);
+        if (existing) {
+          existing.qty += qty;
+        } else {
+          selectedItems.push({ name: item.name, price: item.price, category: item.category, qty: qty });
+        }
+      }
+      selectedItems.forEach(x => { total += x.price * x.qty; });
+
+      const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
+      const details = {
+        name, phone,
+        address: service === "No-contact delivery" ? address : "",
+        mapLink: service === "No-contact delivery" ? `https://www.google.com/maps?q=25.899200,85.679500` : "",
+        service, time: "As soon as possible", payment,
+        notes: Math.random() > 0.5 ? "Make it fresh and hot!" : ""
+      };
+
+      try {
+        const res = await fetch(ORDERS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ id, details, cart: selectedItems, total }),
+        });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || data?.message || `Inventory sync failed (${res.status})`);
+          throw new Error(data?.error || data?.message || "API rejected mock order");
         }
-        const inventory = await res.json();
-        if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
-        saveInventoryLocal(inventory);
-        return inventory;
+        await syncOrdersFromApi();
+        try { await syncInventoryFromApi(); } catch { }
+        renderOrders();
+        if (currentView === "inventory") { renderInventory(); renderStockDeductions(); }
+        showToast("Mock order generated!");
+      } catch (e) {
+        console.error(e);
+        showToast(`⚠️ Mock order failed: ${e.message}`);
       }
+    }
 
-      function renderInventory() {
-        const inventory = readInventory();
-        const search = inventorySearchPhrase.toLowerCase();
+    // VIEW SWITCHING CONTROL
+    const btnOrdersView = document.querySelector("#tab-orders-view");
+    const btnInventoryView = document.querySelector("#tab-inventory-view");
+    const ordersContainer = document.querySelector("#orders-view-container");
+    const inventoryContainer = document.querySelector("#inventory-view-container");
 
-        const filtered = inventory.filter((item) => {
-          const matchSearch = !search || 
-            item.name.toLowerCase().includes(search) || 
-            item.category.toLowerCase().includes(search) || 
-            item.type.toLowerCase().includes(search);
-            
-          const isOutOfStock = item.stock <= 0 || !item.available;
-          const isLowStock = item.stock > 0 && item.stock < 10;
-          
-          let matchFilter = true;
-          if (inventoryFilter === "Low Stock") matchFilter = isLowStock;
-          if (inventoryFilter === "Out of Stock") matchFilter = isOutOfStock;
-          
-          return matchSearch && matchFilter;
+    const adminMainTitle = document.querySelector("#admin-main-title");
+    const adminMainSubtitle = document.querySelector("#admin-main-subtitle");
+
+    let currentView = "orders";
+
+    function switchView(view) {
+      currentView = view;
+      if (view === "orders") {
+        btnOrdersView.className = "button primary";
+        btnInventoryView.className = "button ghost";
+        btnInventoryView.style.borderColor = "var(--line)";
+        ordersContainer.style.display = "block";
+        inventoryContainer.style.display = "none";
+        adminMainTitle.textContent = "Admin Dashboard";
+        adminMainSubtitle.textContent = "Manage customer orders, track sales, and process fulfillments.";
+        renderOrders();
+      } else {
+        btnOrdersView.className = "button ghost";
+        btnOrdersView.style.borderColor = "var(--line)";
+        btnInventoryView.className = "button primary";
+        ordersContainer.style.display = "none";
+        inventoryContainer.style.display = "block";
+        adminMainTitle.textContent = "Inventory Management";
+        adminMainSubtitle.textContent = "Manage menu pricing, stock availability, and catalog listings.";
+        syncInventoryFromApi()
+          .then(() => renderInventory())
+          .catch(() => renderInventory());
+        renderStockDeductions();
+      }
+    }
+
+    btnOrdersView.addEventListener("click", () => switchView("orders"));
+    btnInventoryView.addEventListener("click", () => switchView("inventory"));
+
+    // INVENTORY LOGIC
+    const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+    const inventoryTbody = document.querySelector("#inventory-tbody");
+    const inventorySearch = document.querySelector("#inventory-search");
+    const addItemForm = document.querySelector("#add-item-form");
+
+    let inventorySearchPhrase = "";
+    let inventoryFilter = "All";
+
+    function readInventory() {
+      try {
+        return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function compressImage(file, maxDimension = 600, quality = 0.6) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxDimension) {
+                height *= maxDimension / width;
+                width = maxDimension;
+              }
+            } else {
+              if (height > maxDimension) {
+                width *= maxDimension / height;
+                height = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+      });
+    }
+
+    function saveInventoryLocal(inventory) {
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      window.dispatchEvent(new Event("storage"));
+    }
+
+    async function saveInventory(inventory) {
+      // Update UI immediately.
+      saveInventoryLocal(inventory);
+
+      // Persist globally (admin changes should affect all visitors).
+      try {
+        const res = await fetch(INVENTORY_API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ inventory }),
         });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
+        }
+      } catch (e) {
+        console.error("Inventory persist failed:", e);
+        showToast(`⚠️ Failed to save to server: ${e.message}`);
+      }
+    }
 
-        if (filtered.length === 0) {
-          inventoryTbody.innerHTML = `
+    async function syncInventoryFromApi() {
+      const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || data?.message || `Inventory sync failed (${res.status})`);
+      }
+      const inventory = await res.json();
+      if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+      saveInventoryLocal(inventory);
+      return inventory;
+    }
+
+    function renderInventory() {
+      const inventory = readInventory();
+      const search = inventorySearchPhrase.toLowerCase();
+
+      const filtered = inventory.filter((item) => {
+        const matchSearch = !search ||
+          item.name.toLowerCase().includes(search) ||
+          item.category.toLowerCase().includes(search) ||
+          item.type.toLowerCase().includes(search);
+
+        const isOutOfStock = item.stock <= 0 || !item.available;
+        const isLowStock = item.stock > 0 && item.stock < 10;
+
+        let matchFilter = true;
+        if (inventoryFilter === "Low Stock") matchFilter = isLowStock;
+        if (inventoryFilter === "Out of Stock") matchFilter = isOutOfStock;
+
+        return matchSearch && matchFilter;
+      });
+
+      if (filtered.length === 0) {
+        inventoryTbody.innerHTML = `
             <tr>
               <td colspan="5" style="text-align: center; padding: 24px; color: var(--muted);">
                 No inventory items found.
               </td>
             </tr>
           `;
-          return;
-        }
+        return;
+      }
 
-        inventoryTbody.innerHTML = filtered
-          .map((item) => {
-            const isOutOfStock = item.stock <= 0;
-            const isUnavailable = !item.available;
-            
-            let stockStatus = "";
-            if (isUnavailable || isOutOfStock) {
-              stockStatus = `<span class="status-badge status-cancelled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
-            } else if (item.stock < 10) {
-              stockStatus = `<span class="status-badge status-pending" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Low Stock (${item.stock})</span>`;
-            } else {
-              stockStatus = `<span class="status-badge status-fulfilled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">In Stock (${item.stock})</span>`;
-            }
+      inventoryTbody.innerHTML = filtered
+        .map((item) => {
+          const isOutOfStock = item.stock <= 0;
+          const isUnavailable = !item.available;
 
-            return `
+          let stockStatus = "";
+          if (isUnavailable || isOutOfStock) {
+            stockStatus = `<span class="status-badge status-cancelled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
+          } else if (item.stock < 10) {
+            stockStatus = `<span class="status-badge status-pending" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">Low Stock (${item.stock})</span>`;
+          } else {
+            stockStatus = `<span class="status-badge status-fulfilled" style="font-size: 0.68rem; padding: 2px 8px; font-weight:900;">In Stock (${item.stock})</span>`;
+          }
+
+          return `
               <tr style="border-bottom: 1px solid var(--line); vertical-align: middle;">
-                <td style="padding: 12px 8px;">
+                <td data-label="Details" style="padding: 12px 8px;">
                   <div style="display: flex; gap: 10px; align-items: flex-start;">
                     ${item.image ? `<img src="${item.image}" style="width:48px;height:48px;border-radius:4px;object-fit:cover;flex-shrink:0;" alt="">` : ''}
                     <div>
@@ -1010,17 +1050,17 @@
                     </div>
                   </div>
                 </td>
-                <td style="padding: 12px 8px;">
+                <td data-label="Price (₹)" style="padding: 12px 8px;">
                   <input type="number" min="0" value="${item.price}" class="price-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
                 </td>
-                <td style="padding: 12px 8px;">
+                <td data-label="Stock Level" style="padding: 12px 8px;">
                   <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
                   <div style="margin-top: 6px;">${stockStatus}</div>
                 </td>
-                <td style="padding: 12px 8px;">
+                <td data-label="Available" style="padding: 12px 8px;">
                   <input type="checkbox" class="avail-checkbox" data-name="${item.name}" ${item.available ? "checked" : ""} style="width: 18px; height: 18px; margin: 0; cursor:pointer;" />
                 </td>
-                <td style="padding: 12px 8px; text-align: right;">
+                <td data-label="Actions" style="padding: 12px 8px; text-align: right;">
                   <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="button primary btn-quick-save" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; display:inline-flex; align-items:center; justify-content:center;">Save</button>
                     <button class="button ghost btn-quick-delete" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; border-color: var(--tomato); color: var(--tomato-dark); display:inline-flex; align-items:center; justify-content:center;">Delete</button>
@@ -1028,175 +1068,175 @@
                 </td>
               </tr>
             `;
-          })
-          .join("");
-      }
+        })
+        .join("");
+    }
 
-      async function handleQuickSave(name, trElement) {
-        const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
-        const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
-        const availVal = trElement.querySelector(".avail-checkbox").checked;
+    async function handleQuickSave(name, trElement) {
+      const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
+      const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
+      const availVal = trElement.querySelector(".avail-checkbox").checked;
 
-        const inventory = readInventory();
-        const item = inventory.find((x) => x.name === name);
-        if (item) {
-          item.price = priceVal;
-          item.stock = stockVal;
-          item.available = availVal;
-          await saveInventory(inventory);
-          showToast(`Updated ${name}`);
-          renderInventory();
-        }
-      }
-
-      async function handleQuickDelete(name) {
-        if (!confirm(`Are you sure you want to delete "${name}" from the inventory menu?`)) return;
-        const inventory = readInventory();
-        const filtered = inventory.filter((x) => x.name !== name);
-        await saveInventory(filtered);
-        showToast(`Deleted ${name}`);
+      const inventory = readInventory();
+      const item = inventory.find((x) => x.name === name);
+      if (item) {
+        item.price = priceVal;
+        item.stock = stockVal;
+        item.available = availVal;
+        await saveInventory(inventory);
+        showToast(`Updated ${name}`);
         renderInventory();
       }
+    }
 
-      async function addNewItem(e) {
-        e.preventDefault();
-        const name = document.querySelector("#new-item-name").value.trim();
-        const category = document.querySelector("#new-item-category").value;
-        const type = document.querySelector("#new-item-type").value;
-        const desc = document.querySelector("#new-item-desc").value.trim();
-        const stock = Number(document.querySelector("#new-item-stock").value) || 0;
+    async function handleQuickDelete(name) {
+      if (!confirm(`Are you sure you want to delete "${name}" from the inventory menu?`)) return;
+      const inventory = readInventory();
+      const filtered = inventory.filter((x) => x.name !== name);
+      await saveInventory(filtered);
+      showToast(`Deleted ${name}`);
+      renderInventory();
+    }
 
-        // Read image and compress it to reduce payload size
-        const imageFile = document.querySelector("#new-item-image").files[0];
-        let imageBase64 = null;
-        if (imageFile) {
-          try {
-            // Compress image to max 600px dimension and 60% JPEG quality
-            imageBase64 = await compressImage(imageFile, 600, 0.6);
-          } catch (err) {
-            console.error("Image compression failed", err);
-            alert("Failed to process image. Try a different file.");
-            return;
-          }
-        }
+    async function addNewItem(e) {
+      e.preventDefault();
+      const name = document.querySelector("#new-item-name").value.trim();
+      const category = document.querySelector("#new-item-category").value;
+      const type = document.querySelector("#new-item-type").value;
+      const desc = document.querySelector("#new-item-desc").value.trim();
+      const stock = Number(document.querySelector("#new-item-stock").value) || 0;
 
-        // Read variations
-        const variations = Array.from(document.querySelectorAll('#variations-container .variation-row')).map(row => ({
-          name: row.querySelector('.var-name').value.trim(),
-          price: Number(row.querySelector('.var-price').value) || 0
-        })).filter(v => v.name && v.price > 0);
-
-        if (variations.length === 0) {
-          alert("Please add at least one variation with a name and price.");
+      // Read image and compress it to reduce payload size
+      const imageFile = document.querySelector("#new-item-image").files[0];
+      let imageBase64 = null;
+      if (imageFile) {
+        try {
+          // Compress image to max 600px dimension and 60% JPEG quality
+          imageBase64 = await compressImage(imageFile, 600, 0.6);
+        } catch (err) {
+          console.error("Image compression failed", err);
+          alert("Failed to process image. Try a different file.");
           return;
         }
+      }
 
-        const inventory = readInventory();
-        if (inventory.some((x) => x.name.toLowerCase() === name.toLowerCase())) {
-          alert("An item with this name already exists in catalog.");
-          return;
-        }
+      // Read variations
+      const variations = Array.from(document.querySelectorAll('#variations-container .variation-row')).map(row => ({
+        name: row.querySelector('.var-name').value.trim(),
+        price: Number(row.querySelector('.var-price').value) || 0
+      })).filter(v => v.name && v.price > 0);
 
-        const newItem = {
-          name,
-          category,
-          type,
-          desc,
-          price: variations[0].price,
-          variations,
-          stock,
-          available: true
-        };
-        if (imageBase64) newItem.image = imageBase64;
+      if (variations.length === 0) {
+        alert("Please add at least one variation with a name and price.");
+        return;
+      }
 
-        inventory.push(newItem);
-        await saveInventory(inventory);
-        showToast(`Added ${name} to catalog!`);
-        addItemForm.reset();
-        document.querySelector("#new-item-image-preview").style.display = "none";
-        // Reset variations container
-        document.querySelector("#variations-container").innerHTML = `
+      const inventory = readInventory();
+      if (inventory.some((x) => x.name.toLowerCase() === name.toLowerCase())) {
+        alert("An item with this name already exists in catalog.");
+        return;
+      }
+
+      const newItem = {
+        name,
+        category,
+        type,
+        desc,
+        price: variations[0].price,
+        variations,
+        stock,
+        available: true
+      };
+      if (imageBase64) newItem.image = imageBase64;
+
+      inventory.push(newItem);
+      await saveInventory(inventory);
+      showToast(`Added ${name} to catalog!`);
+      addItemForm.reset();
+      document.querySelector("#new-item-image-preview").style.display = "none";
+      // Reset variations container
+      document.querySelector("#variations-container").innerHTML = `
           <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
             <input type="text" class="var-name" placeholder="e.g. Regular" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" />
             <input type="number" class="var-price" placeholder="Price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
             <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
           </div>
         `;
-        bindVarRemoveButtons();
-        renderInventory();
-      }
-
-      // === Variation row add/remove logic ===
-      function bindVarRemoveButtons() {
-        document.querySelectorAll('.remove-var-btn').forEach(btn => {
-          btn.onclick = () => {
-            if (document.querySelectorAll('.variation-row').length > 1) {
-              btn.closest('.variation-row').remove();
-            } else {
-              alert("You must have at least one variation.");
-            }
-          };
-        });
-      }
       bindVarRemoveButtons();
+      renderInventory();
+    }
 
-      document.getElementById('add-variation-btn').addEventListener('click', () => {
-        const container = document.getElementById('variations-container');
-        const row = document.createElement('div');
-        row.className = 'variation-row';
-        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;';
-        row.innerHTML = `
+    // === Variation row add/remove logic ===
+    function bindVarRemoveButtons() {
+      document.querySelectorAll('.remove-var-btn').forEach(btn => {
+        btn.onclick = () => {
+          if (document.querySelectorAll('.variation-row').length > 1) {
+            btn.closest('.variation-row').remove();
+          } else {
+            alert("You must have at least one variation.");
+          }
+        };
+      });
+    }
+    bindVarRemoveButtons();
+
+    document.getElementById('add-variation-btn').addEventListener('click', () => {
+      const container = document.getElementById('variations-container');
+      const row = document.createElement('div');
+      row.className = 'variation-row';
+      row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;';
+      row.innerHTML = `
           <input type="text" class="var-name" placeholder="e.g. 1kg" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
           <input type="number" class="var-price" placeholder="Price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
           <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
         `;
-        container.appendChild(row);
-        bindVarRemoveButtons();
-      });
+      container.appendChild(row);
+      bindVarRemoveButtons();
+    });
 
-      // === Image preview ===
-      document.getElementById('new-item-image').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const preview = document.getElementById('new-item-image-preview');
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => { preview.src = ev.target.result; preview.style.display = 'block'; };
-          reader.readAsDataURL(file);
-        } else {
-          preview.style.display = 'none';
-        }
-      });
+    // === Image preview ===
+    document.getElementById('new-item-image').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const preview = document.getElementById('new-item-image-preview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { preview.src = ev.target.result; preview.style.display = 'block'; };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = 'none';
+      }
+    });
 
-      function renderStockDeductions() {
-        const logContainer = document.querySelector("#stock-deductions-log");
-        if (!logContainer) return;
+    function renderStockDeductions() {
+      const logContainer = document.querySelector("#stock-deductions-log");
+      if (!logContainer) return;
 
-        const orders = readOrders();
-        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const orders = readOrders();
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        const logs = [];
-        orders.forEach((order) => {
-          const items = order.items || order.cart || [];
-          items.forEach((item) => {
-            logs.push({
-              orderId: order.id,
-              date: new Date(order.createdAt).toLocaleString(),
-              name: item.name,
-              qty: item.qty,
-              total: item.price * item.qty,
-              status: order.status
-            });
+      const logs = [];
+      orders.forEach((order) => {
+        const items = order.items || order.cart || [];
+        items.forEach((item) => {
+          logs.push({
+            orderId: order.id,
+            date: new Date(order.createdAt).toLocaleString(),
+            name: item.name,
+            qty: item.qty,
+            total: item.price * item.qty,
+            status: order.status
           });
         });
+      });
 
-        if (logs.length === 0) {
-          logContainer.innerHTML = `<p style="color: var(--muted); margin: 0; font-style: italic;">No stock deductions recorded yet.</p>`;
-          return;
-        }
+      if (logs.length === 0) {
+        logContainer.innerHTML = `<p style="color: var(--muted); margin: 0; font-style: italic;">No stock deductions recorded yet.</p>`;
+        return;
+      }
 
-        logContainer.innerHTML = logs
-          .map((log) => {
-            return `
+      logContainer.innerHTML = logs
+        .map((log) => {
+          return `
               <div style="padding: 10px; border: 1px solid var(--line); border-radius: 4px; background: #faf8f5; display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.72rem;">
                   <span style="color: var(--cobalt); font-weight:900;">Order #${log.orderId.split("-")[2] || log.orderId}</span>
@@ -1210,160 +1250,137 @@
                 </div>
               </div>
             `;
-          })
-          .join("");
-      }
+        })
+        .join("");
+    }
 
-      async function bootAdmin() {
-        // Sync both orders AND inventory from API on startup
-        try {
-          await syncOrdersFromApi();
-        } catch (e) {
-          console.warn("Initial orders sync skipped:", e);
+    async function bootAdmin() {
+      // Sync both orders AND inventory from API on startup
+      try {
+        await syncOrdersFromApi();
+      } catch (e) {
+        console.warn("Initial orders sync skipped:", e);
+      }
+      try {
+        await syncInventoryFromApi();
+      } catch (e) {
+        console.warn("Initial inventory sync skipped:", e);
+      }
+      renderOrders();
+      renderInventory();
+      renderStockDeductions();
+
+      // Listen for storage events (updates from other tabs)
+      window.addEventListener("storage", (event) => {
+        if (event.key === ALL_ORDERS_KEY || event.key === null) {
+          renderOrders();
+          if (currentView === "inventory") renderStockDeductions();
         }
-        try {
-          await syncInventoryFromApi();
-        } catch (e) {
-          console.warn("Initial inventory sync skipped:", e);
+        if (event.key === INVENTORY_STORAGE_KEY || event.key === null) {
+          if (currentView === "inventory") renderInventory();
         }
+      });
+
+
+
+      // Search trigger
+      searchInput.addEventListener("input", (e) => {
+        searchPhrase = e.target.value.trim().toLowerCase();
         renderOrders();
+      });
+
+      // Tab triggers
+      filterTabs.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-filter]");
+        if (!tab) return;
+
+        document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentFilter = tab.dataset.filter;
+        renderOrders();
+      });
+
+      // Order card action button triggers
+      ordersList.addEventListener("click", (e) => {
+        const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
+        if (cancelItemBtn) {
+          handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
+          return;
+        }
+
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+
+        let deliveryPartner = "";
+        if (btn.dataset.action === "Out for Delivery") {
+          const select = document.getElementById(`delivery-select-${btn.dataset.id}`);
+          if (select) deliveryPartner = select.value;
+        }
+
+        handleAction(btn.dataset.id, btn.dataset.action, deliveryPartner);
+      });
+
+      // Mock Order Generator trigger
+      document.querySelector("#btn-mock-order").addEventListener("click", generateMockOrder);
+
+      // Clear All trigger
+      document.querySelector("#btn-clear-all").addEventListener("click", async () => {
+        if (!confirm("Are you SURE you want to clear ALL orders? This cannot be undone!")) return;
+        const orders = readOrders();
+        // Delete each order from server
+        for (const order of orders) {
+          try {
+            await fetch(ORDERS_API_URL, {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({ id: order.id }),
+            });
+          } catch { }
+        }
+        await syncOrdersFromApi();
+        renderOrders();
+        showToast("All order logs cleared");
+      });
+
+      // Inventory search trigger
+      inventorySearch.addEventListener("input", (e) => {
+        inventorySearchPhrase = e.target.value.trim().toLowerCase();
         renderInventory();
-        renderStockDeductions();
+      });
 
-        // Listen for storage events (updates from other tabs)
-        window.addEventListener("storage", (event) => {
-          if (event.key === ALL_ORDERS_KEY || event.key === null) {
-            renderOrders();
-            if (currentView === "inventory") renderStockDeductions();
-          }
-          if (event.key === INVENTORY_STORAGE_KEY || event.key === null) {
-            if (currentView === "inventory") renderInventory();
-          }
-        });
+      // Inventory filter triggers
+      document.getElementById("inventory-filter-tabs").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
 
-        // Poll so the admin dashboard stays updated across devices.
-        window.setInterval(async () => {
-          try {
-            await syncOrdersFromApi();
-          } catch {
-            // ignore network errors
-          }
+        document.querySelectorAll("#inventory-filter-tabs button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        inventoryFilter = btn.dataset.filter;
+        renderInventory();
+      });
 
-          renderOrders();
+      // Inventory table quick save / delete triggers
+      inventoryTbody.addEventListener("click", (e) => {
+        const saveBtn = e.target.closest(".btn-quick-save");
+        if (saveBtn) {
+          const name = saveBtn.dataset.name;
+          const tr = saveBtn.closest("tr");
+          handleQuickSave(name, tr);
+          return;
+        }
 
-          try {
-            await syncInventoryFromApi();
-          } catch {
-            // ignore
-          }
+        const deleteBtn = e.target.closest(".btn-quick-delete");
+        if (deleteBtn) {
+          handleQuickDelete(deleteBtn.dataset.name);
+        }
+      });
 
-          if (currentView === "inventory") {
-            // Don't re-render while the user is actively editing an input field
-            const isEditing = inventoryTbody.querySelector("input:focus, select:focus");
-            if (!isEditing) {
-              renderInventory();
-              renderStockDeductions();
-            }
-          }
-        }, 4000);
+      // Add Catalog Item submit trigger
+      addItemForm.addEventListener("submit", addNewItem);
+    }
 
-        // Search trigger
-        searchInput.addEventListener("input", (e) => {
-          searchPhrase = e.target.value.trim().toLowerCase();
-          renderOrders();
-        });
+    bootAdmin();
+  </script>
+</body>
 
-        // Tab triggers
-        filterTabs.addEventListener("click", (e) => {
-          const tab = e.target.closest("[data-filter]");
-          if (!tab) return;
-          
-          document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));
-          tab.classList.add("active");
-          currentFilter = tab.dataset.filter;
-          renderOrders();
-        });
-
-        // Order card action button triggers
-        ordersList.addEventListener("click", (e) => {
-          const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
-          if (cancelItemBtn) {
-            handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
-            return;
-          }
-
-          const btn = e.target.closest("[data-action]");
-          if (!btn) return;
-          
-          let deliveryPartner = "";
-          if (btn.dataset.action === "Out for Delivery") {
-            const select = document.getElementById(`delivery-select-${btn.dataset.id}`);
-            if (select) deliveryPartner = select.value;
-          }
-          
-          handleAction(btn.dataset.id, btn.dataset.action, deliveryPartner);
-        });
-
-        // Mock Order Generator trigger
-        document.querySelector("#btn-mock-order").addEventListener("click", generateMockOrder);
-
-        // Clear All trigger
-        document.querySelector("#btn-clear-all").addEventListener("click", async () => {
-          if (!confirm("Are you SURE you want to clear ALL orders? This cannot be undone!")) return;
-          const orders = readOrders();
-          // Delete each order from server
-          for (const order of orders) {
-            try {
-              await fetch(ORDERS_API_URL, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify({ id: order.id }),
-              });
-            } catch {}
-          }
-          await syncOrdersFromApi();
-          renderOrders();
-          showToast("All order logs cleared");
-        });
-
-        // Inventory search trigger
-        inventorySearch.addEventListener("input", (e) => {
-          inventorySearchPhrase = e.target.value.trim().toLowerCase();
-          renderInventory();
-        });
-
-        // Inventory filter triggers
-        document.getElementById("inventory-filter-tabs").addEventListener("click", (e) => {
-          const btn = e.target.closest("button");
-          if (!btn) return;
-          
-          document.querySelectorAll("#inventory-filter-tabs button").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          inventoryFilter = btn.dataset.filter;
-          renderInventory();
-        });
-
-        // Inventory table quick save / delete triggers
-        inventoryTbody.addEventListener("click", (e) => {
-          const saveBtn = e.target.closest(".btn-quick-save");
-          if (saveBtn) {
-            const name = saveBtn.dataset.name;
-            const tr = saveBtn.closest("tr");
-            handleQuickSave(name, tr);
-            return;
-          }
-
-          const deleteBtn = e.target.closest(".btn-quick-delete");
-          if (deleteBtn) {
-            handleQuickDelete(deleteBtn.dataset.name);
-          }
-        });
-
-        // Add Catalog Item submit trigger
-        addItemForm.addEventListener("submit", addNewItem);
-      }
-
-      bootAdmin();
-    </script>
-  </body>
 </html>
