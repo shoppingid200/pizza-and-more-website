@@ -398,17 +398,32 @@ async function submitOrder(event) {
   const submitBtn = orderForm.querySelector("button[type='submit']");
   const originalBtnText = submitBtn ? submitBtn.textContent : "Place order";
   if (submitBtn) {
-    submitBtn.innerHTML = '<span style="display:inline-block; animation: pulse 1s infinite;">Processing...</span>';
     submitBtn.disabled = true;
-    submitBtn.style.opacity = "0.7";
     submitBtn.style.cursor = "wait";
+    submitBtn.innerHTML = `
+      <span class="btn-processing">
+        <span class="btn-spinner"></span>
+        <span class="btn-step-text">Verifying items...</span>
+      </span>
+    `;
   }
 
+  // Cycle through engaging step messages
+  const steps = ["Checking availability...", "Securing your order...", "Almost there..."];
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    if (submitBtn && stepIdx < steps.length) {
+      const stepText = submitBtn.querySelector(".btn-step-text");
+      if (stepText) stepText.textContent = steps[stepIdx];
+      stepIdx++;
+    }
+  }, 800);
+
   const restoreBtn = () => {
+    clearInterval(stepInterval);
     if (submitBtn) {
       submitBtn.textContent = originalBtnText;
       submitBtn.disabled = false;
-      submitBtn.style.opacity = "1";
       submitBtn.style.cursor = "pointer";
     }
   };
@@ -483,18 +498,26 @@ async function submitOrder(event) {
 
 
   confirmationBox.hidden = false;
-  
+
+  // Stop the step messages and show success on button
+  clearInterval(stepInterval);
+  if (submitBtn) {
+    submitBtn.innerHTML = '✅ Order Placed!';
+    submitBtn.style.background = 'var(--basil)';
+    submitBtn.style.color = '#fff';
+    submitBtn.style.borderColor = 'var(--basil)';
+  }
+
   const overlay = document.getElementById("order-success-overlay");
   if (overlay) {
     document.getElementById("success-order-id").textContent = `Order #${serverOrder?.id || id}`;
 
-    
-    overlay.hidden = false;
-    
+    // Show the success overlay after a brief moment on the green tick
+    setTimeout(() => { overlay.hidden = false; }, 600);
+
     setTimeout(() => {
-      overlay.hidden = true;
-      confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 3000);
+      window.location.href = "history.html";
+    }, 3600);
   } else {
     showToast("Order receipt created");
     confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -526,6 +549,27 @@ function bootScrollAnimations() {
 }
 
 function bootOrderPage() {
+  // Auto-remove out-of-stock items from cart on page load
+  try {
+    const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+    const invMap = new Map(inventory.map(i => [i.name, i]));
+    const removedItems = [];
+    cart = cart.filter(item => {
+      const inv = invMap.get(item.name);
+      if (inv && (!inv.available || inv.stock <= 0)) {
+        removedItems.push(item.name);
+        return false;
+      }
+      return true;
+    });
+    if (removedItems.length > 0) {
+      saveCart();
+      showToast(`Removed out-of-stock: ${removedItems.join(", ")}`);
+    }
+  } catch (e) {
+    // ignore
+  }
+
   renderCart();
   bootScrollAnimations();
 
