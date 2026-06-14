@@ -177,21 +177,23 @@ module.exports = async (req, res) => {
       };
 
       const nextOrders = Array.isArray(ordersExisting) ? [...ordersExisting, order] : [order];
-      await redis.set(ORDERS_KEY, nextOrders);
-      await redis.set(INVENTORY_KEY, inventory);
 
-      // 1. Send the response instantly to the customer so the website loads super fast
-      res.status(201).json({ order, inventory });
-
-      // 2. Send Telegram notification in the background before Vercel shuts down
+      // Run Redis saves + Telegram notification in parallel (all BEFORE response)
+      // Vercel kills execution after res.json(), so Telegram must finish first
       const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
       const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+
+      const tasks = [
+        redis.set(ORDERS_KEY, nextOrders),
+        redis.set(INVENTORY_KEY, inventory),
+      ];
+
       if (telegramToken && telegramChatId) {
-        try {
-          const itemList = cleanedCart.map(i => `${i.qty}x ${i.name}`).join('\n');
-          const text = `🚨 *NEW ORDER RECEIVED!*\n\n*Customer:* ${details.name}\n*Phone:* ${details.phone}\n*Total:* ₹${total}\n*Type:* ${details.service}\n\n*Items:*\n${itemList}`;
-          
-          await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        const itemList = cleanedCart.map(i => `${i.qty}x ${i.name}`).join('\n');
+        const text = `🚨 *NEW ORDER RECEIVED!*\n\n*Customer:* ${details.name}\n*Phone:* ${details.phone}\n*Total:* ₹${total}\n*Type:* ${details.service}\n\n*Items:*\n${itemList}`;
+        
+        tasks.push(
+          fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -199,13 +201,13 @@ module.exports = async (req, res) => {
               text: text,
               parse_mode: 'Markdown'
             })
-          });
-        } catch (e) {
-          console.error("Failed to send telegram notification:", e);
-        }
+          }).catch(e => console.error("Telegram notification failed:", e))
+        );
       }
-      
-      return;
+
+      await Promise.all(tasks);
+
+      return res.status(201).json({ order, inventory });
     }
 
     if (req.method === "PATCH") {
