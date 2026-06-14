@@ -474,7 +474,7 @@ async function submitOrder(event) {
     setTimeout(() => {
       overlay.hidden = true;
       confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 1200);
+    }, 3000);
   } else {
     showToast("Order receipt created");
     confirmationBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
