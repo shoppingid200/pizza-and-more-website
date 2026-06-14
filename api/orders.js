@@ -180,7 +180,10 @@ module.exports = async (req, res) => {
       await redis.set(ORDERS_KEY, nextOrders);
       await redis.set(INVENTORY_KEY, inventory);
 
-      // Send Telegram notification (if configured)
+      // 1. Send the response instantly to the customer so the website loads super fast
+      res.status(201).json({ order, inventory });
+
+      // 2. Send Telegram notification in the background before Vercel shuts down
       const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
       const telegramChatId = process.env.TELEGRAM_CHAT_ID;
       if (telegramToken && telegramChatId) {
@@ -188,7 +191,6 @@ module.exports = async (req, res) => {
           const itemList = cleanedCart.map(i => `${i.qty}x ${i.name}`).join('\n');
           const text = `🚨 *NEW ORDER RECEIVED!*\n\n*Customer:* ${details.name}\n*Phone:* ${details.phone}\n*Total:* ₹${total}\n*Type:* ${details.service}\n\n*Items:*\n${itemList}`;
           
-          // Vercel serverless kills background tasks, so we MUST await the fetch
           await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -202,8 +204,8 @@ module.exports = async (req, res) => {
           console.error("Failed to send telegram notification:", e);
         }
       }
-
-      return res.status(201).json({ order, inventory });
+      
+      return;
     }
 
     if (req.method === "PATCH") {
