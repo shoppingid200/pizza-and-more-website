@@ -403,7 +403,7 @@
             await syncOrdersFromApi();
             renderOrderHistory();
           } catch (err) {}
-        }, 3000);
+        }, 20000);
 
         // Live storage event for cross-tab sync
         window.addEventListener("storage", (event) => {

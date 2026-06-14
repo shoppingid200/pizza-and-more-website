@@ -394,7 +394,7 @@ function renderMenu() {
           priceDisplay = `<span class="item-price">${formatRupees(item.price)}</span>`;
           actionControl = `<span class="status-badge status-cancelled" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
         } else if (hasVariations) {
-          priceDisplay = `<select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 160px;">
+          priceDisplay = `<select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 100%; text-overflow: ellipsis; flex-shrink: 1;">
             ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name} · ${formatRupees(v.price)}</option>`).join('')}
           </select>`;
           actionControl = `<button class="add-button" type="button" data-add-var-item="${item.name}" aria-label="Add ${item.name}">
@@ -408,15 +408,15 @@ function renderMenu() {
         }
 
         const imageHTML = hasImage
-          ? `<div style="width:100%;height:160px;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;background:#eee;"><img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" loading="lazy"></div>`
+          ? `<div style="width:100%; aspect-ratio: 4/3; border-radius:var(--radius) var(--radius) 0 0; overflow:hidden; background:#f9f9fa; display:flex; align-items:center; justify-content:center; border-bottom: 1px solid var(--line);"><img src="${item.image}" alt="${item.name}" style="width:100%; height:100%; object-fit:contain; object-position:center;" loading="lazy"></div>`
           : '';
 
         return `
           <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}" style="${hasImage ? 'padding:0;' : ''}">
             ${imageHTML}
             <div style="padding:${hasImage ? '12px 16px 16px' : '0'};">
-              <div class="item-top">
-                <h3 class="item-name">${item.name}</h3>
+              <div class="item-top" style="flex-wrap: wrap;">
+                <h3 class="item-name" style="word-break: break-word;">${item.name}</h3>
                 ${priceDisplay}
               </div>
               <p class="item-desc">${item.desc}</p>
@@ -640,6 +640,8 @@ async function bootMenu() {
   }
 
   // Periodically sync inventory from backend (cross-user updates).
+  // NOTE: Disabled inventory polling to load once or on manual refresh to save resources.
+  /*
   window.setInterval(async () => {
     try {
       const inventory = await syncInventoryFromApi();
@@ -652,6 +654,7 @@ async function bootMenu() {
       // Keep the UI usable with cached inventory.
     }
   }, 5000);
+  */
 
   // Dynamic cross-tab stock sync
   window.addEventListener("storage", (event) => {
