@@ -395,6 +395,24 @@ async function submitOrder(event) {
 
   if (!orderForm.reportValidity()) return;
 
+  const submitBtn = orderForm.querySelector("button[type='submit']");
+  const originalBtnText = submitBtn ? submitBtn.textContent : "Place order";
+  if (submitBtn) {
+    submitBtn.innerHTML = '<span style="display:inline-block; animation: pulse 1s infinite;">Processing...</span>';
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = "0.7";
+    submitBtn.style.cursor = "wait";
+  }
+
+  const restoreBtn = () => {
+    if (submitBtn) {
+      submitBtn.textContent = originalBtnText;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = "1";
+      submitBtn.style.cursor = "pointer";
+    }
+  };
+
   // Validate stock before placing order (try to refresh inventory from server).
   try {
     await syncInventoryFromApi();
@@ -405,6 +423,7 @@ async function submitOrder(event) {
   const validation = validateStockAvailability();
   if (!validation.available) {
     showToast(validation.message);
+    restoreBtn();
     return;
   }
 
@@ -432,6 +451,7 @@ async function submitOrder(event) {
     placed = await placeOrderOnApi({ id, details, cart, total });
   } catch (e) {
     showToast(String(e?.message || e || "Order placement failed"));
+    restoreBtn();
     return;
   }
 
