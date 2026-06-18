@@ -17,6 +17,7 @@ const receiptPreview = document.querySelector("#receipt-preview");
 const sendWhatsapp = document.querySelector("#send-whatsapp");
 
 let cart = readCart();
+let minOrderPrice = 0;
 
 function formatRupees(value) {
   return `₹${value}`;
@@ -96,6 +97,21 @@ function renderCart() {
   const { count, total } = cartStats();
   summaryCount.textContent = `${count} ${count === 1 ? "item" : "items"}`;
   summaryTotal.textContent = formatRupees(total);
+
+  const notice = document.getElementById("min-order-notice");
+  if (notice) {
+    if (minOrderPrice > 0) {
+      if (total > 0 && total < minOrderPrice) {
+        notice.textContent = `Minimum order amount is ${formatRupees(minOrderPrice)}. Add more items.`;
+        notice.style.display = "block";
+      } else if (total === 0) {
+        notice.textContent = `Minimum order amount is ${formatRupees(minOrderPrice)}.`;
+        notice.style.display = "block";
+      } else {
+        notice.style.display = "none";
+      }
+    }
+  }
 
   if (!count) {
     checkoutItems.innerHTML = `<p class="empty-cart">No items selected yet.</p>`;
@@ -393,6 +409,11 @@ async function submitOrder(event) {
     return;
   }
 
+  if (minOrderPrice > 0 && total < minOrderPrice) {
+    showToast(`Minimum order amount is ${formatRupees(minOrderPrice)}`);
+    return;
+  }
+
   if (!orderForm.reportValidity()) return;
 
   const submitBtn = orderForm.querySelector("button[type='submit']");
@@ -572,7 +593,15 @@ function bootScrollAnimations() {
   }, 100);
 }
 
-function bootOrderPage() {
+async function bootOrderPage() {
+  try {
+    const res = await fetch("/api/settings");
+    if (res.ok) {
+      const data = await res.json();
+      minOrderPrice = Number(data.minOrderPrice) || 0;
+    }
+  } catch (e) {}
+
   // Auto-remove out-of-stock items from cart on page load
   try {
     const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];

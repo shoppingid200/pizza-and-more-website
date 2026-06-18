@@ -164,6 +164,14 @@ module.exports = async (req, res) => {
       // Recompute total from cart (more reliable than trusting the client)
       const total = cleanedCart.reduce((sum, x) => sum + x.price * x.qty, 0);
 
+      // Validate minimum order price
+      const settingsKey = "r-pizza-and-more:settings";
+      const settings = (await redis.get(settingsKey)) || {};
+      const minOrderPrice = Number(settings.minOrderPrice) || 0;
+      if (minOrderPrice > 0 && total < minOrderPrice) {
+        return res.status(400).json({ message: `Minimum order amount is ₹${minOrderPrice}. Your total is ₹${total}.` });
+      }
+
       const createdAt = new Date().toISOString();
       const order = {
         id,

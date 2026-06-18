@@ -59,6 +59,14 @@
           style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
           Inventory Manager
         </button>
+        <button class="button ghost" id="tab-delivery-partners-view" type="button"
+          style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
+          Delivery Partners
+        </button>
+        <button class="button ghost" id="tab-settings-view" type="button"
+          style="min-height: 40px; padding: 0 16px; font-size: 0.85rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border-color: var(--line);">
+          Settings
+        </button>
       </div>
     </section>
 
@@ -74,8 +82,28 @@
             </svg>
           </div>
           <div class="admin-stat-info">
-            <span class="admin-stat-label">Total Revenue</span>
+            <span class="admin-stat-label">Overall Revenue</span>
             <strong class="admin-stat-val" id="stat-revenue">₹0</strong>
+          </div>
+        </div>
+
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon revenue" style="background: #e6f4ea; color: #1e8e3e;">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z" /></svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">This Month Revenue</span>
+            <strong class="admin-stat-val" id="stat-revenue-monthly">₹0</strong>
+          </div>
+        </div>
+
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon revenue" style="background: #fce8e6; color: #d93025;">
+             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z" /></svg>
+          </div>
+          <div class="admin-stat-info">
+            <span class="admin-stat-label">Last Month Revenue</span>
+            <strong class="admin-stat-val" id="stat-revenue-last-month">₹0</strong>
           </div>
         </div>
 
@@ -305,6 +333,56 @@
         </aside>
       </div>
     </div>
+
+    <!-- VIEW 3: DELIVERY PARTNERS -->
+    <div id="delivery-partners-view-container" style="display: none; padding: 24px;">
+      <div class="admin-panel-card">
+        <h2 style="margin-top: 0;">Delivery Partner Analytics</h2>
+        <div style="overflow-x: auto; width: 100%; margin-top: 16px;">
+          <table style="width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--ink); font-weight: 900; color: var(--muted); font-size: 0.78rem; text-transform: uppercase;">
+                <th style="padding: 10px 8px;">Partner Name</th>
+                <th style="padding: 10px 8px;">Today's Deliveries</th>
+                <th style="padding: 10px 8px;">This Month Deliveries</th>
+                <th style="padding: 10px 8px;">Last Month Deliveries (Billable)</th>
+                <th style="padding: 10px 8px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="delivery-partners-tbody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Modal for Last Month Orders -->
+      <div id="dp-orders-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99999; align-items: center; justify-content: center;">
+        <div class="admin-panel-card" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;">
+          <button id="dp-orders-close" style="position: absolute; right: 16px; top: 16px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+          <h3 style="margin-top: 0;" id="dp-orders-title">Last Month Orders</h3>
+          <div id="dp-orders-list" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+            <!-- Orders go here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: SETTINGS -->
+    <div id="settings-view-container" style="display: none; padding: 24px;">
+      <div class="admin-panel-card" style="max-width: 500px;">
+        <h2 style="margin-top: 0;">Global Settings</h2>
+        <form id="settings-form" style="display: grid; gap: 16px; margin-top: 16px;">
+          <label class="field" style="gap: 4px;">
+            <span style="font-size: 0.85rem; font-weight: 850;">Minimum Order Price (₹)</span>
+            <input type="number" id="setting-min-order-price" min="0" placeholder="e.g. 150"
+              style="min-height: 38px; padding: 0 10px;" />
+            <small style="color: var(--muted); font-size: 0.75rem;">Orders below this grand total will be blocked at checkout.</small>
+          </label>
+          <button class="button primary" type="submit"
+            style="min-height: 40px; display: inline-flex; align-items: center; justify-content: center;">Save Settings</button>
+        </form>
+      </div>
+    </div>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -461,14 +539,34 @@
 
     function updateDashboardStats(orders) {
       let revenue = 0;
+      let revenueMonthly = 0;
+      let revenueLastMonth = 0;
       let pending = 0;
       let active = 0;
       let completed = 0;
 
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const lastMonthDate = new Date();
+      lastMonthDate.setMonth(currentMonth - 1);
+      const lastMonth = lastMonthDate.getMonth();
+      const lastMonthYear = lastMonthDate.getFullYear();
+
       orders.forEach((o) => {
         if (o.status === "Fulfilled") {
-          revenue += Number(o.total) || 0;
+          const orderTotal = Number(o.total) || 0;
+          revenue += orderTotal;
           completed++;
+
+          const orderDate = new Date(o.createdAt);
+          if (orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) {
+            revenueMonthly += orderTotal;
+          } else if (orderDate.getMonth() === lastMonth && orderDate.getFullYear() === lastMonthYear) {
+            revenueLastMonth += orderTotal;
+          }
+
         } else if (o.status === "Pending") {
           pending++;
         } else if (o.status === "Preparing" || o.status === "Out for Delivery") {
@@ -477,6 +575,8 @@
       });
 
       document.querySelector("#stat-revenue").textContent = formatRupees(revenue);
+      document.querySelector("#stat-revenue-monthly").textContent = formatRupees(revenueMonthly);
+      document.querySelector("#stat-revenue-last-month").textContent = formatRupees(revenueLastMonth);
       document.querySelector("#stat-pending").textContent = pending;
       document.querySelector("#stat-active").textContent = active;
       document.querySelector("#stat-completed").textContent = completed;
@@ -862,30 +962,41 @@
     // VIEW SWITCHING CONTROL
     const btnOrdersView = document.querySelector("#tab-orders-view");
     const btnInventoryView = document.querySelector("#tab-inventory-view");
+    const btnDeliveryPartnersView = document.querySelector("#tab-delivery-partners-view");
+    const btnSettingsView = document.querySelector("#tab-settings-view");
+
     const ordersContainer = document.querySelector("#orders-view-container");
     const inventoryContainer = document.querySelector("#inventory-view-container");
+    const deliveryPartnersContainer = document.querySelector("#delivery-partners-view-container");
+    const settingsContainer = document.querySelector("#settings-view-container");
 
     const adminMainTitle = document.querySelector("#admin-main-title");
     const adminMainSubtitle = document.querySelector("#admin-main-subtitle");
 
     let currentView = "orders";
 
+    function resetTabs() {
+      [btnOrdersView, btnInventoryView, btnDeliveryPartnersView, btnSettingsView].forEach(btn => {
+        btn.className = "button ghost";
+        btn.style.borderColor = "var(--line)";
+      });
+      [ordersContainer, inventoryContainer, deliveryPartnersContainer, settingsContainer].forEach(c => {
+        c.style.display = "none";
+      });
+    }
+
     function switchView(view) {
       currentView = view;
+      resetTabs();
+
       if (view === "orders") {
         btnOrdersView.className = "button primary";
-        btnInventoryView.className = "button ghost";
-        btnInventoryView.style.borderColor = "var(--line)";
         ordersContainer.style.display = "block";
-        inventoryContainer.style.display = "none";
         adminMainTitle.textContent = "Admin Dashboard";
         adminMainSubtitle.textContent = "Manage customer orders, track sales, and process fulfillments.";
         renderOrders();
-      } else {
-        btnOrdersView.className = "button ghost";
-        btnOrdersView.style.borderColor = "var(--line)";
+      } else if (view === "inventory") {
         btnInventoryView.className = "button primary";
-        ordersContainer.style.display = "none";
         inventoryContainer.style.display = "block";
         adminMainTitle.textContent = "Inventory Management";
         adminMainSubtitle.textContent = "Manage menu pricing, stock availability, and catalog listings.";
@@ -893,11 +1004,25 @@
           .then(() => renderInventory())
           .catch(() => renderInventory());
         renderStockDeductions();
+      } else if (view === "delivery") {
+        btnDeliveryPartnersView.className = "button primary";
+        deliveryPartnersContainer.style.display = "block";
+        adminMainTitle.textContent = "Delivery Partners";
+        adminMainSubtitle.textContent = "Track delivery partner performance and billing.";
+        renderDeliveryPartners();
+      } else if (view === "settings") {
+        btnSettingsView.className = "button primary";
+        settingsContainer.style.display = "block";
+        adminMainTitle.textContent = "Settings";
+        adminMainSubtitle.textContent = "Configure global application settings.";
+        loadSettings();
       }
     }
 
     btnOrdersView.addEventListener("click", () => switchView("orders"));
     btnInventoryView.addEventListener("click", () => switchView("inventory"));
+    btnDeliveryPartnersView.addEventListener("click", () => switchView("delivery"));
+    btnSettingsView.addEventListener("click", () => switchView("settings"));
 
     // INVENTORY LOGIC
     const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
@@ -1253,6 +1378,150 @@
         })
         .join("");
     }
+
+    // === SETTINGS LOGIC ===
+    const SETTINGS_API_URL = "/api/settings";
+
+    async function loadSettings() {
+      try {
+        const res = await fetch(SETTINGS_API_URL, { headers: { Accept: "application/json" } });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.minOrderPrice !== undefined) {
+            document.querySelector("#setting-min-order-price").value = data.minOrderPrice;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+    }
+
+    document.querySelector("#settings-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const minOrderPrice = document.querySelector("#setting-min-order-price").value;
+      const token = localStorage.getItem(SESSION_KEY);
+      
+      try {
+        const res = await fetch(SETTINGS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ token, minOrderPrice })
+        });
+        
+        if (!res.ok) throw new Error("Failed to save settings");
+        showToast("Settings saved successfully");
+      } catch (e) {
+        showToast(`⚠️ Error: ${e.message}`);
+      }
+    });
+
+    // === DELIVERY PARTNER ANALYTICS ===
+    function renderDeliveryPartners() {
+      const tbody = document.querySelector("#delivery-partners-tbody");
+      if (!tbody) return;
+
+      const orders = readOrders();
+      
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const lastMonthDate = new Date();
+      lastMonthDate.setMonth(currentMonth - 1);
+      const lastMonth = lastMonthDate.getMonth();
+      const lastMonthYear = lastMonthDate.getFullYear();
+
+      const todayStr = now.toISOString().slice(0, 10);
+
+      const stats = {};
+      deliveryPartnersList.forEach(dp => {
+        stats[dp] = {
+          todayCount: 0, todayTotal: 0,
+          monthCount: 0, monthTotal: 0,
+          lastMonthCount: 0, lastMonthTotal: 0,
+          lastMonthOrders: []
+        };
+      });
+
+      orders.forEach(o => {
+        if (o.status !== "Fulfilled" || !o.deliveryPartner || !stats[o.deliveryPartner]) return;
+
+        const date = new Date(o.createdAt);
+        const total = Number(o.total) || 0;
+        const pStat = stats[o.deliveryPartner];
+
+        if (o.createdAt.startsWith(todayStr)) {
+          pStat.todayCount++;
+          pStat.todayTotal += total;
+        }
+
+        if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+          pStat.monthCount++;
+          pStat.monthTotal += total;
+        } else if (date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear) {
+          pStat.lastMonthCount++;
+          pStat.lastMonthTotal += total;
+          pStat.lastMonthOrders.push(o);
+        }
+      });
+
+      if (deliveryPartnersList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--muted);">No delivery partners found. Add them via registration.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = deliveryPartnersList.map(dp => {
+        const st = stats[dp];
+        const lastMonthOrdersJson = encodeURIComponent(JSON.stringify(st.lastMonthOrders));
+        return `
+          <tr style="border-bottom: 1px solid var(--line);">
+            <td style="padding: 12px 8px; font-weight: 850;">${dp}</td>
+            <td style="padding: 12px 8px;">
+              <div>${st.todayCount} deliveries</div>
+              <div style="font-size: 0.8rem; color: var(--muted);">${formatRupees(st.todayTotal)} generated</div>
+            </td>
+            <td style="padding: 12px 8px;">
+              <div>${st.monthCount} deliveries</div>
+              <div style="font-size: 0.8rem; color: var(--muted);">${formatRupees(st.monthTotal)} generated</div>
+            </td>
+            <td style="padding: 12px 8px;">
+              <div>${st.lastMonthCount} deliveries</div>
+              <div style="font-size: 0.8rem; color: var(--muted);">${formatRupees(st.lastMonthTotal)} generated</div>
+            </td>
+            <td style="padding: 12px 8px;">
+              <button class="button ghost" onclick="showDpOrders('${dp}', '${lastMonthOrdersJson}')" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.75rem;">View Orders</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function showDpOrders(dp, ordersJsonStr) {
+      const orders = JSON.parse(decodeURIComponent(ordersJsonStr));
+      const modal = document.querySelector("#dp-orders-modal");
+      const list = document.querySelector("#dp-orders-list");
+      document.querySelector("#dp-orders-title").textContent = `Last Month Orders for ${dp}`;
+      
+      if (orders.length === 0) {
+        list.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--muted);">No orders found for last month.</div>`;
+      } else {
+        list.innerHTML = orders.map(o => `
+          <div style="padding: 10px; border: 1px solid var(--line); border-radius: 4px; display: flex; justify-content: space-between;">
+            <div>
+              <strong>Order #${o.id.split("-")[2] || o.id}</strong>
+              <div style="font-size: 0.8rem; color: var(--muted);">${new Date(o.createdAt).toLocaleString()}</div>
+            </div>
+            <strong>${formatRupees(o.total)}</strong>
+          </div>
+        `).join("");
+      }
+      
+      modal.style.display = "flex";
+    }
+
+    document.querySelector("#dp-orders-close")?.addEventListener("click", () => {
+      document.querySelector("#dp-orders-modal").style.display = "none";
+    });
 
     async function bootAdmin() {
       // Sync both orders AND inventory from API on startup
