@@ -100,11 +100,73 @@
               </svg>
               <input id="menu-search" type="search" placeholder="Search menu" autocomplete="off" />
             </label>
-            <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Menu categories"></div>
+            <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Menu categories">
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="menu-layout">
-            <div class="menu-grid" id="menu-grid" aria-live="polite"></div>
+            <div class="menu-grid" id="menu-grid" aria-live="polite">
+              <!-- Skeleton cards shown while menu loads -->
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+              <div class="menu-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-desc"></div>
+                <div class="skeleton-line skeleton-desc short"></div>
+                <div class="skeleton-row">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-btn"></div>
+                </div>
+              </div>
+            </div>
             <aside class="order-panel reveal" id="cart-panel" aria-label="Order summary">
               <div class="order-header">
                 <span class="eyebrow">Order</span>
