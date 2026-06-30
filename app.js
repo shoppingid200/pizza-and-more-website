@@ -392,7 +392,7 @@ function renderMenu() {
 
         if (isOutOfStock) {
           priceDisplay = `<span class="item-price">${formatRupees(item.price)}</span>`;
-          actionControl = `<span class="status-badge status-cancelled" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
+          actionControl = `<span class="status-badge status-cancelled out-of-stock-badge" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
         } else if (hasVariations) {
           priceDisplay = `<select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 100%; text-overflow: ellipsis; flex-shrink: 1;">
             ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name} · ${formatRupees(v.price)}</option>`).join('')}
@@ -420,7 +420,7 @@ function renderMenu() {
                 ${priceDisplay}
               </div>
               <p class="item-desc">${item.desc}</p>
-              <div class="item-meta">
+              <div class="item-meta" data-action-container-for="${item.name}">
                 <span class="item-tag">${item.type}</span>
                 ${actionControl}
               </div>
@@ -430,6 +430,7 @@ function renderMenu() {
       }
     )
     .join("");
+  syncMenuButtons();
 }
 
 function addItem(name, variationName) {
@@ -448,6 +449,7 @@ function addItem(name, variationName) {
   existing.qty += 1;
   cart.set(cartKey, existing);
   renderCart();
+  syncMenuButtons();
   showToast(`${variationName ? variationName + ' ' : ''}${item.name} added`);
 }
 
@@ -471,6 +473,7 @@ function changeQty(cartKey, delta) {
     cart.set(cartKey, line);
   }
   renderCart();
+  syncMenuButtons();
 }
 
 function getItemPrice(line) {
@@ -547,6 +550,56 @@ function reconcileCartWithInventory(inventory) {
   return changed;
 }
 
+function syncMenuButtons() {
+  const inventory = readInventory();
+  document.querySelectorAll('.item-meta[data-action-container-for]').forEach(meta => {
+    const itemName = meta.dataset.actionContainerFor;
+    const item = inventory.find(i => i.name === itemName);
+    if (!item || item.stock <= 0 || item.available === false) return;
+
+    let cartKey = itemName;
+    if (item.variations && item.variations.length > 0) {
+      const card = meta.closest('.menu-card');
+      const select = card ? card.querySelector('.var-select') : null;
+      if (select) {
+        cartKey = `${itemName}||${select.value}`;
+      }
+    }
+
+    const cartLine = cart.get(cartKey);
+    let newActionHTML = '';
+    
+    if (cartLine && cartLine.qty > 0) {
+      newActionHTML = `
+        <div class="qty-controls" aria-label="${cartKey} quantity controls">
+          <button type="button" data-qty-item="${cartKey}" data-qty-delta="-1" aria-label="Remove one">-</button>
+          <strong>${cartLine.qty}</strong>
+          <button type="button" data-qty-item="${cartKey}" data-qty-delta="1" aria-label="Add one">+</button>
+        </div>
+      `;
+    } else {
+      if (item.variations && item.variations.length > 0) {
+        newActionHTML = `
+          <button class="add-button" type="button" data-add-var-item="${itemName}" aria-label="Add ${itemName}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" /></svg>
+          </button>
+        `;
+      } else {
+        newActionHTML = `
+          <button class="add-button" type="button" data-add-item="${itemName}" aria-label="Add ${itemName}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" /></svg>
+          </button>
+        `;
+      }
+    }
+
+    if (meta.lastElementChild && !meta.lastElementChild.classList.contains('item-tag')) {
+       meta.lastElementChild.remove();
+       meta.insertAdjacentHTML('beforeend', newActionHTML);
+    }
+  });
+}
+
 function orderText() {
   const { total, count } = cartStats();
   if (!count) return "No items selected.";
@@ -592,6 +645,7 @@ async function bootMenu() {
   renderTabs();
   renderMenu();
   renderCart();
+  syncMenuButtons();
 
   tabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
@@ -603,6 +657,12 @@ async function bootMenu() {
 
   searchInput.addEventListener("input", renderMenu);
 
+  document.addEventListener("change", (event) => {
+    if (event.target.classList.contains("var-select")) {
+      syncMenuButtons();
+    }
+  });
+
   document.addEventListener("click", (event) => {
     const addButton = event.target.closest("[data-add-item]");
     if (addButton) {
@@ -613,8 +673,10 @@ async function bootMenu() {
     const addVarBtn = event.target.closest("[data-add-var-item]");
     if (addVarBtn) {
       const card = addVarBtn.closest('.menu-card');
-      const select = card.querySelector('.var-select');
-      addItem(addVarBtn.dataset.addVarItem, select.value);
+      const select = card ? card.querySelector('.var-select') : null;
+      if (select) {
+        addItem(addVarBtn.dataset.addVarItem, select.value);
+      }
       return;
     }
 
@@ -628,6 +690,7 @@ async function bootMenu() {
   document.querySelector("#clear-cart").addEventListener("click", () => {
     cart.clear();
     renderCart();
+    syncMenuButtons();
     showToast("Order cleared");
   });
 
