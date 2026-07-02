@@ -292,10 +292,26 @@
               </div>
               <label class="field" style="gap: 4px;">
                 <span style="font-size: 0.75rem; font-weight: 850;">Item Image (Take Photo or Upload)</span>
-                <input type="file" id="new-item-image" accept=".jpg,.jpeg,.png"
-                  style="padding: 6px; font-size: 0.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: 4px;" />
+                
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <button type="button" id="btn-open-camera" style="flex:1; padding: 8px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; font-size: 0.75rem; font-weight: 700; color: var(--ink);">📷 Open Camera</button>
+                  <div style="flex:1; position: relative;">
+                    <input type="file" id="new-item-image" accept=".jpg,.jpeg,.png" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;" />
+                    <button type="button" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; font-size: 0.75rem; font-weight: 700; color: var(--ink);">📁 Upload File</button>
+                  </div>
+                </div>
+
+                <!-- Custom Camera View -->
+                <div id="camera-container" style="display: none; flex-direction: column; gap: 8px; margin-top: 8px; border: 1px solid var(--line); padding: 8px; border-radius: 4px; background: #000;">
+                  <video id="camera-video" autoplay playsinline style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px;"></video>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btn-snap-photo" style="flex:2; padding: 8px; border-radius: 4px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 800;">📸 Snap Photo</button>
+                    <button type="button" id="btn-close-camera" style="flex:1; padding: 8px; border-radius: 4px; background: #444; color: white; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 800;">Cancel</button>
+                  </div>
+                </div>
+
                 <img id="new-item-image-preview"
-                  style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:4px;"
+                  style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:8px;"
                   alt="Preview" />
               </label>
               <div
@@ -2457,21 +2473,77 @@
       bindVarRemoveButtons();
     });
 
-    // === Image preview ===
-    document.getElementById('new-item-image').addEventListener('change', async (e) => {
+    // === HTML5 Custom Camera Logic ===
+    let cameraStream = null;
+    const btnOpenCamera = document.getElementById('btn-open-camera');
+    const btnSnapPhoto = document.getElementById('btn-snap-photo');
+    const btnCloseCamera = document.getElementById('btn-close-camera');
+    const cameraContainer = document.getElementById('camera-container');
+    const cameraVideo = document.getElementById('camera-video');
+    const preview = document.getElementById('new-item-image-preview');
+    const imageInput = document.getElementById('new-item-image');
+
+    btnOpenCamera.addEventListener('click', async () => {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraVideo.srcObject = cameraStream;
+        cameraContainer.style.display = 'flex';
+        preview.style.display = 'none'; // hide old preview while camera is open
+      } catch (err) {
+        alert("Camera access denied. Please grant permissions or use the Upload button.");
+      }
+    });
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraContainer.style.display = 'none';
+    }
+
+    btnCloseCamera.addEventListener('click', stopCamera);
+
+    btnSnapPhoto.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      // Heavily compress for Upstash KV limits (Max 500px dimension)
+      const maxDim = 500;
+      let width = cameraVideo.videoWidth;
+      let height = cameraVideo.videoHeight;
+      if (width > height) {
+        if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+      } else {
+        if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(cameraVideo, 0, 0, width, height);
+      
+      // Compress heavily (0.5 quality) for older devices and Vercel/Upstash KV
+      const base64 = canvas.toDataURL('image/jpeg', 0.5);
+      
+      preview.src = base64;
+      preview.style.display = 'block';
+      
+      // Store on the hidden file input dataset for saveInventory
+      imageInput.dataset.compressedBase64 = base64;
+      
+      stopCamera();
+    });
+
+    // === Image preview (File Upload) ===
+    imageInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
-      const preview = document.getElementById('new-item-image-preview');
       if (file) {
         try {
-          // Show loading state if it's a huge camera photo
+          // Show loading state if it's a huge photo
           preview.style.display = 'block';
           preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="50" font-family="sans-serif">Loading...</text></svg>';
           
-          // Compress immediately on selection for fast preview and quick save
-          const base64 = await compressImage(file, 600, 0.6);
+          // Compress heavily (max 500px, 0.5 quality) to ensure small KV size
+          const base64 = await compressImage(file, 500, 0.5);
           preview.src = base64;
-          
-          // Store it on the input element for quick access during submit
           e.target.dataset.compressedBase64 = base64;
         } catch (err) {
           console.error("Preview failed:", err);
