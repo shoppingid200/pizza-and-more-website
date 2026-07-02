@@ -133,6 +133,16 @@ Color-coded status badges for orders:
 .status-cancelled  { background: #f8d7da; color: #721c24; }  /* Red */
 ```
 
+### 2.8 Admin Order Card Left-Border Accents
+Each order card gets a colored left border based on status:
+```css
+.status-card-pending       { border-left: 5px solid #ffd36b; }
+.status-card-preparing     { border-left: 5px solid #1c52d4; }
+.status-card-out-for-delivery { border-left: 5px solid #7928ca; }
+.status-card-fulfilled     { border-left: 5px solid #12805c; }
+.status-card-cancelled     { border-left: 5px solid #d92d20; }
+```
+
 ---
 
 ## SECTION 3: FRONTEND PAGES — COMPLETE SPECIFICATIONS
@@ -180,7 +190,7 @@ Color-coded status badges for orders:
 
 **Search:** Real-time search across `name`, `desc`, `category`, and `type`.
 
-**Menu Cards:** Each card shows: item name, price (₹format), description, Veg/Non-Veg tag, and an Add button (or "Out of Stock" badge if `stock <= 0` or `available === false`).
+**Menu Cards & Inline Controls (`syncMenuButtons()`):** Each card shows: item name, price (₹format), description, Veg/Non-Veg tag, and an Add button (or "Out of Stock" badge if `stock <= 0` or `available === false`). Once an item is added to the cart, the `syncMenuButtons()` function dynamically replaces the Add button directly on the menu card with inline `- 1 +` quantity controls.
 
 **3D Product Animation (`bootPizzaScene()`):**
 - Tries to dynamically import Three.js from CDN.
