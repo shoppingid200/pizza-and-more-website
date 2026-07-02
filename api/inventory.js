@@ -148,6 +148,9 @@ module.exports = async (req, res) => {
           if (typeof x.image === "string" && x.image.length > 0) {
             obj.image = x.image;
           }
+          if (Array.isArray(x.tags) && x.tags.length > 0) {
+            obj.tags = x.tags.map(String);
+          }
           return obj;
         });
 
