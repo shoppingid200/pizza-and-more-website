@@ -235,6 +235,7 @@
                   <th style="padding: 10px 8px;">Item Details</th>
                   <th style="padding: 10px 8px; width: 100px;">Price (₹)</th>
                   <th style="padding: 10px 8px; width: 110px;">Stock</th>
+                  <th style="padding: 10px 8px; width: 150px;">Tags</th>
                   <th style="padding: 10px 8px; width: 80px;">Active</th>
                   <th style="padding: 10px 8px; width: 140px; text-align: right;">Actions</th>
                 </tr>
@@ -281,6 +282,14 @@
                 <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..."
                   style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
               </label>
+              
+              <div class="field" style="gap: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 0.75rem; font-weight: 850;">Tags (Comma separated)</span>
+                  <button type="button" id="btn-auto-tag" style="background: var(--paper); border: 1px solid var(--line); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; color: var(--ink);">✨ Auto-Generate</button>
+                </div>
+                <input type="text" id="new-item-tags" placeholder="e.g. cheese, pizza, spicy" />
+              </div>
               <label class="field" style="gap: 4px;">
                 <span style="font-size: 0.75rem; font-weight: 850;">Item Image (Take Photo or Upload)</span>
                 <input type="file" id="new-item-image" accept="image/*" capture="environment"
@@ -1182,6 +1191,9 @@
                   <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
                   <div style="margin-top: 6px;">${stockStatus}</div>
                 </td>
+                <td data-label="Tags" style="padding: 12px 8px; max-width: 150px;">
+                  <div style="font-size: 0.75rem; color: var(--muted); word-wrap: break-word;">${item.tags ? item.tags.join(', ') : 'None'}</div>
+                </td>
                 <td data-label="Available" style="padding: 12px 8px;">
                   <input type="checkbox" class="avail-checkbox" data-name="${item.name}" ${item.available ? "checked" : ""} style="width: 18px; height: 18px; margin: 0; cursor:pointer;" />
                 </td>
@@ -1223,6 +1235,69 @@
       renderInventory();
     }
 
+    const REGIONAL_DICTIONARY = {
+      "pizza": ["piza", "pija", "peja"],
+      "cheese": ["cheej", "chees", "paneer", "chiz"],
+      "chicken": ["murghi", "chiken", "chikken", "kozhi"],
+      "onion": ["pyaz", "pyaaz", "kanda", "ulli"],
+      "capsicum": ["shimla mirch", "bell pepper", "koda milagai"],
+      "tomato": ["tamatar", "tomatar", "thakkali"],
+      "garlic": ["lasun", "lehsun", "lahsun", "poondu"],
+      "mushroom": ["kumbh", "khumbi", "kalan"],
+      "corn": ["bhutta", "makkai", "cholam"],
+      "jalapeno": ["spicy chilli", "mirchi"],
+      "olive": ["jaitun"],
+      "burger": ["barger", "brgr"],
+      "sausage": ["hotdog", "sosis"],
+      "spicy": ["tikha", "kara", "masala"],
+      "paneer": ["cottage cheese", "panir"]
+    };
+
+    async function autoGenerateTags() {
+      const nameInput = document.getElementById("new-item-name").value.trim().toLowerCase();
+      if (!nameInput) return;
+
+      const tagSet = new Set();
+      
+      // 1. Local Dictionary Check
+      for (const [englishWord, regionalWords] of Object.entries(REGIONAL_DICTIONARY)) {
+        const allWords = [englishWord, ...regionalWords];
+        if (allWords.some(w => nameInput.includes(w))) {
+          allWords.forEach(w => tagSet.add(w));
+        }
+      }
+
+      // 2. Internet Fetch Fallback (Datamuse API) for English words
+      if (tagSet.size === 0) {
+        try {
+          const firstWord = nameInput.split(' ')[0];
+          const res = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(firstWord)}&max=5`);
+          if (res.ok) {
+            const data = await res.json();
+            data.forEach(wordObj => tagSet.add(wordObj.word));
+          }
+        } catch (e) {
+          console.error("Datamuse fetch failed:", e);
+        }
+      }
+      
+      // Add words from the name itself
+      nameInput.split(' ').forEach(w => {
+        const clean = w.replace(/[^a-z0-9]/gi, '');
+        if (clean.length > 2) tagSet.add(clean);
+      });
+
+      document.getElementById("new-item-tags").value = Array.from(tagSet).join(", ");
+    }
+
+    // Attach listeners once DOM is ready
+    document.addEventListener("DOMContentLoaded", () => {
+      const tagBtn = document.getElementById("btn-auto-tag");
+      const nameInput = document.getElementById("new-item-name");
+      if (tagBtn) tagBtn.addEventListener("click", autoGenerateTags);
+      if (nameInput) nameInput.addEventListener("blur", autoGenerateTags);
+    });
+
     async function addNewItem(e) {
       e.preventDefault();
       const name = document.querySelector("#new-item-name").value.trim();
@@ -1262,6 +1337,9 @@
         return;
       }
 
+      const tagsInput = document.getElementById("new-item-tags").value;
+      const tagsArray = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
+
       const newItem = {
         name,
         category,
@@ -1270,6 +1348,7 @@
         price: variations[0].price,
         variations,
         stock,
+        tags: tagsArray,
         available: true
       };
       if (imageBase64) newItem.image = imageBase64;

@@ -364,7 +364,8 @@ function currentItems() {
   const searchTerm = searchInput.value.trim().toLowerCase();
   return inventory.filter((item) => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
-    const matchesSearch = [item.name, item.desc, item.category, item.type]
+    const tagsString = item.tags ? item.tags.join(" ") : "";
+    const matchesSearch = [item.name, item.desc, item.category, item.type, tagsString]
       .join(" ")
       .toLowerCase()
       .includes(searchTerm);
