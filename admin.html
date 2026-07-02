@@ -1236,22 +1236,1054 @@
     }
 
     const REGIONAL_DICTIONARY = {
-      "pizza": ["piza", "pija", "peja"],
-      "cheese": ["cheej", "chees", "paneer", "chiz"],
-      "chicken": ["murghi", "chiken", "chikken", "kozhi"],
-      "onion": ["pyaz", "pyaaz", "kanda", "ulli"],
-      "capsicum": ["shimla mirch", "bell pepper", "koda milagai"],
-      "tomato": ["tamatar", "tomatar", "thakkali"],
-      "garlic": ["lasun", "lehsun", "lahsun", "poondu"],
-      "mushroom": ["kumbh", "khumbi", "kalan"],
-      "corn": ["bhutta", "makkai", "cholam"],
-      "jalapeno": ["spicy chilli", "mirchi"],
-      "olive": ["jaitun"],
-      "burger": ["barger", "brgr"],
-      "sausage": ["hotdog", "sosis"],
-      "spicy": ["tikha", "kara", "masala"],
-      "paneer": ["cottage cheese", "panir"]
-    };
+      "cumin seeds": [
+            "jeera",
+            "zeera",
+            "jira",
+            "geera",
+            "jera",
+            "zira"
+      ],
+      "coriander seeds": [
+            "khada dhaniya",
+            "sabut dhania",
+            "dhania",
+            "dhanya",
+            "daniya",
+            "dhania seed"
+      ],
+      "coriander powder": [
+            "dhaniya powder",
+            "dhania pudar",
+            "dhanya powder",
+            "daniya powder",
+            "pisa dhaniya",
+            "dhania powder"
+      ],
+      "turmeric powder": [
+            "haldi powder",
+            "haldy",
+            "haldi pudar",
+            "hardi",
+            "huldi",
+            "turmaric"
+      ],
+      "whole turmeric": [
+            "khadi haldi",
+            "sabut haldi",
+            "khada haldi",
+            "gota haldi",
+            "khari haldi",
+            "hardi gota"
+      ],
+      "black pepper": [
+            "kaali mirch",
+            "kali mirch",
+            "kali mirchi",
+            "kala mirch",
+            "black mirch",
+            "golki"
+      ],
+      "mustard seeds": [
+            "rai",
+            "sarson",
+            "sarsu",
+            "sarsa",
+            "mustard seed",
+            "raee"
+      ],
+      "yellow mustard": [
+            "peeli sarson",
+            "pili sarson",
+            "pili sarsu",
+            "yellow sarso",
+            "pila sarso",
+            "peeli sarso"
+      ],
+      "green cardamom": [
+            "chhoti elaichi",
+            "elachi",
+            "ilaichi",
+            "elaichi green",
+            "choti ilaychi",
+            "alachi"
+      ],
+      "black cardamom": [
+            "badi elaichi",
+            "bari elaichi",
+            "moti elaichi",
+            "bada ilachi",
+            "bari elachi",
+            "black elachi"
+      ],
+      "cloves": [
+            "laung",
+            "lavang",
+            "long",
+            "loung",
+            "lwang",
+            "clove"
+      ],
+      "cinnamon": [
+            "dalchini",
+            "dal chini",
+            "daalchini",
+            "dalchiny",
+            "dalchini lakdi",
+            "cinnaman"
+      ],
+      "fenugreek seeds": [
+            "methi dana",
+            "meti",
+            "methy",
+            "maithi",
+            "methi seed",
+            "methi guta"
+      ],
+      "carom seeds": [
+            "ajwain",
+            "ajvain",
+            "ajwayan",
+            "ajowain",
+            "jwain",
+            "jawain"
+      ],
+      "asafoetida": [
+            "hing",
+            "heeng",
+            "heng",
+            "hinga",
+            "asafetida",
+            "hinng"
+      ],
+      "bay leaf": [
+            "tej patta",
+            "tejpatta",
+            "tez patta",
+            "tej pata",
+            "bayleaf",
+            "tejpat"
+      ],
+      "star anise": [
+            "chakra phool",
+            "chakri phool",
+            "star phool",
+            "star anish",
+            "chakar phool",
+            "anise star"
+      ],
+      "mace": [
+            "javitri",
+            "jawitri",
+            "javitry",
+            "jabitri",
+            "mace spice",
+            "javitari"
+      ],
+      "nutmeg": [
+            "jaiphal",
+            "jayphal",
+            "jaifal",
+            "jayfal",
+            "nut meg",
+            "jaifhal"
+      ],
+      "poppy seeds": [
+            "khas khas",
+            "khaskhas",
+            "posta dana",
+            "postu",
+            "poppy seed",
+            "khash khash"
+      ],
+      "fennel seeds": [
+            "saunf",
+            "sauf",
+            "sonf",
+            "sounf",
+            "somph",
+            "fennal"
+      ],
+      "dry mango powder": [
+            "amchoor",
+            "amchur",
+            "aamchoor",
+            "aam powder",
+            "amchur powder",
+            "khattai"
+      ],
+      "pomegranate seeds": [
+            "anardana",
+            "anar dana",
+            "anardhana",
+            "anar seed",
+            "anar powder",
+            "anaardana"
+      ],
+      "dry ginger": [
+            "saunth",
+            "sonth",
+            "sounth",
+            "dry adrak",
+            "sukha adrak",
+            "soth"
+      ],
+      "red chilli whole": [
+            "khadi lal mirch",
+            "lal mirch sabut",
+            "suki lal mirch",
+            "gota mircha",
+            "sukha mirchi",
+            "red mirch"
+      ],
+      "red chilli powder": [
+            "lal mirch powder",
+            "lal mirchi",
+            "red mirchi powder",
+            "mircha powder",
+            "lal mirch pudar",
+            "lal mirchi pudar"
+      ],
+      "kashmiri chilli": [
+            "kashmiri mirch",
+            "kasmiri mirch",
+            "kashmiri lal",
+            "degi mirch",
+            "kashmiri chili",
+            "kashmiri mirchi"
+      ],
+      "garam masala": [
+            "garam masala",
+            "garam masla",
+            "gram masala",
+            "garm masala",
+            "meat masala",
+            "garam massala"
+      ],
+      "chaat masala": [
+            "chaat masala",
+            "chat masala",
+            "chat masla",
+            "chaat masal",
+            "fruit masala",
+            "chat massala"
+      ],
+      "chana masala": [
+            "chole masala",
+            "chola masala",
+            "chana masla",
+            "choley masala",
+            "chhole masala",
+            "chana powder"
+      ],
+      "meat masala": [
+            "meat masala",
+            "mit masala",
+            "mutton masala",
+            "meat masla",
+            "meat powder",
+            "non veg masala"
+      ],
+      "chicken masala": [
+            "chicken masala",
+            "chiken masala",
+            "murgi masala",
+            "chicken masla",
+            "chikan masala",
+            "murga masala"
+      ],
+      "kasoori methi": [
+            "kasoori methi",
+            "kasuri methi",
+            "kasuri meti",
+            "dry methi leaves",
+            "kasturi methi",
+            "methi patta"
+      ],
+      "nigella seeds": [
+            "mangrail",
+            "kalonji",
+            "kalonzi",
+            "mangral",
+            "black onion seed",
+            "mungrail"
+      ],
+      "black salt": [
+            "kala namak",
+            "black salt",
+            "kala noon",
+            "bit namak",
+            "black namak",
+            "kaala namak"
+      ],
+      "rock salt": [
+            "sendha namak",
+            "senda namak",
+            "sindha namak",
+            "falahari namak",
+            "rock namak",
+            "sendhanamak"
+      ],
+      "whole wheat flour": [
+            "atta",
+            "aata",
+            "ata",
+            "wheat flour",
+            "gehu ka atta",
+            "roti atta"
+      ],
+      "refined flour": [
+            "maida",
+            "meda",
+            "mayda",
+            "refined flour",
+            "white flour",
+            "maidaa"
+      ],
+      "gram flour": [
+            "besan",
+            "baisan",
+            "besun",
+            "chana flour",
+            "gram flou",
+            "besaan"
+      ],
+      "roasted gram flour": [
+            "sattu",
+            "satu",
+            "chana sattu",
+            "satoo",
+            "sattu powder",
+            "satuu"
+      ],
+      "rice flour": [
+            "chawal ka atta",
+            "rice atta",
+            "chawal atta",
+            "arwa atta",
+            "chawal pudar",
+            "rice pudar"
+      ],
+      "basmati rice": [
+            "basmati chawal",
+            "basmati rice",
+            "basmati",
+            "bansmati",
+            "long rice",
+            "basmati chawl"
+      ],
+      "sona masoori rice": [
+            "sona masoori",
+            "sona masuri",
+            "mansuri chawal",
+            "sona mansuri",
+            "sona rice",
+            "masuri chawal"
+      ],
+      "parboiled rice": [
+            "usna chawal",
+            "usna rice",
+            "boiled rice",
+            "ushna chawal",
+            "mota chawal",
+            "sela rice"
+      ],
+      "flattened rice": [
+            "chura",
+            "poha",
+            "chivda",
+            "choora",
+            "chiwda",
+            "bitten rice"
+      ],
+      "puffed rice": [
+            "muri",
+            "murmura",
+            "lai",
+            "mudhi",
+            "puff rice",
+            "moori"
+      ],
+      "semolina": [
+            "suji",
+            "rava",
+            "sooji",
+            "rawa",
+            "semolina",
+            "sujji"
+      ],
+      "broken wheat": [
+            "daliya",
+            "dalia",
+            "dalya",
+            "lapsi",
+            "broken whet",
+            "daliaa"
+      ],
+      "pearl millet": [
+            "bajra",
+            "bajara",
+            "bajra flour",
+            "bajri",
+            "pearl milet",
+            "bajaraa"
+      ],
+      "finger millet": [
+            "ragi",
+            "madua",
+            "marua",
+            "nachni",
+            "ragi atta",
+            "madua flour"
+      ],
+      "sago": [
+            "sabudana",
+            "sabudna",
+            "shabudana",
+            "sago pearl",
+            "sabu dana",
+            "sabudhana"
+      ],
+      "oats": [
+            "oats",
+            "ots",
+            "jai",
+            "quaker",
+            "oates",
+            "oatmeal"
+      ],
+      "pigeon peas": [
+            "toor dal",
+            "arhar dal",
+            "tur dal",
+            "rahari dal",
+            "rahar dal",
+            "yellow dal"
+      ],
+      "split chickpeas": [
+            "chana dal",
+            "chana daal",
+            "bengal gram",
+            "chane ki dal",
+            "channa dal",
+            "yellow chana"
+      ],
+      "green gram whole": [
+            "sabut moong",
+            "gota moong",
+            "green moong",
+            "khada moong",
+            "hara moong",
+            "mung sabut"
+      ],
+      "green gram washed": [
+            "moong dal dhuli",
+            "yellow moong",
+            "mung dal",
+            "moong dhuli",
+            "moong daal",
+            "yellow mung"
+      ],
+      "black gram whole": [
+            "sabut urad",
+            "kala urad",
+            "gota urad",
+            "urad sabut",
+            "black urad",
+            "mash dal"
+      ],
+      "black gram washed": [
+            "urad dal dhuli",
+            "white urad",
+            "urad dhuli",
+            "safed urad",
+            "bina chilka urad",
+            "urad daal"
+      ],
+      "red lentils whole": [
+            "sabut masoor",
+            "gota masoor",
+            "black masoor",
+            "khada masoor",
+            "masur sabut",
+            "masoor sabut"
+      ],
+      "red lentils split": [
+            "masoor dal",
+            "masur dal",
+            "orange dal",
+            "red dal",
+            "masoor daal",
+            "lalka dal"
+      ],
+      "kidney beans": [
+            "rajma",
+            "rajmah",
+            "razma",
+            "red kidney bean",
+            "kashmiri rajma",
+            "rajma chitra"
+      ],
+      "chickpeas white": [
+            "kabuli chana",
+            "chole",
+            "safed chana",
+            "white chana",
+            "bada chana",
+            "kabli chana"
+      ],
+      "chickpeas black": [
+            "kala chana",
+            "desi chana",
+            "brown chana",
+            "black chana",
+            "chota chana",
+            "lal chana"
+      ],
+      "black eyed peas": [
+            "lobia",
+            "raungi",
+            "bora",
+            "chawli",
+            "white lobia",
+            "black eye bean"
+      ],
+      "dried green peas": [
+            "sukha matar",
+            "green matar dry",
+            "hara matar sukha",
+            "dry peas",
+            "matar sabut",
+            "vatana"
+      ],
+      "soyabean chunks": [
+            "nutrela",
+            "soyabean badi",
+            "soya chunks",
+            "soya wadi",
+            "mealmaker",
+            "soya bin"
+      ],
+      "mustard oil": [
+            "sarson tel",
+            "karua tel",
+            "kachi ghani",
+            "musturd oil",
+            "mustard tel",
+            "sarso tel"
+      ],
+      "refined sunflower": [
+            "refined tel",
+            "rifind oil",
+            "sunflower oil",
+            "sada tel",
+            "refined oil",
+            "rifain"
+      ],
+      "groundnut oil": [
+            "mungfali tel",
+            "peanut oil",
+            "badam tel",
+            "groudnut oil",
+            "singdana oil",
+            "moongfali tel"
+      ],
+      "cow ghee": [
+            "gai ka ghee",
+            "cow ghi",
+            "ghee cow",
+            "desi ghee",
+            "sudh ghee",
+            "gow ghee"
+      ],
+      "hydrogenated fat": [
+            "dalda",
+            "vanaspati ghee",
+            "banaspati",
+            "dalada",
+            "pooja ghee",
+            "ghee dalda"
+      ],
+      "sugar": [
+            "cheeni",
+            "chini",
+            "shakkar",
+            "sugar",
+            "suger",
+            "cheni"
+      ],
+      "jaggery": [
+            "gur",
+            "gud",
+            "jaggery",
+            "mitha",
+            "bheli",
+            "meetha"
+      ],
+      "table salt": [
+            "namak",
+            "nimak",
+            "salt",
+            "tata salt",
+            "nun",
+            "nmak"
+      ],
+      "rock sugar": [
+            "mishri",
+            "misri",
+            "dana mishri",
+            "khand",
+            "misry",
+            "mishree"
+      ],
+      "honey": [
+            "shahad",
+            "madhu",
+            "honey",
+            "sahad",
+            "hony",
+            "shahid"
+      ],
+      "almonds": [
+            "badam",
+            "badaam",
+            "almond",
+            "kagzi badam",
+            "giri",
+            "bdam"
+      ],
+      "cashews": [
+            "kaju",
+            "cashew",
+            "kajoo",
+            "cashew nut",
+            "kaju tukda",
+            "kajju"
+      ],
+      "raisins": [
+            "kishmish",
+            "kismis",
+            "raisin",
+            "kish mis",
+            "kismish",
+            "kishmish green"
+      ],
+      "black raisins": [
+            "munakka",
+            "kali kishmish",
+            "black kismis",
+            "munnaka",
+            "badi kishmish",
+            "manuka"
+      ],
+      "dates": [
+            "khajoor",
+            "khajur",
+            "date",
+            "khajour",
+            "pind khajoor",
+            "kajur"
+      ],
+      "dry dates": [
+            "chuhara",
+            "dry date",
+            "chohara",
+            "chuhada",
+            "chhuhara"
+      ],
+      "walnuts": [
+            "akhrot",
+            "akrot",
+            "walnut",
+            "akhrot giri",
+            "akroot",
+            "akhrot shell"
+      ],
+      "pistachios": [
+            "pista",
+            "pistachio",
+            "pistaa",
+            "pista badam",
+            "pista nut",
+            "pishta"
+      ],
+      "fox nuts": [
+            "makhana",
+            "phool makhana",
+            "foxnut",
+            "lotus seed",
+            "makhan",
+            "makhna"
+      ],
+      "dry coconut": [
+            "sukha nariyal",
+            "garri",
+            "gola",
+            "kopra",
+            "dry cocnut",
+            "khopra"
+      ],
+      "peanuts": [
+            "mungfali",
+            "chinia badam",
+            "moongfali",
+            "peanut",
+            "singdana",
+            "badam chiniya"
+      ],
+      "potato chips": [
+            "aloo chips",
+            "lays",
+            "alu chips",
+            "potato wafer",
+            "chips aloo",
+            "wafers"
+      ],
+      "mixture namkeen": [
+            "mixture",
+            "mixer namkeen",
+            "mikchar",
+            "mix namkeen",
+            "bombay mixture",
+            "chanachur"
+      ],
+      "roasted gram": [
+            "bhuna chana",
+            "phuta chana",
+            "roasted chana",
+            "futana",
+            "bhuja chana",
+            "rosted chana"
+      ],
+      "rusk": [
+            "toast",
+            "rusk",
+            "tost",
+            "tea rusk",
+            "pape",
+            "biskut toast"
+      ],
+      "glucose biscuit": [
+            "parle g",
+            "glucose biskut",
+            "biskit",
+            "parle",
+            "gluco biskut",
+            "biscuit parle"
+      ],
+      "black tea leaves": [
+            "chai patti",
+            "cha patti",
+            "tea powder",
+            "chay patti",
+            "chai",
+            "tea patti"
+      ],
+      "instant coffee": [
+            "coffee",
+            "kofi",
+            "nescafe",
+            "cofi",
+            "coffee powder",
+            "bru"
+      ],
+      "fruit juice": [
+            "juice",
+            "jus",
+            "real juice",
+            "fruit drink",
+            "frooti",
+            "juise"
+      ],
+      "notebook": [
+            "copy",
+            "kapi",
+            "register",
+            "note book",
+            "khata",
+            "rough copy"
+      ],
+      "ballpoint pen": [
+            "pen",
+            "kalam",
+            "dot pen",
+            "jotter",
+            "ball pen",
+            "penn"
+      ],
+      "pencil": [
+            "pencil",
+            "pensil",
+            "lead pencil",
+            "natraaj pencil",
+            "pensel",
+            "pincil"
+      ],
+      "eraser": [
+            "rubber",
+            "rabar",
+            "mitauni",
+            "iraser",
+            "erasser",
+            "rubbar"
+      ],
+      "sharpener": [
+            "cutter",
+            "katar",
+            "sharpner",
+            "shopner",
+            "shapner",
+            "cuttar"
+      ],
+      "ruler": [
+            "scale",
+            "futta",
+            "ruler",
+            "inchi tape",
+            "skale",
+            "futa"
+      ],
+      "geometry box": [
+            "instrument box",
+            "geometry",
+            "jemetry",
+            "box",
+            "pencil box",
+            "compass box"
+      ],
+      "glue": [
+            "gond",
+            "fevicol",
+            "gum",
+            "lassa",
+            "glue stick",
+            "fevikol"
+      ],
+      "a4 paper": [
+            "sada kagaz",
+            "a4 sheet",
+            "print paper",
+            "xerox paper",
+            "white paper",
+            "kagaj"
+      ],
+      "crayons": [
+            "momiya rang",
+            "crayon",
+            "wax color",
+            "mom color",
+            "color box",
+            "crayan"
+      ],
+      "detergent powder": [
+            "surf",
+            "saraf",
+            "washing powder",
+            "nirma",
+            "dhulai powder",
+            "sarf"
+      ],
+      "washing soap": [
+            "kapde ka sabun",
+            "washing sabun",
+            "rin",
+            "kapda sabun",
+            "dhone ka sabun",
+            "dhobi sabun"
+      ],
+      "dishwash bar": [
+            "vim bar",
+            "bartan sabun",
+            "vim",
+            "dish bar",
+            "barten sabun",
+            "vim tikki"
+      ],
+      "floor cleaner": [
+            "phenyl",
+            "finail",
+            "poche ka liquid",
+            "floor cleaner",
+            "lizol",
+            "phinail"
+      ],
+      "toilet cleaner": [
+            "harpic",
+            "toilet acid",
+            "latrine cleaner",
+            "harpik",
+            "toilet cleaner",
+            "tilet cleaner"
+      ],
+      "broom (soft)": [
+            "phool jhadu",
+            "jhadu",
+            "phul jhadu",
+            "soft broom",
+            "jharu",
+            "fool jhadu"
+      ],
+      "broom (hard)": [
+            "seekh jhadu",
+            "nariyal jhadu",
+            "hard broom",
+            "khajur jhadu",
+            "sikh jhadu",
+            "sik jhadu"
+      ],
+      "matchbox": [
+            "maachis",
+            "machis",
+            "match box",
+            "salai",
+            "machish",
+            "matchbox"
+      ],
+      "mosquito repellent": [
+            "all out",
+            "good knight",
+            "machhar liquid",
+            "mosquito liquid",
+            "odomos",
+            "machar dawai"
+      ],
+      "cow dung cake": [
+            "goitha",
+            "upla",
+            "gobar upla",
+            "kanda",
+            "gotha",
+            "gowtha"
+      ],
+      "bathing soap": [
+            "nahane ka sabun",
+            "bathing sabun",
+            "body soap",
+            "lifebuoy",
+            "lux",
+            "snan sabun"
+      ],
+      "toothpaste": [
+            "manjan",
+            "colgate",
+            "tooth paste",
+            "paste",
+            "dant manjan",
+            "toothpast"
+      ],
+      "toothbrush": [
+            "brush",
+            "dant brush",
+            "tooth brush",
+            "burush",
+            "brash",
+            "datoan"
+      ],
+      "hair oil": [
+            "baal ka tel",
+            "kesh tel",
+            "hair tel",
+            "navratna",
+            "coconut oil hair",
+            "bal oil"
+      ],
+      "shaving razor": [
+            "razor",
+            "rejar",
+            "blade",
+            "ustura",
+            "shaving blade",
+            "rezar"
+      ],
+      "sanitary pads": [
+            "pads",
+            "whisper",
+            "stayfree",
+            "sanitary napkin",
+            "pad",
+            "paids"
+      ],
+      "incense sticks": [
+            "agarbatti",
+            "agarbati",
+            "agerbatti",
+            "pooja batti",
+            "insense stick",
+            "agar bati"
+      ],
+      "dhoop": [
+            "dhoop batti",
+            "dhup",
+            "dhoop cone",
+            "pooja dhoop",
+            "dhup bati",
+            "dhoopbatti"
+      ],
+      "camphor": [
+            "kapoor",
+            "kapur",
+            "pooja kapoor",
+            "camphor",
+            "kappur",
+            "karpoor"
+      ],
+      "cotton wicks": [
+            "baati",
+            "rui batti",
+            "bati",
+            "gol batti",
+            "pooja rui",
+            "ruhi bati"
+      ],
+      "sacred thread": [
+            "mouli",
+            "kalawa",
+            "raksha sutra",
+            "kalaawa",
+            "moli",
+            "pooja dhaga"
+      ],
+      "vermilion": [
+            "sindoor",
+            "sindur",
+            "kamakhya sindoor",
+            "orange sindoor",
+            "sindor",
+            "shindoor"
+      ],
+      "red pooja powder": [
+            "roli",
+            "kukum",
+            "kumkum",
+            "pooja roli",
+            "rolli",
+            "red kumkum"
+      ],
+      "baby diapers": [
+            "diaper",
+            "huggies",
+            "pampers",
+            "bacha diaper",
+            "dayper",
+            "daiper"
+      ],
+      "digestive tablets": [
+            "hajmola",
+            "pudin hara",
+            "digene",
+            "gas goli",
+            "hagmola",
+            "hajmoola"
+      ],
+      "electrolyte": [
+            "ors",
+            "electral",
+            "jivan jal",
+            "electoral",
+            "ghol",
+            "ors powder"
+      ]
+};
 
     async function autoGenerateTags() {
       const nameInput = document.getElementById("new-item-name").value.trim().toLowerCase();
