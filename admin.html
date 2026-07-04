@@ -290,14 +290,24 @@
                 </div>
                 <input type="text" id="new-item-tags" placeholder="e.g. cheese, pizza, spicy" />
               </div>
-              <label class="field" style="gap: 4px;">
-                <span style="font-size: 0.75rem; font-weight: 850;">Item Image (Upload File)</span>
-                <input type="file" id="new-item-image" accept=".jpg,.jpeg,.png"
-                  style="padding: 6px; font-size: 0.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: 4px;" />
+              <div class="field" style="gap: 4px; display: flex; flex-direction: column;">
+                <span style="font-size: 0.75rem; font-weight: 850;">Item Image</span>
+                <div style="display: flex; gap: 8px;">
+                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.75rem; padding: 6px; margin: 0; background: var(--paper);">
+                    📷 Take Photo
+                    <input type="file" id="new-item-image-cam" accept="image/*" capture="environment" style="display: none;" />
+                  </label>
+                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.75rem; padding: 6px; margin: 0; background: var(--paper);">
+                    🖼️ Upload Photo
+                    <input type="file" id="new-item-image-file" accept="image/*" style="display: none;" />
+                  </label>
+                </div>
+                <!-- Hidden input to store state for form submission -->
+                <input type="hidden" id="new-item-image" />
                 <img id="new-item-image-preview"
                   style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:4px;"
                   alt="Preview" />
-              </label>
+              </div>
               <div
                 style="border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -2363,21 +2373,9 @@
       const desc = document.querySelector("#new-item-desc").value.trim();
       const stock = Number(document.querySelector("#new-item-stock").value) || 0;
 
-      // Use pre-compressed image if available, else try compressing now
+      // Use pre-compressed image if available
       const imageInput = document.querySelector("#new-item-image");
-      const imageFile = imageInput.files[0];
       let imageBase64 = imageInput.dataset.compressedBase64 || null;
-      
-      if (imageFile && !imageBase64) {
-        try {
-          // Compress image to max 600px dimension and 60% JPEG quality
-          imageBase64 = await compressImage(imageFile, 600, 0.6);
-        } catch (err) {
-          console.error("Image compression failed", err);
-          alert("Failed to process image. Try a different file.");
-          return;
-        }
-      }
 
       // Read variations
       const variations = Array.from(document.querySelectorAll('#variations-container .variation-row')).map(row => ({
@@ -2417,6 +2415,8 @@
       showToast(`Added ${name} to catalog!`);
       addItemForm.reset();
       document.querySelector("#new-item-image-preview").style.display = "none";
+      const mainInput = document.querySelector("#new-item-image");
+      if (mainInput) delete mainInput.dataset.compressedBase64;
       // Reset variations container
       document.querySelector("#variations-container").innerHTML = `
           <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
@@ -2458,8 +2458,10 @@
     });
 
     // === Image preview (File Upload) ===
-    document.getElementById('new-item-image').addEventListener('change', async (e) => {
+    const handleImageChange = async (e) => {
       const file = e.target.files[0];
+      const mainInput = document.getElementById('new-item-image');
+      const preview = document.getElementById('new-item-image-preview');
       if (file) {
         try {
           // Show loading state if it's a huge photo
@@ -2468,7 +2470,7 @@
           
           const base64 = await compressImage(file, 600, 0.6);
           preview.src = base64;
-          e.target.dataset.compressedBase64 = base64;
+          mainInput.dataset.compressedBase64 = base64;
         } catch (err) {
           console.error("Preview failed:", err);
           alert("Image error: " + err.message);
@@ -2477,9 +2479,11 @@
         }
       } else {
         preview.style.display = 'none';
-        delete e.target.dataset.compressedBase64;
+        delete mainInput.dataset.compressedBase64;
       }
-    });
+    };
+    document.getElementById('new-item-image-cam')?.addEventListener('change', handleImageChange);
+    document.getElementById('new-item-image-file')?.addEventListener('change', handleImageChange);
 
     function renderStockDeductions() {
       const logContainer = document.querySelector("#stock-deductions-log");
