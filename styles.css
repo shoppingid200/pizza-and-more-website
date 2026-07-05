@@ -917,8 +917,9 @@ h1 {
   border-radius: 999px;
   padding: 3px;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
 .menu-card .qty-controls button {
   background: var(--ink);
   color: #fff;
@@ -926,10 +927,12 @@ h1 {
   min-height: 34px;
   transition: transform 150ms ease, background 150ms ease;
 }
+
 .menu-card .qty-controls button:hover {
   background: var(--tomato);
   transform: scale(1.08);
 }
+
 .menu-card .qty-controls strong {
   font-size: 1.05rem;
   width: 16px;
@@ -1766,6 +1769,7 @@ footer strong {
 .admin-body {
   background: #fbf9f4;
   color: var(--ink);
+  overflow-x: hidden;
 }
 
 .admin-shell {
