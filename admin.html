@@ -1124,12 +1124,43 @@
       window.dispatchEvent(new Event("storage"));
     }
 
+    function showOfflinePopup() {
+      const existing = document.getElementById("offline-popup");
+      if (existing) existing.remove();
+      
+      const popup = document.createElement("div");
+      popup.id = "offline-popup";
+      popup.style.position = "fixed";
+      popup.style.top = "50%";
+      popup.style.left = "50%";
+      popup.style.transform = "translate(-50%, -50%)";
+      popup.style.backgroundColor = "white";
+      popup.style.padding = "24px 32px";
+      popup.style.borderRadius = "12px";
+      popup.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
+      popup.style.zIndex = "9999";
+      popup.style.textAlign = "center";
+      
+      popup.innerHTML = `
+        <h2 style="color: red; font-weight: bold; margin: 0 0 16px 0;">No Internet Connection</h2>
+        <p style="margin: 0 0 20px 0; font-size: 14px; color: #333;">Failed to communicate with the database. Your changes have been reversed.</p>
+        <button onclick="this.parentElement.remove()" style="background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer;">OK</button>
+      `;
+      
+      document.body.appendChild(popup);
+    }
+
     async function saveInventory(inventory) {
-      // Update UI immediately.
+      // 1. Save original state for rollback if offline
+      const backupRaw = localStorage.getItem(INVENTORY_STORAGE_KEY);
+      
+      // 2. Update UI immediately (optimistic UI)
       saveInventoryLocal(inventory);
 
-      // Persist globally (admin changes should affect all visitors).
+      // 3. Persist globally (admin changes should affect all visitors).
       try {
+        if (!navigator.onLine) throw new Error("No Internet Connection");
+        
         const res = await fetch(INVENTORY_API_URL, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -1137,11 +1168,28 @@
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
+          throw new Error(data?.error || data?.message || \`Save failed (\${res.status})\`);
         }
       } catch (e) {
         console.error("Inventory persist failed:", e);
-        showToast(`⚠️ Failed to save to server: ${e.message}`);
+        
+        // ROLLBACK: Reverse the change to as it is loaded from the database
+        if (backupRaw) {
+          localStorage.setItem(INVENTORY_STORAGE_KEY, backupRaw);
+          window.dispatchEvent(new Event("storage"));
+        }
+        renderInventory();
+        
+        const isOffline = e.message === "No Internet Connection" || !navigator.onLine || e.message.includes("fetch") || e.message.includes("NetworkError");
+        
+        if (isOffline) {
+          showOfflinePopup();
+        } else {
+          showToast(\`⚠️ Failed to save to server: \${e.message}\`);
+        }
+        
+        // Rethrow the error so the caller does not show "Updated" success toasts
+        throw e;
       }
     }
 
