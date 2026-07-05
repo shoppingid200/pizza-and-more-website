@@ -38,10 +38,20 @@
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        overflow-x: hidden !important;
       }
       .admin-panel-card > div[style*="overflow-x: auto"] {
         max-width: 100% !important;
         box-sizing: border-box !important;
+      }
+      /* Fix intrinsic minimum widths of inputs in grid layouts blowing up the screen width */
+      input, select, textarea {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        width: 100%;
+      }
+      .variation-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto !important;
       }
     }
   </style>
