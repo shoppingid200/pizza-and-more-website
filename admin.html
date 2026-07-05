@@ -1168,7 +1168,7 @@
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || data?.message || \`Save failed (\${res.status})\`);
+          throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
         }
       } catch (e) {
         console.error("Inventory persist failed:", e);
@@ -1185,7 +1185,7 @@
         if (isOffline) {
           showOfflinePopup();
         } else {
-          showToast(\`⚠️ Failed to save to server: \${e.message}\`);
+          showToast(`⚠️ Failed to save to server: ${e.message}`);
         }
         
         // Rethrow the error so the caller does not show "Updated" success toasts
