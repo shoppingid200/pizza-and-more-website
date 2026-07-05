@@ -31,6 +31,10 @@ body {
   line-height: 1.5;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body.menu-lock {
   overflow: hidden;
 }
@@ -1769,7 +1773,6 @@ footer strong {
 .admin-body {
   background: #fbf9f4;
   color: var(--ink);
-  overflow-x: hidden;
 }
 
 .admin-shell {
@@ -2209,7 +2212,7 @@ footer strong {
   }
 
   .admin-grid-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .admin-sidebar {
