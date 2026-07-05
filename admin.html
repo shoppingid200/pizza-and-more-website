@@ -250,18 +250,19 @@
         <!-- Sidebar Actions for Catalog Management -->
         <aside class="admin-sidebar">
           <!-- Add Item Form -->
-          <div class="admin-panel-card">
-            <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top:0;">Add New Item</h3>
-            <form id="add-item-form" style="display: grid; gap: 12px;">
-              <label class="field" style="gap: 4px;">
-                <span style="font-size: 0.75rem; font-weight: 850;">Item Name</span>
+          <div class="admin-panel-card" style="padding: 16px;">
+            <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top:0; font-size: 1.1rem; color: var(--ink);">Add New Item</h3>
+            <form id="add-item-form" style="display: grid; gap: 8px;">
+              <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Item Name</span>
                 <input type="text" id="new-item-name" required placeholder="e.g. Garlic Bread"
-                  style="min-height: 38px; padding: 0 10px;" />
+                  style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
               </label>
+              
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Category</span>
-                  <select id="new-item-category" required style="min-height: 38px; padding: 0 8px;">
+                <label class="field" style="gap: 2px;">
+                  <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</span>
+                  <select id="new-item-category" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
                     <option value="Veg Specials">Veg Specials</option>
                     <option value="Paneer Pizzas">Paneer Pizzas</option>
                     <option value="Classic Veg">Classic Veg</option>
@@ -269,74 +270,65 @@
                     <option value="Burgers & More">Burgers & More</option>
                   </select>
                 </label>
-                <label class="field" style="gap: 4px;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Item Type</span>
-                  <select id="new-item-type" required style="min-height: 38px; padding: 0 8px;">
+                <label class="field" style="gap: 2px;">
+                  <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</span>
+                  <select id="new-item-type" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
                     <option value="Veg">Veg</option>
                     <option value="Non Veg">Non Veg</option>
                   </select>
                 </label>
               </div>
-              <label class="field" style="gap: 4px;">
-                <span style="font-size: 0.75rem; font-weight: 850;">Description</span>
-                <textarea id="new-item-desc" required placeholder="e.g. Fresh bread toasted with garlic butter..."
-                  style="min-height: 60px; padding: 8px; font-size:0.85rem;" rows="2"></textarea>
+              
+              <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Description</span>
+                <textarea id="new-item-desc" required placeholder="Fresh bread toasted with garlic butter..."
+                  style="min-height: 44px; padding: 6px 8px; font-size:0.75rem; border-radius: 6px; border: 1px solid var(--line);" rows="2"></textarea>
               </label>
               
-              <div class="field" style="gap: 4px;">
+              <div class="field" style="gap: 2px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 0.75rem; font-weight: 850;">Tags (Comma separated)</span>
-                  <button type="button" id="btn-auto-tag" style="background: var(--paper); border: 1px solid var(--line); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; color: var(--ink);">✨ Auto-Generate</button>
+                  <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Tags (Comma separated)</span>
+                  <button type="button" id="btn-auto-tag" style="background: var(--paper); border: 1px solid var(--line); font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; color: var(--ink);">✨ Auto</button>
                 </div>
-                <input type="text" id="new-item-tags" placeholder="e.g. cheese, pizza, spicy" />
+                <input type="text" id="new-item-tags" placeholder="cheese, spicy" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
               </div>
+              
               <div class="field" style="gap: 4px; display: flex; flex-direction: column;">
-                <span style="font-size: 0.75rem; font-weight: 850;">Item Image</span>
-                <div style="display: flex; gap: 8px;">
-                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.75rem; padding: 6px; margin: 0; background: var(--paper);">
-                    📷 Take Photo
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Item Image</span>
+                <div style="display: flex; gap: 6px;">
+                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.7rem; padding: 4px; margin: 0; background: var(--paper); min-height: 28px; border-radius: 6px;">
+                    📷 Camera
                     <input type="file" id="new-item-image-cam" accept="image/*" capture="environment" style="display: none;" />
                   </label>
-                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.75rem; padding: 6px; margin: 0; background: var(--paper);">
-                    🖼️ Upload Photo
+                  <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.7rem; padding: 4px; margin: 0; background: var(--paper); min-height: 28px; border-radius: 6px;">
+                    🖼️ Gallery
                     <input type="file" id="new-item-image-file" accept="image/*" style="display: none;" />
                   </label>
                 </div>
-                <!-- Hidden input to store state for form submission -->
                 <input type="hidden" id="new-item-image" />
-                <img id="new-item-image-preview"
-                  style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:4px; margin-top:4px;"
-                  alt="Preview" />
+                <img id="new-item-image-preview" style="display:none; width:100%; max-height:100px; object-fit:cover; border-radius:6px; margin-top:4px;" alt="Preview" />
               </div>
-              <div
-                style="border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 0.8rem; font-weight: 850;">Variations (Sizes / Weights)</span>
-                  <button type="button" id="add-variation-btn"
-                    style="background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">+
-                    Add</button>
+              
+              <div style="border: 1px solid var(--line); padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span style="font-size: 0.75rem; font-weight: 800; color: var(--ink);">Variations</span>
+                  <button type="button" id="add-variation-btn" style="background: white; border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">+ Add</button>
                 </div>
-                <div id="variations-container" style="display: grid; gap: 8px;">
-                  <div class="variation-row"
-                    style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
-                    <input type="text" class="var-name" placeholder="e.g. Regular"
-                      style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;"
-                      value="Regular" />
-                    <input type="number" class="var-price" placeholder="Price ₹" min="0"
-                      style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
-                    <button type="button" class="remove-var-btn"
-                      style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
+                <div id="variations-container" style="display: grid; gap: 6px;">
+                  <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
+                    <input type="text" class="var-name" placeholder="Name" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" />
+                    <input type="number" class="var-price" placeholder="₹ Price" min="0" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" />
+                    <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1rem; padding: 0 2px;">&times;</button>
                   </div>
                 </div>
               </div>
-              <label class="field" style="gap: 4px;">
-                <span style="font-size: 0.75rem; font-weight: 850;">Stock Level</span>
-                <input type="number" id="new-item-stock" min="0" required placeholder="30"
-                  style="min-height: 38px; padding: 0 10px;" />
+              
+              <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Stock Level</span>
+                <input type="number" id="new-item-stock" min="0" required placeholder="e.g. 30" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
               </label>
-              <button class="button primary" type="submit"
-                style="width: 100%; min-height: 40px; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center;">Add
-                Catalog Item</button>
+              
+              <button class="button primary" type="submit" style="width: 100%; min-height: 36px; margin-top: 4px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">Add Item</button>
             </form>
           </div>
 
