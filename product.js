@@ -7,6 +7,8 @@ const productDiscount = document.getElementById("product-discount");
 const productDesc = document.getElementById("product-desc");
 const productVariations = document.getElementById("product-variations");
 const variantSelect = document.getElementById("product-variant-select");
+const productSizes = document.getElementById("product-sizes");
+const sizeOptions = document.getElementById("size-options");
 const productStock = document.getElementById("product-stock");
 const qtyInput = document.getElementById("product-qty");
 const qtyMinus = document.getElementById("qty-minus");
@@ -23,6 +25,7 @@ const INVENTORY_API_URL = "/api/inventory";
 let inventory = [];
 let currentProduct = null;
 let selectedVariation = null;
+let selectedSize = null;
 let maxStock = 0;
 
 function formatRupees(value) {
@@ -106,6 +109,30 @@ function renderProduct() {
     ? currentProduct.variations
     : null;
 
+  const sizes = Array.isArray(currentProduct.sizes) && currentProduct.sizes.length
+    ? currentProduct.sizes
+    : null;
+
+  // Size buttons
+  if (sizes) {
+    productSizes.hidden = false;
+    sizeOptions.innerHTML = sizes.map((s) => {
+      const active = selectedSize === s ? "active" : "";
+      return '<button type="button" class="size-btn ' + active + '" data-size="' + s + '">' + s + "</button>";
+    }).join("");
+    if (!selectedSize) selectedSize = sizes[0];
+    sizeOptions.querySelectorAll(".size-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedSize = btn.dataset.size;
+        sizeOptions.querySelectorAll(".size-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  } else {
+    productSizes.hidden = true;
+    selectedSize = null;
+  }
+
   if (variations) {
     productVariations.hidden = false;
     variantSelect.innerHTML = variations.map(
@@ -126,7 +153,7 @@ function renderProduct() {
     }
     maxStock = Number(currentProduct.stock || 0);
   } else {
-    productVariations.hidden = true;
+  productVariations.hidden = true;
     selectedVariation = null;
   }
 
@@ -146,7 +173,7 @@ function addToCart() {
   }
 
   const cart = readCart();
-  const existing = cart.find((item) => item.name === currentProduct.name && item.variation === (selectedVariation ? selectedVariation.name : null));
+  const existing = cart.find((item) => item.name === currentProduct.name && item.variation === (selectedVariation ? selectedVariation.name : null) && item.size === (selectedSize || null));
 
   if (existing) {
     existing.qty += qty;
@@ -160,6 +187,7 @@ function addToCart() {
       price,
       qty,
       variation: selectedVariation ? selectedVariation.name : null,
+      size: selectedSize || null,
     });
   }
 
@@ -172,8 +200,9 @@ function addToCart() {
 
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
-  const name = decodeURIComponent(params.get("name") || "");
-  if (!name) {
+  const nameParam = decodeURIComponent(params.get("name") || "");
+  const idParam = decodeURIComponent(params.get("id") || "");
+  if (!nameParam && !idParam) {
     productTitle.textContent = "Product not found";
     return;
   }
@@ -187,7 +216,10 @@ async function loadProduct() {
     inventory = readInventory();
   }
 
-  currentProduct = inventory.find((item) => item.name === name);
+  currentProduct = inventory.find((item) => {
+    if (nameParam && item.name === nameParam) return true;
+    return item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") === idParam;
+  });
   if (!currentProduct) {
     productTitle.textContent = "Product not found";
     return;
@@ -214,10 +246,26 @@ qtyPlus.addEventListener("click", () => {
 
 qtyInput.addEventListener("input", updateQtyBounds);
 
-addToCartBtn.addEventListener("click", addToCart);
-buyNowBtn.addEventListener("click", () => {
-  addToCart();
-  setTimeout(() => { window.location.href = "order.html"; }, 500);
-});
+  addToCartBtn.addEventListener("click", addToCart);
+  buyNowBtn.addEventListener("click", () => {
+    const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
+    const qty = Number(qtyInput.value) || 1;
+    if (qty > maxStock) {
+      showToast("Only " + maxStock + " available in stock.");
+      return;
+    }
+    const directItem = {
+      name: currentProduct.name,
+      category: currentProduct.category || "",
+      type: currentProduct.type || "",
+      desc: currentProduct.desc || "",
+      price,
+      qty,
+      variation: selectedVariation ? selectedVariation.name : null,
+      size: selectedSize || null,
+    };
+    localStorage.setItem("mount-parche-direct-order", JSON.stringify(directItem));
+    window.location.href = "order.html?direct=1";
+  });
 
 loadProduct();

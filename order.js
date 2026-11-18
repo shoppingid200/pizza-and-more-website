@@ -17,6 +17,19 @@ const receiptPreview = document.querySelector("#receipt-preview");
 const sendWhatsapp = document.querySelector("#send-whatsapp");
 
 let cart = readCart();
+
+// Handle direct "Buy Now" checkout (separate from regular cart)
+const params = new URLSearchParams(window.location.search);
+const isDirectOrder = params.get("direct") === "1";
+if (isDirectOrder) {
+  try {
+    const directItem = JSON.parse(localStorage.getItem("mount-parche-direct-order"));
+    if (directItem) {
+      cart = [directItem];
+      // Do NOT save to regular cart - keep Buy Now separate
+    }
+  } catch (e) {}
+}
 let minOrderPrice = 0;
 
 function formatRupees(value) {
@@ -154,6 +167,7 @@ function readCart() {
 }
 
 function saveCart() {
+  if (isDirectOrder) return; // Don't pollute regular cart
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 }
 
@@ -476,6 +490,7 @@ async function handleCancelOrder(orderId) {
 }
 
 async function submitOrder(event) {
+  // Clean up direct order flag after placing
   event.preventDefault();
   const { count, total } = cartStats();
   if (!count) {
@@ -632,6 +647,9 @@ async function submitOrder(event) {
   }
 
 
+  if (isDirectOrder) {
+    localStorage.removeItem("mount-parche-direct-order");
+  }
   confirmationBox.hidden = false;
 
   // Stop the step messages and show success on button

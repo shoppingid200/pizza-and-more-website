@@ -21,7 +21,7 @@
 
     <main class="checkout-page">
       <section class="checkout-shell" aria-labelledby="product-title">
-        <div class="product-page reveal">
+        <div class="product-page">
           <div class="product-gallery">
             <div class="product-image" id="product-image">
               <div class="product-image-placeholder">No image</div>
@@ -37,6 +37,11 @@
             </div>
 
             <p id="product-desc">Description</p>
+
+            <div class="product-sizes" id="product-sizes" hidden>
+              <label>Size</label>
+              <div class="size-options" id="size-options"></div>
+            </div>
 
             <div class="product-variations" id="product-variations" hidden>
               <label>Variant</label>
@@ -54,12 +59,14 @@
               </div>
             </div>
 
-            <button class="button primary full" id="add-to-cart-btn" type="button">
-              Add to Cart
-            </button>
-            <button class="button primary full" id="buy-now-btn" type="button">
-              Buy Now
-            </button>
+            <div class="product-actions">
+              <button class="button primary" id="buy-now-btn" type="button">
+                Buy Now
+              </button>
+              <button class="button ghost" id="add-to-cart-btn" type="button">
+                Add to Cart
+              </button>
+            </div>
             <p id="add-to-cart-message" style="margin-top:8px;font-size:0.85rem;color:var(--muted);"></p>
           </div>
         </div>
