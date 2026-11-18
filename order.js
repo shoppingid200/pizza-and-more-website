@@ -262,8 +262,8 @@ function customerDetails() {
     notes: String(formData.get("orderNotes") || "").trim(),
     payment: String(formData.get("paymentMode") || "").trim(),
     phone: String(formData.get("customerPhone") || "").trim(),
-    service: String(formData.get("serviceType") || "").trim(),
-    time: String(formData.get("orderTime") || "").trim(),
+    service: "Delivery",
+    time: "As soon as possible",
   };
 }
 
@@ -870,6 +870,26 @@ async function bootOrderPage() {
       // trigger phone validation
       if (saved.customerPhone && saved.customerPhone.length === 10 && phoneTick) {
         phoneTick.style.opacity = "1";
+      }
+
+      // Show saved address in one line
+      const savedAddressBox = document.getElementById("saved-address-box");
+      const savedAddressText = document.getElementById("saved-address-text");
+      const useSavedBtn = document.getElementById("use-saved-address");
+      if (savedAddressBox && savedAddressText && (saved.addrHouse || saved.addrArea)) {
+        const parts = [saved.addrHouse, saved.addrArea, saved.addrLandmark, saved.addrCity, saved.addrState, saved.addrPincode].filter(Boolean);
+        savedAddressText.textContent = parts.join(", ");
+        savedAddressBox.hidden = false;
+        if (useSavedBtn) {
+          useSavedBtn.addEventListener("click", () => {
+            document.getElementById("address-pincode").value = saved.addrPincode || "";
+            document.getElementById("address-state").value = saved.addrState || "";
+            document.getElementById("address-city").value = saved.addrCity || "";
+            document.getElementById("address-house").value = saved.addrHouse || "";
+            document.getElementById("address-area").value = saved.addrArea || "";
+            document.getElementById("address-landmark").value = saved.addrLandmark || "";
+          });
+        }
       }
     }
   } catch(e) {}

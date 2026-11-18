@@ -79,25 +79,18 @@
 
             <div class="field-grid">
               <label class="field">
-                <span>Time</span>
-                <select id="order-time" name="orderTime">
-                  <option value="As soon as possible">As soon as possible</option>
-                  <option value="11:00 AM">11:00 AM</option>
-                  <option value="12:00 PM">12:00 PM</option>
-                  <option value="01:00 PM">01:00 PM</option>
-                  <option value="02:00 PM">02:00 PM</option>
-                  <option value="05:00 PM">05:00 PM</option>
-                  <option value="07:00 PM">07:00 PM</option>
-                  <option value="09:00 PM">09:00 PM</option>
-                </select>
-              </label>
-              <label class="field">
                 <span>Payment</span>
                 <select id="payment-mode" name="paymentMode">
-                  <option value="Razorpay">Pay online securely (Razorpay)</option>
+                  <option value="Razorpay" selected>Pay online securely (Razorpay)</option>
                   <option value="Cash on Delivery">Cash on Delivery</option>
                 </select>
               </label>
+            </div>
+
+            <div id="saved-address-box" class="saved-address-box" hidden>
+              <span class="eyebrow">Saved Address</span>
+              <p id="saved-address-text"></p>
+              <button type="button" class="button ghost" id="use-saved-address" style="padding:6px 12px;font-size:0.8rem;">Use this address</button>
             </div>
           </section>
 
