@@ -15,6 +15,125 @@
   --radius: 8px;
 }
 
+/* Product page */
+.product-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.product-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-image {
+  aspect-ratio: 1;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f4f4f6;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.product-image-placeholder {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.product-price {
+  font-size: 1.75rem;
+  font-weight: 950;
+  color: var(--tomato-dark);
+}
+
+.product-stock {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.product-variations label,
+.product-qty label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.product-variations select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  font-size: 0.95rem;
+}
+
+.product-qty .qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 200px;
+  background: var(--paper);
+}
+
+.product-qty .qty-controls button {
+  min-width: 40px;
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.product-qty .qty-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.product-qty .qty-controls input {
+  width: 44px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .product-page {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

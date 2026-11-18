@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mount Parche product details" />
+    <title>Mount Parche | Product</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="checkout-body">
+    <header class="topbar">
+      <a class="brand-lockup" href="index.html" aria-label="Mount Parche home">
+        <img src="images/mount-parche-logo.svg" class="brand-logo" alt="Mount Parche logo">
+        <span>
+          <strong>MOUNT PARCHE</strong>
+          <small>Shop</small>
+        </span>
+      </a>
+      <a class="button ghost" href="index.html" aria-label="Back to shop">Back to shop</a>
+    </header>
+
+    <main class="checkout-page">
+      <section class="checkout-shell" aria-labelledby="product-title">
+        <div class="product-page reveal">
+          <div class="product-gallery">
+            <div class="product-image" id="product-image">
+              <div class="product-image-placeholder">No image</div>
+            </div>
+          </div>
+          <div class="product-info">
+            <span class="eyebrow" id="product-category">Category</span>
+            <h1 id="product-title">Product Name</h1>
+            <div class="product-price" id="product-price">₹0</div>
+            <p id="product-desc">Description</p>
+
+            <div class="product-variations" id="product-variations" hidden>
+              <label>Variant</label>
+              <select id="product-variant-select"></select>
+            </div>
+
+            <div class="product-stock" id="product-stock"></div>
+
+            <div class="product-qty">
+              <label>Quantity</label>
+              <div class="qty-controls">
+                <button type="button" id="qty-minus" aria-label="Decrease quantity">−</button>
+                <input type="number" id="product-qty" value="1" min="1" max="99" />
+                <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+
+            <button class="button primary full" id="add-to-cart-btn" type="button">
+              Add to Cart
+            </button>
+            <p id="add-to-cart-message" style="margin-top:8px;font-size:0.85rem;color:var(--muted);"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer>
+      <strong>MOUNT PARCHE</strong>
+      <span>Clothes · Accessories · Crockery · More</span>
+    </footer>
+
+    <script src="product.js"></script>
+  </body>
+</html>

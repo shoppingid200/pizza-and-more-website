@@ -442,6 +442,17 @@ function renderMenu() {
     )
     .join("");
   syncMenuButtons();
+
+  // Open full-screen product page when clicking a product card (not buttons)
+  menuGrid.addEventListener("click", (event) => {
+    const card = event.target.closest(".menu-card");
+    if (!card) return;
+    const isButton = event.target.closest("button, select");
+    if (isButton) return;
+    const name = card.dataset.menuId;
+    if (!name) return;
+    window.location.href = `product.html?name=${encodeURIComponent(name)}`;
+  });
 }
 
 function addItem(name, variationName) {
