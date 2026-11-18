@@ -3023,3 +3023,31 @@ footer strong {
     transform: translateY(0);
   }
 }
+.product-price-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.product-mrp {
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.product-discount {
+  font-size: 0.85rem;
+  color: #d92d20;
+  font-weight: 900;
+}
+
+.product-mrp,
+.product-discount {
+  display: inline-flex;
+}
+
+.product-mrp[hidden],
+.product-discount[hidden] {
+  display: none;
+}

@@ -423,7 +423,7 @@ function renderMenu() {
           : '';
 
         return `
-          <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}" style="${hasImage ? 'padding:0;' : ''}">
+          <article class="menu-card reveal is-visible" data-menu-id="${safeId(item.name)}" data-menu-name="${item.name}" style="${hasImage ? 'padding:0;' : ''}">
             ${imageHTML}
             <div style="padding:${hasImage ? '12px 16px 16px' : '0'};">
               <div class="item-top" style="flex-wrap: wrap;">
@@ -449,7 +449,7 @@ function renderMenu() {
     if (!card) return;
     const isButton = event.target.closest("button, select");
     if (isButton) return;
-    const name = card.dataset.menuId;
+    const name = card.dataset.menuName;
     if (!name) return;
     window.location.href = `product.html?name=${encodeURIComponent(name)}`;
   });

@@ -2,6 +2,8 @@ const productImage = document.getElementById("product-image");
 const productTitle = document.getElementById("product-title");
 const productCategory = document.getElementById("product-category");
 const productPrice = document.getElementById("product-price");
+const productMrp = document.getElementById("product-mrp");
+const productDiscount = document.getElementById("product-discount");
 const productDesc = document.getElementById("product-desc");
 const productVariations = document.getElementById("product-variations");
 const variantSelect = document.getElementById("product-variant-select");
@@ -10,6 +12,7 @@ const qtyInput = document.getElementById("product-qty");
 const qtyMinus = document.getElementById("qty-minus");
 const qtyPlus = document.getElementById("qty-plus");
 const addToCartBtn = document.getElementById("add-to-cart-btn");
+const buyNowBtn = document.getElementById("buy-now-btn");
 const addToCartMessage = document.getElementById("add-to-cart-message");
 const toast = document.getElementById("toast");
 
@@ -23,7 +26,7 @@ let selectedVariation = null;
 let maxStock = 0;
 
 function formatRupees(value) {
-  return `₹${value}`;
+  return "₹" + value;
 }
 
 function showToast(message) {
@@ -60,6 +63,7 @@ function updateQtyBounds() {
   qtyMinus.disabled = Number(qtyInput.value) <= 1;
   qtyPlus.disabled = Number(qtyInput.value) >= maxStock || maxStock === 0;
   addToCartBtn.disabled = maxStock === 0;
+  buyNowBtn.disabled = maxStock === 0;
 }
 
 function renderProduct() {
@@ -69,26 +73,35 @@ function renderProduct() {
   productCategory.textContent = currentProduct.category;
   productDesc.textContent = currentProduct.desc || "No description.";
 
-  const price = selectedVariation ? selectedVariation.price : Number(currentProduct.price || 0);
+  const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
+  const mrp = Number(currentProduct.mrp || 0);
   productPrice.textContent = formatRupees(price);
+  if (mrp > price && mrp > 0) {
+    productMrp.hidden = false;
+    productMrp.textContent = "MRP " + formatRupees(mrp);
+    const pct = Math.round(((mrp - price) / mrp) * 100);
+    productDiscount.hidden = false;
+    productDiscount.textContent = "-" + pct + "%";
+  } else {
+    productMrp.hidden = true;
+    productDiscount.hidden = true;
+  }
 
-  const img = document.querySelector("#product-image .product-image-placeholder");
   const container = document.querySelector("#product-image");
   if (currentProduct.image) {
-    container.innerHTML = `<img src="${currentProduct.image}" alt="${currentProduct.name}" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:inherit;">`;
-  } else if (img) {
-    img.textContent = "No image";
+    container.innerHTML = '<img src="' + currentProduct.image + '" alt="' + currentProduct.name + '" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:inherit;">';
+  } else {
+    container.innerHTML = '<div class="product-image-placeholder">No image</div>';
   }
 
   maxStock = Number(currentProduct.stock || 0);
   const available = currentProduct.available !== false && maxStock > 0;
 
   productStock.textContent = available
-    ? `In stock: ${maxStock} available`
+    ? "In stock: " + maxStock + " available"
     : "Out of stock";
   productStock.style.color = available ? "var(--basil)" : "var(--tomato)";
 
-  // Variations
   const variations = currentProduct.variations && currentProduct.variations.length
     ? currentProduct.variations
     : null;
@@ -96,10 +109,21 @@ function renderProduct() {
   if (variations) {
     productVariations.hidden = false;
     variantSelect.innerHTML = variations.map(
-      (v) => `<option value="${v.name}">${v.name} · ${formatRupees(v.price)}</option>`
+      (v) => '<option value="' + v.name + '">' + v.name + " · " + formatRupees(v.price) + "</option>"
     ).join("");
     selectedVariation = variations[0];
     productPrice.textContent = formatRupees(Number(selectedVariation.price));
+    const selectedMrp = Number(currentProduct.mrp || 0);
+    if (selectedMrp > Number(selectedVariation.price) && selectedMrp > 0) {
+      productMrp.hidden = false;
+      productMrp.textContent = "MRP " + formatRupees(selectedMrp);
+      const pct = Math.round(((selectedMrp - Number(selectedVariation.price)) / selectedMrp) * 100);
+      productDiscount.hidden = false;
+      productDiscount.textContent = "-" + pct + "%";
+    } else {
+      productMrp.hidden = true;
+      productDiscount.hidden = true;
+    }
     maxStock = Number(currentProduct.stock || 0);
   } else {
     productVariations.hidden = true;
@@ -117,15 +141,11 @@ function addToCart() {
   const qty = Number(qtyInput.value) || 1;
 
   if (qty > maxStock) {
-    showToast(`Only ${maxStock} available in stock.`);
+    showToast("Only " + maxStock + " available in stock.");
     return;
   }
 
-  const cartKey = selectedVariation
-    ? `${currentProduct.name}||${selectedVariation.name}`
-    : currentProduct.name;
-
-  let cart = readCart();
+  const cart = readCart();
   const existing = cart.find((item) => item.name === currentProduct.name && item.variation === (selectedVariation ? selectedVariation.name : null));
 
   if (existing) {
@@ -144,7 +164,7 @@ function addToCart() {
   }
 
   saveCart(cart);
-  addToCartMessage.textContent = `Added ${qty} x ${currentProduct.name} to cart`;
+  addToCartMessage.textContent = "Added " + qty + " x " + currentProduct.name + " to cart";
   addToCartMessage.style.color = "var(--basil)";
   showToast("Added to cart");
   window.dispatchEvent(new Event("storage"));
@@ -152,14 +172,14 @@ function addToCart() {
 
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
-  const name = params.get("name");
+  const name = decodeURIComponent(params.get("name") || "");
   if (!name) {
     productTitle.textContent = "Product not found";
     return;
   }
 
   try {
-    const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+    const res = await fetch(INVENTORY_API_URL + "?t=" + Date.now(), { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error("Failed to load inventory");
     inventory = await res.json();
     if (!Array.isArray(inventory)) inventory = [];
@@ -195,5 +215,9 @@ qtyPlus.addEventListener("click", () => {
 qtyInput.addEventListener("input", updateQtyBounds);
 
 addToCartBtn.addEventListener("click", addToCart);
+buyNowBtn.addEventListener("click", () => {
+  addToCart();
+  setTimeout(() => { window.location.href = "order.html"; }, 500);
+});
 
 loadProduct();

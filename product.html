@@ -30,7 +30,12 @@
           <div class="product-info">
             <span class="eyebrow" id="product-category">Category</span>
             <h1 id="product-title">Product Name</h1>
-            <div class="product-price" id="product-price">₹0</div>
+            <div class="product-price-row" id="product-price-row">
+              <div class="product-price" id="product-price">₹0</div>
+              <div class="product-mrp" id="product-mrp" hidden></div>
+              <div class="product-discount" id="product-discount" hidden></div>
+            </div>
+
             <p id="product-desc">Description</p>
 
             <div class="product-variations" id="product-variations" hidden>
@@ -51,6 +56,9 @@
 
             <button class="button primary full" id="add-to-cart-btn" type="button">
               Add to Cart
+            </button>
+            <button class="button primary full" id="buy-now-btn" type="button">
+              Buy Now
             </button>
             <p id="add-to-cart-message" style="margin-top:8px;font-size:0.85rem;color:var(--muted);"></p>
           </div>
