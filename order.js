@@ -707,6 +707,26 @@ async function bootOrderPage() {
     if (res.ok) {
       const data = await res.json();
       minOrderPrice = Number(data.minOrderPrice) || 0;
+      const storeCODEnabled = Boolean(data.codEnabled);
+      const paymentSelect = document.getElementById("payment-mode");
+
+      // Per-item COD check: if any cart item has codEnabled=false, COD is unavailable
+      const anyItemCODDisabled = cart.some((item) => item.codEnabled === false);
+      const codEnabled = storeCODEnabled && !anyItemCODDisabled;
+
+      if (paymentSelect) {
+        const codOption = paymentSelect.querySelector('option[value="Cash on Delivery"]');
+        if (codOption) {
+          if (!codEnabled) {
+            codOption.hidden = true;
+          } else {
+            codOption.hidden = false;
+          }
+          if (!codEnabled && paymentSelect.value === "Cash on Delivery") {
+            paymentSelect.value = "Razorpay";
+          }
+        }
+      }
     }
   } catch (e) {}
 
@@ -872,22 +892,20 @@ async function bootOrderPage() {
         phoneTick.style.opacity = "1";
       }
 
-      // Show saved address in one line
-      const savedAddressBox = document.getElementById("saved-address-box");
-      const savedAddressText = document.getElementById("saved-address-text");
-      const useSavedBtn = document.getElementById("use-saved-address");
-      if (savedAddressBox && savedAddressText && (saved.addrHouse || saved.addrArea)) {
-        const parts = [saved.addrHouse, saved.addrArea, saved.addrLandmark, saved.addrCity, saved.addrState, saved.addrPincode].filter(Boolean);
-        savedAddressText.textContent = parts.join(", ");
-        savedAddressBox.hidden = false;
-        if (useSavedBtn) {
-          useSavedBtn.addEventListener("click", () => {
-            document.getElementById("address-pincode").value = saved.addrPincode || "";
-            document.getElementById("address-state").value = saved.addrState || "";
-            document.getElementById("address-city").value = saved.addrCity || "";
-            document.getElementById("address-house").value = saved.addrHouse || "";
-            document.getElementById("address-area").value = saved.addrArea || "";
-            document.getElementById("address-landmark").value = saved.addrLandmark || "";
+      // Show saved details summary (one line) and hide full form
+      const detailsSection = document.getElementById("details-section");
+      const savedSummary = document.getElementById("saved-summary");
+      const savedSummaryText = document.getElementById("saved-summary-text");
+      const editBtn = document.getElementById("edit-details-btn");
+      if (savedSummary && savedSummaryText && (saved.addrHouse || saved.addrArea)) {
+        const parts = [saved.customerName, saved.customerPhone, saved.addrHouse, saved.addrArea, saved.addrCity, saved.addrState, saved.addrPincode].filter(Boolean);
+        savedSummaryText.textContent = parts.join(", ");
+        savedSummary.hidden = false;
+        if (detailsSection) detailsSection.hidden = true;
+        if (editBtn) {
+          editBtn.addEventListener("click", () => {
+            if (detailsSection) detailsSection.hidden = false;
+            if (savedSummary) savedSummary.hidden = true;
           });
         }
       }

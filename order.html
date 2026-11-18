@@ -48,6 +48,7 @@
 
       <div class="checkout-layout">
         <form class="checkout-form reveal" id="order-form">
+          <div id="details-section">
           <section class="form-panel" aria-labelledby="customer-title">
             <div class="panel-title">
               <span class="panel-step">1</span>
@@ -169,9 +170,17 @@
               <span>Order notes</span>
               <textarea id="order-notes" name="orderNotes" rows="3"></textarea>
             </label>
-            <button class="button primary submit-order" type="submit">Place order</button>
           </section>
+          </div>
         </form>
+
+        <div id="saved-summary" class="saved-summary" hidden>
+          <div class="saved-summary-row">
+            <span class="eyebrow">Delivering to</span>
+            <p id="saved-summary-text"></p>
+            <button type="button" class="button ghost" id="edit-details-btn" style="padding:6px 12px;font-size:0.8rem;">Edit</button>
+          </div>
+        </div>
 
         <aside class="checkout-summary reveal" aria-label="Order summary">
           <div class="order-header">
@@ -202,6 +211,7 @@
               </svg>
             </button>
           </div>
+          <button class="button primary full" id="place-order-btn" type="submit" form="order-form">Place order</button>
           <div class="confirmation-box" id="confirmation-box" hidden>
             <span class="eyebrow">Receipt</span>
             <strong id="order-number"></strong>

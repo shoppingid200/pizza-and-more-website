@@ -50,6 +50,7 @@ function normalizeInventory(inventory) {
         price: Math.max(0, Number(item.price) || 0),
         stock: Math.max(0, Number(item.stock) || 0),
         available: Boolean(item.available),
+        codEnabled: Boolean(item.codEnabled),
       };
       if (Array.isArray(item.variations) && item.variations.length) {
         normalized.variations = item.variations

@@ -3124,3 +3124,34 @@ footer strong {
   color: var(--ink);
   line-height: 1.4;
 }
+.saved-summary {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+
+.saved-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.saved-summary-row p {
+  flex: 1 1 200px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.saved-summary-row .eyebrow {
+  flex: 0 0 auto;
+}
+
+#place-order-btn {
+  margin-top: 12px;
+}

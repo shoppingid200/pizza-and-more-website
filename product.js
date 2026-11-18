@@ -188,6 +188,7 @@ function addToCart() {
       qty,
       variation: selectedVariation ? selectedVariation.name : null,
       size: selectedSize || null,
+      codEnabled: currentProduct.codEnabled !== false
     });
   }
 
@@ -263,6 +264,7 @@ qtyInput.addEventListener("input", updateQtyBounds);
       qty,
       variation: selectedVariation ? selectedVariation.name : null,
       size: selectedSize || null,
+      codEnabled: currentProduct.codEnabled !== false
     };
     localStorage.setItem("mount-parche-direct-order", JSON.stringify(directItem));
     window.location.href = "order.html?direct=1";

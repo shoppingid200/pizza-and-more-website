@@ -7,6 +7,7 @@ const CATALOG_ITEMS = [
     type: "Apparel",
     desc: "Everyday cotton T-shirt. Add your sizes and colours in the admin panel.",
     price: 499,
+    codEnabled: true,
   },
   {
     name: "Casual Shirt",
@@ -14,6 +15,7 @@ const CATALOG_ITEMS = [
     type: "Apparel",
     desc: "Comfortable casual shirt for daily wear.",
     price: 899,
+    codEnabled: true,
   },
   {
     name: "Fashion Handbag",
@@ -21,6 +23,7 @@ const CATALOG_ITEMS = [
     type: "Accessory",
     desc: "A versatile handbag for everyday essentials.",
     price: 1199,
+    codEnabled: true,
   },
   {
     name: "Sunglasses",
@@ -28,6 +31,7 @@ const CATALOG_ITEMS = [
     type: "Accessory",
     desc: "Lightweight sunglasses with UV protection.",
     price: 699,
+    codEnabled: true,
   },
   {
     name: "Ceramic Mug Set",
@@ -35,6 +39,7 @@ const CATALOG_ITEMS = [
     type: "Homeware",
     desc: "Set of two ceramic mugs for tea, coffee, or gifting.",
     price: 599,
+    codEnabled: true,
   },
   {
     name: "Dinner Plate Set",
@@ -42,18 +47,20 @@ const CATALOG_ITEMS = [
     type: "Homeware",
     desc: "Durable dinner plate set for your table.",
     price: 1499,
+    codEnabled: true,
   },
   {
     name: "Everyday Essentials",
     category: "Other Items",
     type: "General",
-    desc: "A flexible listing for any new product you want to sell.",
+    desc: "A flexible listing for any product you want to sell.",
     price: 299,
+    codEnabled: true,
   },
 ];
 
 function buildDefaultInventory() {
-  return CATALOG_ITEMS.map((item) => ({ ...item, stock: 50, available: true }));
+  return CATALOG_ITEMS.map((item) => ({ ...item, stock: 50, available: true, codEnabled: item.codEnabled !== false }));
 }
 
 async function ensureSeededInventory(redis) {

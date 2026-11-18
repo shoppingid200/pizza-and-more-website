@@ -71,6 +71,9 @@ module.exports = async (req, res) => {
       if (body.minOrderPrice !== undefined) {
         settings.minOrderPrice = Number(body.minOrderPrice);
       }
+      if (body.codEnabled !== undefined) {
+        settings.codEnabled = Boolean(body.codEnabled);
+      }
 
       await redis.set(SETTINGS_KEY, settings);
       return res.status(200).json({ message: "Settings updated successfully", settings });
