@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard | R Pizza and More</title>
+  <title>Admin Dashboard | Mount Parche</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* CRITICAL MOBILE RESPONSIVENESS FIXES */
@@ -61,17 +61,17 @@
   <!-- Auth Guard: shown while checking session -->
   <div id="auth-guard"
     style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
-    <img src="images/logo.jpg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="R Logo">
+    <img src="images/mount-parche-logo.svg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="Mount Parche logo">
     <p
       style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">
       Verifying access...</p>
   </div>
 
   <header class="topbar">
-    <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
-      <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
+    <a class="brand-lockup" href="index.html" aria-label="Mount Parche home">
+      <img src="images/mount-parche-logo.svg" class="brand-logo" alt="Mount Parche logo">
       <span>
-        <strong>R PIZZA AND MORE</strong>
+        <strong>MOUNT PARCHE</strong>
         <small>Admin Portal</small>
       </span>
     </a>
@@ -312,18 +312,19 @@
                 <label class="field" style="gap: 2px;">
                   <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</span>
                   <select id="new-item-category" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
-                    <option value="Veg Specials">Veg Specials</option>
-                    <option value="Paneer Pizzas">Paneer Pizzas</option>
-                    <option value="Classic Veg">Classic Veg</option>
-                    <option value="Non Veg">Non Veg</option>
-                    <option value="Burgers & More">Burgers & More</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Crockery">Crockery</option>
+                    <option value="Other Items">Other Items</option>
                   </select>
                 </label>
                 <label class="field" style="gap: 2px;">
                   <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</span>
                   <select id="new-item-type" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
-                    <option value="Veg">Veg</option>
-                    <option value="Non Veg">Non Veg</option>
+                    <option value="Apparel">Apparel</option>
+                    <option value="Accessory">Accessory</option>
+                    <option value="Homeware">Homeware</option>
+                    <option value="General">General</option>
                   </select>
                 </label>
               </div>
@@ -448,14 +449,14 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <footer>
-    <strong>R PIZZA AND MORE · ADMIN</strong>
-    <span>Secret Dashboard · Samastipur, Bihar</span>
+    <strong>MOUNT PARCHE · ADMIN</strong>
+    <span>Store Dashboard</span>
   </footer>
 
   <script src="audio.js"></script>
   <script>
     const AUTH_API = "/api/auth";
-    const SESSION_KEY = "r-pizza-admin-session";
+    const SESSION_KEY = "mount-parche-admin-session";
 
     // ── AUTH GUARD ──
     (async function guardAdmin() {
@@ -532,8 +533,7 @@
       window.location.replace("login.html");
     });
 
-    const ALL_ORDERS_KEY = "r-pizza-all-orders";
-    const RESTAURANT_WHATSAPP = "916301045696";
+    const ALL_ORDERS_KEY = "mount-parche-all-orders";
     const ORDERS_API_URL = "/api/orders";
     const INVENTORY_API_URL = "/api/inventory";
 
@@ -956,10 +956,10 @@
       const mockNames = ["Rahul Kumar", "Anjali Singh", "Mohammad Saif", "Vikram Rathore", "Priya Sharma", "Aman Verma"];
       const mockPhones = ["+91 9876543210", "+91 8765432109", "+91 7654321098", "+91 9123456789", "+91 9988776655"];
       const mockAddresses = [
-        "Ward No. 5, Near Ram Mandir, Tajpur, Samastipur",
-        "Agarwal Complex Area, Tajpur Bazar Road",
-        "Near Station Road, Tajpur, Bihar",
-        "Gandhi Chowk, Samastipur Road, Tajpur"
+        "House 12, Main Road, Example City",
+        "Near Central Market, Example City",
+        "Apartment 4B, Example City",
+        "Main Street, Example City"
       ];
       const availableItems = readInventory().filter(item => item.available && item.stock > 0);
       if (availableItems.length === 0) {
@@ -971,7 +971,7 @@
       const phone = mockPhones[Math.floor(Math.random() * mockPhones.length)];
       const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
       const service = Math.random() > 0.3 ? "No-contact delivery" : "Dine-in";
-      const payment = Math.random() > 0.5 ? "UPI" : "Cash";
+      const payment = "Cash on Delivery";
 
       const numItems = Math.floor(Math.random() * 3) + 1;
       const selectedItems = [];
@@ -989,13 +989,13 @@
       }
       selectedItems.forEach(x => { total += x.price * x.qty; });
 
-      const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
+      const id = `MP-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-6)}`;
       const details = {
         name, phone,
         address: service === "No-contact delivery" ? address : "",
         mapLink: service === "No-contact delivery" ? `https://www.google.com/maps?q=25.899200,85.679500` : "",
         service, time: "As soon as possible", payment,
-        notes: Math.random() > 0.5 ? "Make it fresh and hot!" : ""
+        notes: Math.random() > 0.5 ? "Please pack carefully." : ""
       };
 
       try {
@@ -1085,7 +1085,7 @@
     btnSettingsView.addEventListener("click", () => switchView("settings"));
 
     // INVENTORY LOGIC
-    const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+    const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
     const inventoryTbody = document.querySelector("#inventory-tbody");
     const inventorySearch = document.querySelector("#inventory-search");
     const addItemForm = document.querySelector("#add-item-form");

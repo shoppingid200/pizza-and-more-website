@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
-    content="Complete an order for R Pizza and More with customer details, service choice, and optional location selection." />
-  <title>Order | R Pizza and More</title>
+    content="Complete your Mount Parche order with customer details, shipping address, and secure payment." />
+  <title>Order | Mount Parche</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
@@ -16,15 +16,15 @@
 
 <body class="checkout-body">
   <header class="topbar">
-    <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
-      <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
+    <a class="brand-lockup" href="index.html" aria-label="Mount Parche home">
+      <img src="images/mount-parche-logo.svg" class="brand-logo" alt="Mount Parche logo">
       <span>
-        <strong>R PIZZA AND MORE</strong>
+        <strong>MOUNT PARCHE</strong>
         <small>Order desk</small>
       </span>
     </a>
     <nav aria-label="Primary navigation">
-      <a href="index.html#menu">Menu</a>
+        <a href="index.html#menu">Shop</a>
       <a href="order.html" aria-current="page">Order</a>
       <a href="history.html">My Orders</a>
       <a href="index.html#visit">Visit</a>
@@ -34,7 +34,7 @@
         <path
           d="M4 5.5C4 4.7 4.7 4 5.5 4H19c.6 0 1 .4 1 1v14c0 .6-.4 1-1 1H5.5C4.7 20 4 19.3 4 18.5v-13Zm3 2v2h10v-2H7Zm0 4v2h10v-2H7Zm0 4v2h7v-2H7Z" />
       </svg>
-      Menu
+      Shop
     </a>
   </header>
 
@@ -43,7 +43,7 @@
       <div class="checkout-heading reveal">
         <span class="eyebrow">Order</span>
         <h1 id="checkout-title">Complete your order</h1>
-        <p>R Pizza and More · AGARWAL COMPLEX 0005, Tajpur, Samastipur</p>
+        <p>Mount Parche · Clothes, accessories, crockery, and more</p>
       </div>
 
       <div class="checkout-layout">
@@ -94,9 +94,8 @@
               <label class="field">
                 <span>Payment</span>
                 <select id="payment-mode" name="paymentMode">
-                  <option value="Cash">Cash</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Card">Card</option>
+                  <option value="Razorpay">Pay online securely (Razorpay)</option>
+                  <option value="Cash on Delivery">Cash on Delivery</option>
                 </select>
               </label>
             </div>
@@ -174,7 +173,7 @@
               <h2 id="notes-title">Notes</h2>
             </div>
             <label class="field">
-              <span>Cooking notes</span>
+              <span>Order notes</span>
               <textarea id="order-notes" name="orderNotes" rows="3"></textarea>
             </label>
             <button class="button primary submit-order" type="submit">Place order</button>
@@ -235,8 +234,8 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <footer>
-    <strong>R PIZZA AND MORE</strong>
-    <span>Order page · Tajpur, Samastipur · ₹1-200</span>
+    <strong>MOUNT PARCHE</strong>
+    <span>Clothes · Accessories · Crockery · More</span>
   </footer>
 
   <div id="order-success-overlay" class="order-success-overlay" hidden>
@@ -259,6 +258,7 @@
     </div>
   </div>
 
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="order.js"></script>
 </body>
 

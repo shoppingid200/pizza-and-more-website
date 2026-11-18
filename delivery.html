@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Delivery Dashboard | R Pizza and More</title>
+    <title>Delivery Dashboard | Mount Parche</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
       .delivery-grid {
@@ -63,15 +63,15 @@
   <body class="admin-body">
     <!-- Auth Guard -->
     <div id="auth-guard" style="position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.4s ease,visibility 0.4s ease;">
-      <img src="images/logo.jpg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="R Logo">
+      <img src="images/mount-parche-logo.svg" class="brand-logo" style="width:56px;height:56px;margin-bottom:16px;" alt="Mount Parche logo">
       <p style="font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;">Verifying access...</p>
     </div>
 
     <header class="topbar">
-      <a class="brand-lockup" href="index.html" aria-label="R Pizza and More home">
-        <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
+      <a class="brand-lockup" href="index.html" aria-label="Mount Parche home">
+        <img src="images/mount-parche-logo.svg" class="brand-logo" alt="Mount Parche logo">
         <span>
-          <strong>R PIZZA AND MORE</strong>
+          <strong>MOUNT PARCHE</strong>
           <small>Delivery Portal</small>
         </span>
       </a>
@@ -102,13 +102,13 @@
     <script>
       const AUTH_API = "/api/auth";
       const ORDERS_API_URL = "/api/orders";
-      const SESSION_KEY = "r-pizza-admin-session";
+      const SESSION_KEY = "mount-parche-admin-session";
 
       // ── AUTH GUARD ──
       (async function guardDelivery() {
         const guard = document.getElementById("auth-guard");
         const token = localStorage.getItem(SESSION_KEY);
-        const role = localStorage.getItem("r-pizza-admin-role");
+        const role = localStorage.getItem("mount-parche-admin-role");
 
         if (!token) {
           window.location.replace("login.html");
@@ -165,7 +165,7 @@
           });
         } catch {}
         localStorage.removeItem(SESSION_KEY);
-        localStorage.removeItem("r-pizza-admin-role");
+        localStorage.removeItem("mount-parche-admin-role");
         window.location.replace("login.html");
       });
 
@@ -191,7 +191,7 @@
           if (!Array.isArray(allOrders)) return;
 
           const deliveriesContainer = document.getElementById("deliveries-container");
-          const myUsername = localStorage.getItem("r-pizza-admin-username") || "";
+          const myUsername = localStorage.getItem("mount-parche-admin-username") || "";
           
           // Only show orders that are currently "Out for Delivery" AND (unassigned OR assigned to me)
           const unassigned = allOrders.filter(o => o.status === "Out for Delivery" && !o.deliveryPartner);

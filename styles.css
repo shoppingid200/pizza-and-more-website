@@ -175,6 +175,22 @@ svg {
   display: block;
 }
 
+.hero-merch {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(184, 64, 40, 0.85), rgba(34, 26, 47, 0.86));
+  color: #fff8ee;
+  font-size: clamp(1.2rem, 3vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.55;
+  text-align: center;
+}
+
 .hero-visual {
   position: relative;
   display: flex;

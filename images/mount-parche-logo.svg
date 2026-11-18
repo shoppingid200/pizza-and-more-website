@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="title">
+  <title id="title">Mount Parche logo</title>
+  <defs>
+    <linearGradient id="mount" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#b84028"/>
+      <stop offset="1" stop-color="#5f1f39"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="42" fill="#17131a"/>
+  <path d="M25 143 75 66l25 37 27-47 48 87H25Z" fill="url(#mount)"/>
+  <path d="M72 143 101 96l27 47H72Z" fill="#f6d6ae"/>
+  <text x="100" y="178" text-anchor="middle" fill="#fff8ee" font-family="Arial, sans-serif" font-size="23" font-weight="700">MP</text>
+</svg>

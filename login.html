@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Admin login for R Pizza and More. Enter your credentials to access the dashboard." />
-    <title>Admin Login | R Pizza and More</title>
+    <meta name="description" content="Admin login for Mount Parche. Enter your credentials to access the dashboard." />
+    <title>Admin Login | Mount Parche</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
       .login-page {
@@ -312,8 +312,8 @@
       <div class="login-card">
         <div class="login-brand">
           <img src="images/logo.jpg" class="brand-logo" alt="R Logo">
-          <h1>R PIZZA AND MORE</h1>
-          <p>Admin Portal · Tajpur, Samastipur</p>
+          <h1>MOUNT PARCHE</h1>
+          <p>Admin Portal</p>
         </div>
 
         <div class="login-tabs">
@@ -380,7 +380,7 @@
 
     <script>
       const AUTH_API = "/api/auth";
-      const SESSION_KEY = "r-pizza-admin-session";
+      const SESSION_KEY = "mount-parche-admin-session";
 
       const tabLogin = document.getElementById("tab-login");
       const tabRegister = document.getElementById("tab-register");
@@ -459,8 +459,8 @@
           }
 
           localStorage.setItem(SESSION_KEY, data.token);
-          localStorage.setItem("r-pizza-admin-role", data.role || "admin");
-          localStorage.setItem("r-pizza-admin-username", data.username);
+          localStorage.setItem("mount-parche-admin-role", data.role || "admin");
+          localStorage.setItem("mount-parche-admin-username", data.username);
           showMessage("Login successful! Redirecting...", "success");
           setTimeout(() => {
             window.location.href = data.role === "delivery" ? "delivery.html" : "admin.html";

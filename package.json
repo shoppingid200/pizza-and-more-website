@@ -1,5 +1,5 @@
 {
-  "name": "r-pizza-and-more",
+  "name": "mount-parche",
   "private": true,
   "dependencies": {
     "@upstash/redis": "^1.30.0"

@@ -5,8 +5,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
 });
 
-const SETTINGS_KEY = "r-pizza-and-more:settings";
-const SESSIONS_KEY = "r-pizza-and-more:sessions";
+const SETTINGS_KEY = "mount-parche:settings";
+const SESSIONS_KEY = "mount-parche:sessions";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

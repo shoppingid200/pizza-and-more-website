@@ -1,8 +1,8 @@
-const CART_STORAGE_KEY = "r-pizza-cart";
-const LAST_ORDER_KEY = "r-pizza-last-order";
-const RESTAURANT_WHATSAPP = "916301045696";
+const CART_STORAGE_KEY = "mount-parche-cart";
+const LAST_ORDER_KEY = "mount-parche-last-order";
 const ORDERS_API_URL = "/api/orders";
 const INVENTORY_API_URL = "/api/inventory";
+const PAYMENT_API_URL = "/api/payment";
 
 const checkoutItems = document.querySelector("#checkout-items");
 const summaryCount = document.querySelector("#summary-count");
@@ -48,6 +48,80 @@ async function placeOrderOnApi(payload) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || data?.message || "Failed to place order");
   return data;
+}
+
+async function createRazorpayOrder(cart) {
+  const response = await fetch(PAYMENT_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ action: "create-order", cart }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.message || "Could not start the online payment.");
+  return data;
+}
+
+async function verifyRazorpayPayment(payment) {
+  const response = await fetch(PAYMENT_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      action: "verify",
+      merchantOrderId: payment.merchantOrderId,
+      razorpayOrderId: payment.razorpayOrderId,
+      razorpayPaymentId: payment.razorpayPaymentId,
+      razorpaySignature: payment.razorpaySignature,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.message || "Payment verification failed.");
+  return data;
+}
+
+async function payWithRazorpay(details) {
+  if (typeof window.Razorpay !== "function") {
+    throw new Error("The Razorpay checkout could not be loaded. Please refresh and try again.");
+  }
+  const paymentOrder = await createRazorpayOrder(cart);
+
+  return new Promise((resolve, reject) => {
+    let completed = false;
+    const checkout = new window.Razorpay({
+      key: paymentOrder.keyId,
+      amount: paymentOrder.amount,
+      currency: paymentOrder.currency,
+      name: "Mount Parche",
+      description: "Secure online payment",
+      order_id: paymentOrder.razorpayOrderId,
+      prefill: { name: details.name, contact: details.phone },
+      theme: { color: "#b84028" },
+      handler: async (response) => {
+        completed = true;
+        try {
+          const verified = await verifyRazorpayPayment({
+            merchantOrderId: paymentOrder.merchantOrderId,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+          resolve(verified);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      modal: {
+        ondismiss: () => {
+          window.setTimeout(() => {
+            if (!completed) reject(new Error("Payment was cancelled."));
+          }, 0);
+        },
+      },
+    });
+    checkout.on("payment.failed", (response) => {
+      if (!completed) reject(new Error(response?.error?.description || "Payment failed."));
+    });
+    checkout.open();
+  });
 }
 
 async function patchOrderStatusOnApi({ id, status }) {
@@ -189,7 +263,7 @@ function orderMessage(details, id) {
   ].filter(Boolean);
 
   return [
-    `R Pizza and More order ${id}`,
+    `Mount Parche order ${id}`,
     `Name: ${details.name}`,
     `Phone: ${details.phone}`,
     `Service: ${details.service}`,
@@ -293,7 +367,7 @@ function selectCurrentLocation() {
   );
 }
 
-const ALL_ORDERS_KEY = "r-pizza-all-orders";
+const ALL_ORDERS_KEY = "mount-parche-all-orders";
 
 function readAllOrders() {
   try {
@@ -329,7 +403,7 @@ async function syncOrdersFromApi() {
 
 
 
-const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
 
 function validateStockAvailability() {
   try {
@@ -501,14 +575,30 @@ async function submitOrder(event) {
     addrArea: formData.get("addrArea") || "",
     addrLandmark: formData.get("addrLandmark") || "",
   };
-  localStorage.setItem("r-pizza-saved-profile", JSON.stringify(profile));
+  localStorage.setItem("mount-parche-saved-profile", JSON.stringify(profile));
 
-  const id = `RPZ-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
+  let id = `MP-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-6)}`;
   const message = orderMessage(details, id);
+
+  let paymentVerification;
+  if (details.payment === "Razorpay") {
+    try {
+      const verifiedPayment = await payWithRazorpay(details);
+      id = verifiedPayment.merchantOrderId;
+      paymentVerification = {
+        razorpayOrderId: verifiedPayment.razorpayOrderId,
+        razorpayPaymentId: verifiedPayment.razorpayPaymentId,
+      };
+    } catch (error) {
+      showToast(String(error?.message || "Online payment was not completed."));
+      restoreBtn();
+      return;
+    }
+  }
 
   let placed;
   try {
-    placed = await placeOrderOnApi({ id, details, cart, total });
+    placed = await placeOrderOnApi({ id, details, cart, total, paymentVerification });
   } catch (e) {
     showToast(String(e?.message || e || "Order placement failed"));
     restoreBtn();
@@ -748,7 +838,7 @@ async function bootOrderPage() {
   
   // Load saved profile
   try {
-    const saved = JSON.parse(localStorage.getItem("r-pizza-saved-profile"));
+    const saved = JSON.parse(localStorage.getItem("mount-parche-saved-profile"));
     if (saved) {
       if (document.getElementById("customer-name")) document.getElementById("customer-name").value = saved.customerName || "";
       if (phoneInput) document.getElementById("customer-phone").value = saved.customerPhone || "";

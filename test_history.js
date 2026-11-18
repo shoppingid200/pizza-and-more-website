@@ -8,8 +8,8 @@ const window = dom.window;
 
 // Mock localStorage
 let store = {
-  "r-pizza-all-orders": JSON.stringify([{
-    id: "RPZ-20260603-12345",
+  "mount-parche-all-orders": JSON.stringify([{
+    id: "MP-20260603-12345",
     createdAt: new Date().toISOString(),
     details: { name: "Test", phone: "123", service: "Delivery" },
     status: "Pending",

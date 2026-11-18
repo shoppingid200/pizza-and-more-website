@@ -1,99 +1,40 @@
 const { Redis } = require("@upstash/redis");
+const { INVENTORY_KEY, ensureSeededInventory, priceForCartItem } = require("./catalog");
+
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
 });
 
-const ORDERS_KEY = "r-pizza-and-more:orders";
-const INVENTORY_KEY = "r-pizza-and-more:inventory";
-
-const MENU_ITEMS = [
-  {
-    name: "Fresh veggie",
-    category: "Veg Specials",
-    type: "Veg",
-    desc: "3 topping, onion, capsicum tomato",
-    price: 179,
-  },
-  {
-    name: "Veg pasta pizza",
-    category: "Veg Specials",
-    type: "Veg",
-    desc: "5 topping, capsicum tomato pasta olives jalpino",
-    price: 209,
-  },
-  { name: "Farmhouse", category: "Veg Specials", type: "Veg", desc: "5 topping, capsicum tomato onion corn mushroom", price: 209 },
-  { name: "Veggi paradise", category: "Veg Specials", type: "Veg", desc: "4 topping, capsicum corn peprika olivs", price: 209 },
-  { name: "Peppy Paneer", category: "Paneer Pizzas", type: "Veg", desc: "4 topping, capsicum onion paneer makhani", price: 209 },
-  { name: "Paneer makhani", category: "Paneer Pizzas", type: "Veg", desc: "4 topping, capsicum peprika paneer makhani mint", price: 239 },
-  { name: "Delux paneer veggie", category: "Paneer Pizzas", type: "Veg", desc: "4 topping, capsicum tomato paneer corn mushroom", price: 239 },
-  { name: "veg extra vaganza", category: "Veg Specials", type: "Veg", desc: "7 topping, capsicum onion tomato corn olives mushroom jalapino", price: 239 },
-  { name: "Tandoori paneer pizza", category: "Paneer Pizzas", type: "Veg", desc: "5 topping, capsicum peprika paneer makhani mint", price: 239 },
-  { name: "Margherita", category: "Classic Veg", type: "Veg", desc: "Cheese only", price: 99 },
-  { name: "Cheese paneer", category: "Classic Veg", type: "Veg", desc: "Single topping, paneer", price: 129 },
-  { name: "Corn paneer", category: "Classic Veg", type: "Veg", desc: "2 topping, paneer, corn", price: 139 },
-  { name: "Capsicum paneer", category: "Classic Veg", type: "Veg", desc: "2 topping, paneer, capsicum", price: 139 },
-  { name: "Double cheese", category: "Classic Veg", type: "Veg", desc: "Double cheese only", price: 179 },
-  { name: "Cheese corn", category: "Classic Veg", type: "Veg", desc: "Double cheese with corn", price: 179 },
-  { name: "Cheese tomato", category: "Classic Veg", type: "Veg", desc: "Double cheese with tomato", price: 179 },
-  { name: "Chicken sausage", category: "Non Veg", type: "Non Veg", desc: "Single topping, sausage flavour", price: 159 },
-  { name: "Barbecue Chicken", category: "Non Veg", type: "Non Veg", desc: "Single topping, barbecue flavour", price: 189 },
-  { name: "Nonveg pasta pizza", category: "Non Veg", type: "Non Veg", desc: "5 topping, capsicum tomato pasta chicken onion jalpino", price: 219 },
-  { name: "Chicken goldendelight", category: "Non Veg", type: "Non Veg", desc: "2 topping, bbq chicken corn extra cheese", price: 219 },
-  { name: "Barbecue & Onion", category: "Non Veg", type: "Non Veg", desc: "2 topping, barbecue flavour with onion", price: 219 },
-  { name: "Chicken dominator", category: "Non Veg", type: "Non Veg", desc: "5 topping, capsicum tomato onion BBQ sausage ex cheese", price: 249 },
-  { name: "Chicken tikka", category: "Non Veg", type: "Non Veg", desc: "4 topping capsicum peprika chicken makhani mint", price: 249 },
-  { name: "Spice Double chicken", category: "Non Veg", type: "Non Veg", desc: "2 topping, BBQ & sausage with extra cheese", price: 249 },
-  { name: "Tomato", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 69 },
-  { name: "Onion", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 69 },
-  { name: "Capsicum", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 69 },
-  { name: "Golden corn", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 69 },
-  { name: "Paneer onion", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 79 },
-  { name: "Loaded veg", category: "Burgers & More", type: "Veg", desc: "Quick bite", price: 79 },
-  { name: "Sausage", category: "Burgers & More", type: "Non Veg", desc: "Quick bite", price: 109 },
-  { name: "Loaded chicken", category: "Burgers & More", type: "Non Veg", desc: "Quick bite", price: 129 },
-  { name: "Cheese Nonveg", category: "Burgers & More", type: "Non Veg", desc: "Quick bite", price: 139 },
-];
-
-function buildDefaultInventory() {
-  return MENU_ITEMS.map((item) => ({ ...item, stock: 50, available: true }));
-}
-
-async function ensureSeededInventory() {
-  const existing = await redis.get(INVENTORY_KEY);
-  if (Array.isArray(existing)) return existing;
-  const seeded = buildDefaultInventory();
-  await redis.set(INVENTORY_KEY, seeded);
-  return seeded;
-}
+const ORDERS_KEY = "mount-parche:orders";
+const SETTINGS_KEY = "mount-parche:settings";
+const PAYMENT_KEY_PREFIX = "mount-parche:payment:";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 async function readJsonBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
-  if (req.body && typeof req.body === "string") {
+  if (typeof req.body === "string") {
     try {
       return JSON.parse(req.body);
     } catch {
       return {};
     }
   }
-
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let raw = "";
     req.on("data", (chunk) => {
       raw += String(chunk);
     });
     req.on("end", () => {
-      if (!raw) return resolve({});
       try {
-        resolve(JSON.parse(raw));
-      } catch (e) {
-        reject(e);
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch (error) {
+        reject(error);
       }
     });
     req.on("error", reject);
@@ -102,341 +43,221 @@ async function readJsonBody(req) {
 
 function generateOrderId() {
   const day = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = Date.now().toString().slice(-5);
-  return `RPZ-${day}-${suffix}`;
+  return "MP-" + day + "-" + Date.now().toString().slice(-6);
+}
+
+function cleanCart(cart, inventory) {
+  const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
+  const cleaned = [];
+  for (const line of cart) {
+    const name = String(line?.name || "").trim();
+    const qty = Number(line?.qty || 0);
+    const variation = String(line?.variation || "").trim();
+    const inventoryItem = inventoryByName.get(name);
+    if (!name || !Number.isInteger(qty) || qty < 1) throw new Error("Invalid cart item");
+    if (!inventoryItem) throw new Error("Item not found: " + name);
+    if (!inventoryItem.available) throw new Error(name + " is currently unavailable.");
+    if (Number(inventoryItem.stock) < qty) throw new Error("Only " + inventoryItem.stock + " of " + name + " are available.");
+    const price = priceForCartItem(inventoryItem, line);
+    if (!Number.isFinite(price) || price < 0) throw new Error("Invalid variation for " + name);
+    cleaned.push({
+      name,
+      qty,
+      price,
+      variation: variation || undefined,
+      category: String(inventoryItem.category || ""),
+      type: String(inventoryItem.type || ""),
+    });
+  }
+  if (!cleaned.length) throw new Error("Cart is empty");
+  return cleaned;
+}
+
+async function validateRazorpayPayment(orderId, paymentVerification, total) {
+  const payment = await redis.get(PAYMENT_KEY_PREFIX + orderId);
+  if (!payment || payment.status !== "verified") throw new Error("Online payment has not been verified.");
+  if (
+    payment.razorpayOrderId !== String(paymentVerification?.razorpayOrderId || "") ||
+    payment.razorpayPaymentId !== String(paymentVerification?.razorpayPaymentId || "") ||
+    Number(payment.amount) !== Math.round(total * 100)
+  ) {
+    throw new Error("Online payment details do not match this order.");
+  }
+  return payment;
 }
 
 module.exports = async (req, res) => {
   setCors(res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (req.method === "OPTIONS") return res.status(200).end();
-
-  if (req.method === "GET") {
-    res.setHeader("Cache-Control", "public, s-maxage=3, stale-while-revalidate=5");
-  } else {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  }
+  res.setHeader("Cache-Control", req.method === "GET" ? "public, s-maxage=3, stale-while-revalidate=5" : "no-cache, no-store, must-revalidate");
 
   try {
-    const ordersExisting = (await redis.get(ORDERS_KEY)) || [];
-
-    if (req.method === "GET") {
-      return res.status(200).json(Array.isArray(ordersExisting) ? ordersExisting : []);
-    }
+    const storedOrders = (await redis.get(ORDERS_KEY)) || [];
+    if (req.method === "GET") return res.status(200).json(Array.isArray(storedOrders) ? storedOrders : []);
 
     if (req.method === "POST") {
       const body = await readJsonBody(req);
-      const details = body?.details;
-      const cart = body?.cart;
-      const id = body?.id || generateOrderId();
-      const providedTotal = Number(body?.total);
+      if (!body.details || typeof body.details !== "object") return res.status(400).json({ message: "Missing order details" });
+      if (!Array.isArray(body.cart)) return res.status(400).json({ message: "Missing cart items" });
 
-      if (!details || typeof details !== "object") return res.status(400).json({ message: "Missing order details" });
-      if (!Array.isArray(cart)) return res.status(400).json({ message: "Missing cart items" });
-
-      const cleanedCart = cart
-        .map((x) => ({
-          name: String(x?.name || ""),
-          qty: Number(x?.qty || 0),
-          price: Number(x?.price || 0),
-        }))
-        .filter((x) => x.name && x.qty > 0);
-
-      if (!cleanedCart.length) return res.status(400).json({ message: "Cart is empty" });
-
-      const inventory = await ensureSeededInventory();
-      const inventoryByName = new Map(inventory.map((x) => [x.name, x]));
-
-      // Validate stock
-      for (const ci of cleanedCart) {
-        const invItem = inventoryByName.get(ci.name);
-        if (!invItem) return res.status(400).json({ message: `Item not found: ${ci.name}` });
-        if (!invItem.available) return res.status(409).json({ message: `${ci.name} is currently unavailable.` });
-        if (invItem.stock < ci.qty) return res.status(409).json({ message: `Only ${invItem.stock} of ${ci.name} are available.` });
+      const inventory = await ensureSeededInventory(redis);
+      let items;
+      try {
+        items = cleanCart(body.cart, inventory);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
       }
-
-      // Deduct stock
-      for (const ci of cleanedCart) {
-        const invItem = inventoryByName.get(ci.name);
-        invItem.stock = Math.max(0, invItem.stock - ci.qty);
-      }
-
-      // Recompute total from cart (more reliable than trusting the client)
-      const total = cleanedCart.reduce((sum, x) => sum + x.price * x.qty, 0);
-
-      // Validate minimum order price
-      const settingsKey = "r-pizza-and-more:settings";
-      const settings = (await redis.get(settingsKey)) || {};
+      const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const settings = (await redis.get(SETTINGS_KEY)) || {};
       const minOrderPrice = Number(settings.minOrderPrice) || 0;
       if (minOrderPrice > 0 && total < minOrderPrice) {
-        return res.status(400).json({ message: `Minimum order amount is ₹${minOrderPrice}. Your total is ₹${total}.` });
+        return res.status(400).json({ message: "Minimum order amount is ₹" + minOrderPrice + ". Your total is ₹" + total + "." });
       }
 
-      const createdAt = new Date().toISOString();
+      const paymentMethod = String(body.details.payment || "Cash on Delivery").trim();
+      const id = String(body.id || generateOrderId()).trim();
+      let verifiedPayment;
+      if (paymentMethod !== "Razorpay" && paymentMethod !== "Cash on Delivery") {
+        return res.status(400).json({ message: "Unsupported payment method." });
+      }
+      if (paymentMethod === "Razorpay") {
+        try {
+          verifiedPayment = await validateRazorpayPayment(id, body.paymentVerification, total);
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
+        }
+      }
+
+      const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
+      for (const item of items) {
+        const inventoryItem = inventoryByName.get(item.name);
+        inventoryItem.stock = Math.max(0, Number(inventoryItem.stock) - item.qty);
+      }
+
       const order = {
         id,
-        createdAt,
-        details,
-        // Keep both `items` and `cart` for compatibility with your admin page.
-        items: cleanedCart.map((x) => ({ ...x, category: "", type: "" })),
-        cart: cleanedCart.map((x) => ({ ...x, category: "", type: "" })),
-        total: Number.isFinite(providedTotal) && providedTotal > 0 ? providedTotal : total,
+        createdAt: new Date().toISOString(),
+        details: { ...body.details, payment: paymentMethod || "Cash on Delivery" },
+        items,
+        cart: items,
+        total,
         status: "Pending",
       };
-
-      const nextOrders = Array.isArray(ordersExisting) ? [...ordersExisting, order] : [order];
-
-      // Run Redis saves + Telegram notification in parallel (all BEFORE response)
-      // Vercel kills execution after res.json(), so Telegram must finish first
-      const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-      const telegramChatId = process.env.TELEGRAM_CHAT_ID;
-
-      const tasks = [
-        redis.set(ORDERS_KEY, nextOrders),
-        redis.set(INVENTORY_KEY, inventory),
-      ];
-
-      if (telegramToken && telegramChatId) {
-        const itemList = cleanedCart.map(i => `${i.qty}x ${i.name}`).join('\n');
-        const text = `🚨 *NEW ORDER RECEIVED!*\n\n*Customer:* ${details.name}\n*Phone:* ${details.phone}\n*Total:* ₹${total}\n*Type:* ${details.service}\n\n*Items:*\n${itemList}`;
-        
-        tasks.push(
-          fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: telegramChatId,
-              text: text,
-              parse_mode: 'Markdown'
-            })
-          }).catch(e => console.error("Telegram notification failed:", e))
-        );
+      if (verifiedPayment) {
+        order.payment = {
+          provider: "Razorpay",
+          paymentId: verifiedPayment.razorpayPaymentId,
+          orderId: verifiedPayment.razorpayOrderId,
+          status: "paid",
+        };
+        await redis.set(PAYMENT_KEY_PREFIX + id, { ...verifiedPayment, status: "consumed", consumedAt: new Date().toISOString() });
       }
 
-      await Promise.all(tasks);
-
+      const orders = Array.isArray(storedOrders) ? storedOrders : [];
+      await Promise.all([redis.set(ORDERS_KEY, [...orders, order]), redis.set(INVENTORY_KEY, inventory)]);
       return res.status(201).json({ order, inventory });
     }
 
     if (req.method === "PATCH") {
       const body = await readJsonBody(req);
-      const id = body?.id;
-      const status = body?.status;
-      if (!id || typeof id !== "string") return res.status(400).json({ message: "Missing order id" });
-      if (!status || typeof status !== "string") return res.status(400).json({ message: "Missing status" });
+      const id = String(body.id || "").trim();
+      const status = String(body.status || "").trim();
+      if (!id || !status) return res.status(400).json({ message: "Missing order id or status" });
 
-      const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
-      const idx = orders.findIndex((o) => o?.id === id);
-      if (idx === -1) return res.status(404).json({ message: "Order not found" });
+      const orders = Array.isArray(storedOrders) ? storedOrders : [];
+      const index = orders.findIndex((order) => order?.id === id);
+      if (index < 0) return res.status(404).json({ message: "Order not found" });
 
-      const inventory = await ensureSeededInventory();
-      const inventoryByName = new Map(inventory.map((x) => [x.name, x]));
-
-      const order = orders[idx];
-      const prevStatus = order.status;
+      const order = orders[index];
+      const previousStatus = order.status;
       order.status = status;
-
-      // Generate a 6-digit delivery code when order goes "Out for Delivery"
-      if (status === "Out for Delivery" && prevStatus !== "Out for Delivery") {
-        if (!order.deliveryCode) {
-          order.deliveryCode = String(Math.floor(100000 + Math.random() * 900000));
-        }
-        order.partnerAccepted = false;
-        
-        // Save delivery partner if assigned
-        if (body.deliveryPartner) {
-          order.deliveryPartner = String(body.deliveryPartner).trim();
-        } else {
-          order.deliveryPartner = ""; // Ensure it's clear for Any Partner
-        }
+      if (status === "Out for Delivery" && previousStatus !== "Out for Delivery") {
+        order.deliveryCode = order.deliveryCode || String(Math.floor(100000 + Math.random() * 900000));
+        order.deliveryPartner = String(body.deliveryPartner || "").trim();
       }
 
-      // If an order is cancelled, restore stock once (only on transition to Cancelled).
-      // Note: once an order is Fulfilled, we should not restore inventory.
-      if (status === "Cancelled" && prevStatus !== "Cancelled") {
-        if (prevStatus === "Fulfilled") {
-          return res.status(409).json({ message: "Cannot cancel a fulfilled order" });
+      const inventory = await ensureSeededInventory(redis);
+      if (status === "Cancelled" && previousStatus !== "Cancelled" && previousStatus !== "Fulfilled") {
+        const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
+        for (const item of order.items || order.cart || []) {
+          const inventoryItem = inventoryByName.get(item.name);
+          if (inventoryItem) inventoryItem.stock += Number(item.qty) || 0;
         }
-
-        const items = Array.isArray(order.items) && order.items.length ? order.items : (Array.isArray(order.cart) ? order.cart : []);
-        for (const it of items) {
-          const name = String(it?.name || "");
-          const qty = Number(it?.qty || 0);
-          if (!name || qty <= 0) continue;
-          const invItem = inventoryByName.get(name);
-          if (!invItem) continue;
-          invItem.stock += qty;
-          // If inventory item exists but was unavailable, keep its `available` flag as-is.
-        }
+        await redis.set(INVENTORY_KEY, inventory);
       }
 
-      orders[idx] = order;
       await redis.set(ORDERS_KEY, orders);
-      await redis.set(INVENTORY_KEY, inventory);
-
       return res.status(200).json({ order, inventory });
     }
 
     if (req.method === "DELETE") {
       const body = await readJsonBody(req);
-      const id = body?.id;
-      if (!id || typeof id !== "string") return res.status(400).json({ message: "Missing order id" });
-
-      const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
-      const nextOrders = orders.filter((o) => o?.id !== id);
+      const id = String(body.id || "").trim();
+      const orders = Array.isArray(storedOrders) ? storedOrders : [];
+      const nextOrders = orders.filter((order) => order?.id !== id);
+      if (nextOrders.length === orders.length) return res.status(404).json({ message: "Order not found" });
       await redis.set(ORDERS_KEY, nextOrders);
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ message: "Order deleted" });
     }
 
     if (req.method === "PUT") {
       const body = await readJsonBody(req);
-      const action = String(body?.action || "").trim();
+      const action = String(body.action || "").trim();
+      const id = String(body.id || "").trim();
+      const orders = Array.isArray(storedOrders) ? storedOrders : [];
+      const index = orders.findIndex((order) => order?.id === id);
+      if (!id || index < 0) return res.status(404).json({ message: "Order not found" });
 
-      // ── ACCEPT DELIVERY ORDER ──
+      const order = orders[index];
       if (action === "accept-delivery") {
-        const id = String(body?.id || "").trim();
-        const partner = String(body?.partner || "").trim();
-
-        if (!id || !partner) {
-          return res.status(400).json({ message: "Order ID and partner name are required" });
-        }
-
-        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
-        const idx = orders.findIndex((o) => o?.id === id);
-
-        if (idx === -1) {
-          return res.status(404).json({ message: "Order not found" });
-        }
-
-        const order = orders[idx];
-
-        if (order.status !== "Out for Delivery") {
-          return res.status(409).json({ message: "Order is not available for delivery" });
-        }
-
-        // Check if already claimed/assigned to someone else
+        const partner = String(body.partner || "").trim();
+        if (!partner) return res.status(400).json({ message: "Partner name is required" });
+        if (order.status !== "Out for Delivery") return res.status(409).json({ message: "Order is not available for delivery" });
         if (order.deliveryPartner && order.deliveryPartner !== partner) {
           return res.status(409).json({ message: "Order is assigned to another partner" });
         }
-        
-        // Check if already accepted
-        if (order.partnerAccepted) {
-          return res.status(409).json({ message: "Order has already been accepted" });
-        }
-
+        if (order.partnerAccepted) return res.status(409).json({ message: "Order has already been accepted" });
         order.deliveryPartner = partner;
         order.partnerAccepted = true;
-        orders[idx] = order;
         await redis.set(ORDERS_KEY, orders);
-
         return res.status(200).json({ message: "Order claimed successfully", order });
       }
 
-      // ── VERIFY DELIVERY OTP ──
       if (action === "verify-otp") {
-        const id = String(body?.id || "").trim();
-        const otp = String(body?.otp || "").trim();
-
-        if (!id || !otp) {
-          return res.status(400).json({ message: "Order ID and OTP are required" });
+        const otp = String(body.otp || "").trim();
+        if (order.status !== "Out for Delivery") return res.status(409).json({ message: "Order is not out for delivery" });
+        if (!order.deliveryCode || order.deliveryCode !== otp) {
+          return res.status(403).json({ message: "Incorrect delivery code. Please try again." });
         }
-
-        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
-        const idx = orders.findIndex((o) => o?.id === id);
-
-        if (idx === -1) {
-          return res.status(404).json({ message: "Order not found" });
-        }
-
-        const order = orders[idx];
-
-        if (order.status !== "Out for Delivery") {
-          return res.status(409).json({ message: "Order is not out for delivery" });
-        }
-
-        if (!order.deliveryCode) {
-          return res.status(409).json({ message: "No delivery code assigned to this order" });
-        }
-
-        if (order.deliveryCode !== otp) {
-          return res.status(403).json({ message: "Incorrect OTP. Please try again." });
-        }
-
-        // OTP matches — mark as Fulfilled
         order.status = "Fulfilled";
         order.fulfilledAt = new Date().toISOString();
-        orders[idx] = order;
         await redis.set(ORDERS_KEY, orders);
-
         return res.status(200).json({ message: "Delivery verified! Order fulfilled.", order });
       }
 
-      // ── CANCEL SPECIFIC ITEM ──
       if (action === "cancel-item") {
-        const id = String(body?.id || "").trim();
-        const itemName = String(body?.itemName || "").trim();
-
-        if (!id || !itemName) {
-          return res.status(400).json({ message: "Order ID and item name are required" });
-        }
-
-        const orders = Array.isArray(ordersExisting) ? ordersExisting : [];
-        const idx = orders.findIndex((o) => o?.id === id);
-
-        if (idx === -1) {
-          return res.status(404).json({ message: "Order not found" });
-        }
-
-        const order = orders[idx];
-
+        const itemName = String(body.itemName || "").trim();
+        if (!itemName) return res.status(400).json({ message: "Item name is required" });
         if (order.status === "Fulfilled" || order.status === "Cancelled") {
-          return res.status(409).json({ message: "Cannot modify items in a fulfilled or cancelled order" });
+          return res.status(409).json({ message: "Cannot modify a fulfilled or cancelled order" });
         }
-
-        const items = Array.isArray(order.items) ? order.items : (Array.isArray(order.cart) ? order.cart : []);
-        const itemIdx = items.findIndex(it => it.name === itemName);
-
-        if (itemIdx === -1) {
-          return res.status(404).json({ message: "Item not found in this order" });
-        }
-
-        const targetItem = items[itemIdx];
-
-        if (targetItem.cancelled) {
-          return res.status(409).json({ message: "Item is already cancelled" });
-        }
-
-        // Cancel item and reduce total
-        targetItem.cancelled = true;
-        const itemCost = Number(targetItem.price || 0) * Number(targetItem.qty || 1);
-        order.total = Math.max(0, order.total - itemCost);
-
-        // Turn off item in inventory
-        const inventory = await ensureSeededInventory();
-        const invItem = inventory.find(x => x.name === itemName);
-        if (invItem) {
-          invItem.available = false;
-        }
-
-        // Check if ALL items are cancelled
-        const allCancelled = items.every(it => it.cancelled);
-        if (allCancelled) {
-          order.status = "Cancelled";
-        }
-
-        orders[idx] = order;
+        const items = Array.isArray(order.items) ? order.items : order.cart || [];
+        const item = items.find((entry) => entry.name === itemName);
+        if (!item) return res.status(404).json({ message: "Item not found in this order" });
+        if (item.cancelled) return res.status(409).json({ message: "Item is already cancelled" });
+        item.cancelled = true;
+        order.total = Math.max(0, Number(order.total) - Number(item.price || 0) * Number(item.qty || 1));
+        if (items.every((entry) => entry.cancelled)) order.status = "Cancelled";
         await redis.set(ORDERS_KEY, orders);
-        await redis.set(INVENTORY_KEY, inventory);
-
-        return res.status(200).json({ message: `Item ${itemName} cancelled`, order, inventory });
+        return res.status(200).json({ message: "Item cancelled", order });
       }
 
-      return res.status(400).json({ message: "Unknown PUT action" });
+      return res.status(400).json({ message: "Unknown order action" });
     }
 
     return res.status(405).json({ message: "Method not allowed" });
-  } catch (e) {
-    return res.status(500).json({ message: "Orders endpoint failed", error: String(e?.message || e) });
+  } catch (error) {
+    return res.status(500).json({ message: "Orders endpoint failed", error: String(error?.message || error) });
   }
 };
-

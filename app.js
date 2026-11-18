@@ -1,4 +1,4 @@
-const menuItems = [
+const legacyMenuItems = [
   {
     name: "Fresh veggie",
     category: "Veg Specials",
@@ -232,7 +232,17 @@ const menuItems = [
   },
 ];
 
-const INVENTORY_STORAGE_KEY = "r-pizza-inventory";
+const menuItems = [
+  { name: "Classic Cotton T-Shirt", category: "Clothing", type: "Apparel", desc: "Everyday cotton T-shirt. Add your sizes and colours in the admin panel.", price: 499 },
+  { name: "Casual Shirt", category: "Clothing", type: "Apparel", desc: "Comfortable casual shirt for daily wear.", price: 899 },
+  { name: "Fashion Handbag", category: "Accessories", type: "Accessory", desc: "A versatile handbag for everyday essentials.", price: 1199 },
+  { name: "Sunglasses", category: "Accessories", type: "Accessory", desc: "Lightweight sunglasses with UV protection.", price: 699 },
+  { name: "Ceramic Mug Set", category: "Crockery", type: "Homeware", desc: "Set of two ceramic mugs for tea, coffee, or gifting.", price: 599 },
+  { name: "Dinner Plate Set", category: "Crockery", type: "Homeware", desc: "Durable dinner plate set for your table.", price: 1499 },
+  { name: "Everyday Essentials", category: "Other Items", type: "General", desc: "A flexible listing for any new product you want to sell.", price: 299 },
+];
+
+const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
 const INVENTORY_API_URL = "/api/inventory";
 
 function initializeInventoryFromDefaults() {
@@ -279,7 +289,7 @@ const cartTotal = document.querySelector("#cart-total");
 const floatingCartButton = document.querySelector("#floating-cart");
 const floatingCartCount = document.querySelector("#floating-cart-count");
 const toast = document.querySelector("#toast");
-const CART_STORAGE_KEY = "r-pizza-cart";
+const CART_STORAGE_KEY = "mount-parche-cart";
 const cart = new Map();
 
 let activeCategory = "All";
@@ -609,7 +619,7 @@ function orderText() {
     const label = line.variation ? `${line.item.name} (${line.variation})` : line.item.name;
     return `${line.qty} x ${label} - ${formatRupees(price * line.qty)}`;
   });
-  return `R Pizza and More order\n${lines.join("\n")}\nTotal: ${formatRupees(total)}`;
+  return `Mount Parche order\n${lines.join("\n")}\nTotal: ${formatRupees(total)}`;
 }
 
 async function copyOrder() {
@@ -1050,4 +1060,3 @@ async function bootPizzaScene() {
 
 void bootMenu();
 bootScrollAnimations();
-bootPizzaScene();

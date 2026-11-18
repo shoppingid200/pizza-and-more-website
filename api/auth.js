@@ -4,8 +4,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
 });
 
-const USERS_KEY = "r-pizza-and-more:users";
-const SESSIONS_KEY = "r-pizza-and-more:sessions";
+const USERS_KEY = "mount-parche:users";
+const SESSIONS_KEY = "mount-parche:sessions";
 const MASTER_KEY = process.env.ADMIN_MASTER_KEY || "TheAdminHouse";
 
 function setCors(res) {
