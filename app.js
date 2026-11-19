@@ -244,6 +244,11 @@ const menuItems = [
 
 const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
 const INVENTORY_API_URL = "/api/inventory";
+const CATEGORY_TREE_STORAGE_KEY = "mount-parche-category-tree";
+const CATEGORY_TREE_API_URL = "/api/categories";
+
+let categoryTree = [];
+let activeCategoryId = "";
 
 function initializeInventoryFromDefaults() {
   // Only used as an absolute fallback when both the API and localStorage are empty.
@@ -278,6 +283,25 @@ async function syncInventoryFromApi() {
   if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
   saveInventory(inventory);
   return inventory;
+}
+
+async function syncCategoryTreeFromApi() {
+  const res = await fetch(`${CATEGORY_TREE_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error("Category sync failed");
+  const categories = await res.json();
+  if (!Array.isArray(categories)) throw new Error("Invalid category tree");
+  categoryTree = categories;
+  localStorage.setItem(CATEGORY_TREE_STORAGE_KEY, JSON.stringify(categories));
+  return categories;
+}
+
+function readCachedCategoryTree() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATEGORY_TREE_STORAGE_KEY) || "[]");
+    return Array.isArray(cached) ? cached : [];
+  } catch {
+    return [];
+  }
 }
 
 const menuGrid = document.querySelector("#menu-grid");
@@ -345,45 +369,95 @@ function restoreCart() {
   saveCart();
 }
 
-function getCategories() {
-  const inventory = readInventory();
-  const categories = inventory
-    .map((item) => String(item.category || "").trim())
-    .filter(Boolean);
-  return ["All", ...new Set(categories)];
+const ageFilter = document.querySelector("#age-filter");
+const breadcrumbs = document.querySelector("#category-breadcrumbs");
+
+function flattenCategories(nodes = categoryTree, path = []) {
+  return nodes.flatMap((node) => {
+    const nextPath = [...path, node];
+    return [{ node, path: nextPath }, ...flattenCategories(node.children || [], nextPath)];
+  });
+}
+
+function activeCategoryEntry() {
+  return flattenCategories().find(({ node }) => node.id === activeCategoryId) || null;
 }
 
 function renderTabs() {
-  const categories = getCategories();
+  const entry = activeCategoryEntry();
+  const visibleNodes = entry ? (entry.node.children || []) : (activeCategoryId ? [] : categoryTree);
+  const inventory = readInventory();
+  const legacy = !entry && !activeCategoryId
+    ? [...new Set(inventory.filter((item) => !item.categoryId).map((item) => String(item.category || "").trim()).filter(Boolean))]
+      .map((name) => ({ id: `legacy:${name}`, name, image: "", children: [] }))
+    : [];
+  const nodes = [...visibleNodes, ...legacy];
   tabs.replaceChildren();
-  categories.forEach((category) => {
+  nodes.forEach((node) => {
     const button = document.createElement("button");
-    const isActive = category === activeCategory;
-    button.className = `category-tab${isActive ? " active" : ""}`;
+    button.className = "category-tile";
     button.type = "button";
-    button.setAttribute("role", "tab");
-    button.setAttribute("aria-selected", String(isActive));
-    button.dataset.category = category;
-    button.textContent = category;
+    button.dataset.categoryId = node.id;
+    if (node.image) {
+      const image = document.createElement("img");
+      image.src = node.image;
+      image.alt = "";
+      image.loading = "lazy";
+      button.appendChild(image);
+    }
+    const label = document.createElement("span");
+    label.textContent = node.name;
+    button.appendChild(label);
+    if (node.children?.length) {
+      const hint = document.createElement("small");
+      hint.textContent = "Browse categories";
+      button.appendChild(hint);
+    }
     tabs.appendChild(button);
+  });
+  breadcrumbs.replaceChildren();
+  const root = document.createElement("button");
+  root.type = "button";
+  root.textContent = "All categories";
+  root.dataset.breadcrumb = "";
+  breadcrumbs.appendChild(root);
+  (entry?.path || []).forEach(({ id, name }, index, path) => {
+    const separator = document.createElement("span");
+    separator.textContent = "›";
+    breadcrumbs.appendChild(separator);
+    const crumb = document.createElement("button");
+    crumb.type = "button";
+    crumb.textContent = name;
+    crumb.dataset.breadcrumb = index === path.length - 1 ? id : path[index].id;
+    breadcrumbs.appendChild(crumb);
   });
 }
 
 function currentItems() {
   const inventory = readInventory();
   const searchTerm = searchInput.value.trim().toLowerCase();
+  const entry = activeCategoryEntry();
+  const selectedAge = ageFilter?.value || "";
   return inventory.filter((item) => {
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const inCategory = !activeCategoryId || (activeCategoryId.startsWith("legacy:")
+      ? !item.categoryId && item.category === activeCategoryId.slice(7)
+      : item.categoryId === activeCategoryId || (Array.isArray(item.categoryPath) && entry && item.categoryPath.join(" / ") === entry.path.map((part) => part.name).join(" / ")));
+    const matchesAge = !selectedAge || item.ageGroup === selectedAge;
     const tagsString = item.tags ? item.tags.join(" ") : "";
-    const matchesSearch = [item.name, item.desc, item.category, item.type, tagsString]
-      .join(" ")
-      .toLowerCase()
-      .includes(searchTerm);
-    return matchesCategory && matchesSearch;
+    const matchesSearch = [item.name, item.desc, item.category, item.type, tagsString].join(" ").toLowerCase().includes(searchTerm);
+    return inCategory && matchesAge && matchesSearch;
   });
 }
 
 function renderMenu() {
+  const entry = activeCategoryEntry();
+  const ageFilterWrap = document.querySelector("#age-filter-wrap");
+  if (ageFilterWrap) ageFilterWrap.hidden = !readInventory().some((item) => item.ageGroup);
+  const hasSubcategories = Boolean(entry?.node.children?.length) || (!activeCategoryId && categoryTree.length > 0);
+  if (hasSubcategories && !searchInput.value.trim()) {
+    menuGrid.innerHTML = `<p class="empty-cart">Choose a category to see products.</p>`;
+    return;
+  }
   const items = currentItems();
 
   if (!items.length) {
@@ -670,6 +744,14 @@ async function bootMenu() {
     }
   }
 
+  // Load the category tree; cached categories keep browsing available offline.
+  categoryTree = readCachedCategoryTree();
+  try {
+    await syncCategoryTreeFromApi();
+  } catch (error) {
+    console.warn("Category sync skipped:", error);
+  }
+
   restoreCart();
   renderTabs();
   renderMenu();
@@ -677,11 +759,29 @@ async function bootMenu() {
   syncMenuButtons();
 
   tabs.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-category]");
+    const button = event.target.closest("[data-category-id]");
     if (!button) return;
-    activeCategory = button.dataset.category;
+    activeCategoryId = button.dataset.categoryId;
     renderTabs();
     renderMenu();
+  });
+
+  breadcrumbs.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-breadcrumb]");
+    if (!button) return;
+    activeCategoryId = button.dataset.breadcrumb;
+    renderTabs();
+    renderMenu();
+  });
+
+  ageFilter?.addEventListener("change", renderMenu);
+  window.addEventListener("storage", (event) => {
+    if (event.key === CATEGORY_TREE_STORAGE_KEY || event.key === null) {
+      categoryTree = readCachedCategoryTree();
+      if (!activeCategoryEntry()) activeCategoryId = "";
+      renderTabs();
+      renderMenu();
+    }
   });
 
   searchInput.addEventListener("input", renderMenu);

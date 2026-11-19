@@ -53,6 +53,14 @@ function normalizeInventory(inventory) {
         available: Boolean(item.available),
         codEnabled: Boolean(item.codEnabled),
       };
+      const categoryId = String(item.categoryId || "").trim();
+      if (/^[A-Za-z0-9_-]{1,80}$/.test(categoryId)) normalized.categoryId = categoryId;
+      if (Array.isArray(item.categoryPath)) {
+        const categoryPath = item.categoryPath.map((name) => String(name || "").trim()).filter(Boolean).slice(0, 9);
+        if (categoryPath.length) normalized.categoryPath = categoryPath;
+      }
+      const ageGroup = String(item.ageGroup || "").trim();
+      if (["0-2", "3-5", "6-8", "9-12", "13-15", "16+"].includes(ageGroup)) normalized.ageGroup = ageGroup;
       const colorFamily = String(item.colorFamily || "").trim();
       const colorName = String(item.colorName || "").trim();
       if (colorFamily && colorName && colorFamily.length <= 80 && colorName.length <= 40) {
