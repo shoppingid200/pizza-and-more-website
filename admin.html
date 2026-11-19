@@ -770,6 +770,7 @@
             actionsHTML = `
                 <button class="admin-action-btn cancel-btn" data-action="Delete" data-id="${order.id}" style="background: #fbf9f4; color: var(--muted); border: 1px solid var(--line);">Delete Log</button>
               `;
+          }
 
           // Render order card
           const cleanPhone = (order.details.phone || "").replace(/[^0-9+]/g, "");
