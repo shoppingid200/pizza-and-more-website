@@ -885,6 +885,168 @@
         .join("");
     }
 
+    // INVENTORY LOGIC
+    const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
+    const inventoryTbody = document.querySelector("#inventory-tbody");
+    const inventorySearch = document.querySelector("#inventory-search");
+    const addItemForm = document.querySelector("#add-item-form");
+
+    let inventorySearchPhrase = "";
+    let inventoryFilter = "All";
+
+    function readInventory() {
+      try {
+        return JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function compressImage(file, maxDimension = 600, quality = 0.6) {
+      if (!file || file.size === 0) {
+        throw new Error("File is empty (0 bytes). This is a known Android app camera permission bug.");
+      }
+      return new Promise((resolve, reject) => {
+        let objectUrl = null;
+        try { objectUrl = URL.createObjectURL(file); } catch (e) {}
+
+        const img = new Image();
+        img.onload = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          try {
+            let width = img.width, height = img.height;
+            if (width > height) { if (width > maxDimension) { height *= maxDimension / width; width = maxDimension; } }
+            else { if (height > maxDimension) { width *= maxDimension / height; height = maxDimension; } }
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch (e) {
+            reject(new Error("Canvas compression failed: " + e.message));
+          }
+        };
+
+        img.onerror = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img2 = new Image();
+            img2.onload = () => {
+              try {
+                let width = img2.width, height = img2.height;
+                if (width > height) { if (width > maxDimension) { height *= maxDimension / width; width = maxDimension; } }
+                else { if (height > maxDimension) { width *= maxDimension / height; height = maxDimension; } }
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img2, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+              } catch (err) {
+                reject(new Error("Fallback canvas compression failed: " + err.message));
+              }
+            };
+            img2.onerror = () => reject(new Error("Image decoding failed entirely."));
+            img2.src = e.target.result;
+          };
+          reader.onerror = () => reject(new Error("FileReader failed to read file."));
+          reader.readAsDataURL(file);
+        };
+
+        if (objectUrl) {
+          img.src = objectUrl;
+        } else {
+          img.onerror();
+        }
+      });
+    }
+
+    function saveInventoryLocal(inventory) {
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      window.dispatchEvent(new Event("storage"));
+    }
+
+    function showOfflinePopup() {
+      const existing = document.getElementById("offline-popup");
+      if (existing) existing.remove();
+
+      const popup = document.createElement("div");
+      popup.id = "offline-popup";
+      popup.style.position = "fixed";
+      popup.style.top = "50%";
+      popup.style.left = "50%";
+      popup.style.transform = "translate(-50%, -50%)";
+      popup.style.backgroundColor = "white";
+      popup.style.padding = "24px 32px";
+      popup.style.borderRadius = "12px";
+      popup.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
+      popup.style.zIndex = "9999";
+      popup.style.textAlign = "center";
+
+      popup.innerHTML = `
+        <h2 style="color: red; font-weight: bold; margin: 0 0 16px 0;">No Internet Connection</h2>
+        <p style="margin: 0 0 20px 0; font-size: 14px; color: #333;">Failed to communicate with the database. Your changes have been reversed.</p>
+        <button onclick="this.parentElement.remove()" style="background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer;">OK</button>
+      `;
+
+      document.body.appendChild(popup);
+    }
+
+    async function saveInventory(inventory) {
+      // 1. Save original state for rollback if offline
+      const backupRaw = localStorage.getItem(INVENTORY_STORAGE_KEY);
+
+      // 2. Update UI immediately (optimistic UI)
+      saveInventoryLocal(inventory);
+
+      // 3. Persist globally (admin changes should affect all visitors).
+      try {
+        if (!navigator.onLine) throw new Error("No Internet Connection");
+
+        const res = await fetch(INVENTORY_API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ inventory }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || data?.message || `Save failed (${res.status})`);
+        }
+      } catch (e) {
+        console.error("Inventory persist failed:", e);
+
+        // ROLLBACK: Reverse the change to as it is loaded from the database
+        if (backupRaw) {
+          localStorage.setItem(INVENTORY_STORAGE_KEY, backupRaw);
+          window.dispatchEvent(new Event("storage"));
+        }
+        renderInventory();
+
+        const isOffline = e.message === "No Internet Connection" || !navigator.onLine || e.message.includes("fetch") || e.message.includes("NetworkError");
+
+        if (isOffline) {
+          showOfflinePopup();
+        } else {
+          showToast(`⚠️ Failed to save to server: ${e.message}`);
+        }
+
+        // Rethrow the error so the caller does not show "Updated" success toasts
+        throw e;
+      }
+    }
+
+    async function syncInventoryFromApi() {
+      const res = await fetch(`${INVENTORY_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || data?.message || `Inventory sync failed (${res.status})`);
+      }
+      const inventory = await res.json();
+      if (!Array.isArray(inventory)) throw new Error("Invalid inventory payload");
+      saveInventoryLocal(inventory);
+      return inventory;
+    }
+
     function renderInventory() {
       const inventory = readInventory();
       const search = inventorySearchPhrase.toLowerCase();
@@ -2442,26 +2604,80 @@
     async function handleAction(id, action, deliveryPartner) {
       try {
         let res;
-        if (action === "toggle-cod") {
-          res = await fetch("/api/orders", {
-            method: "PATCH",
+        if (action === "Delete") {
+          if (!confirm(`Are you sure you want to delete order #${id} from logs?`)) return;
+          res = await fetch(ORDERS_API_URL, {
+            method: "DELETE",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ id, action }),
+            body: JSON.stringify({ id }),
           });
         } else {
-          res = await fetch("/api/orders", {
+          res = await fetch(ORDERS_API_URL, {
             method: "PATCH",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ id, status: action, deliveryPartner }),
           });
         }
+
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || "Action failed");
+        if (!res.ok) throw new Error(data?.message || `Action failed (${res.status})`);
+
         await syncOrdersFromApi();
+        if (Array.isArray(data?.inventory)) saveInventoryLocal(data.inventory);
+        else if (action === "Cancelled") {
+          try { await syncInventoryFromApi(); } catch { }
+        }
         renderOrders();
-        showToast(data?.message || "Order updated");
+        if (currentView === "inventory") {
+          renderInventory();
+          renderStockDeductions();
+        }
+        showToast(data?.message || (action === "Delete" ? "Order log deleted" : `Order status updated to ${action}`));
       } catch (error) {
+        console.error("Order action failed:", error);
         showToast(String(error?.message || error || "Action failed"));
+      }
+    }
+
+    async function generateMockOrder() {
+      const availableItems = readInventory().filter((item) => item.available && Number(item.stock) > 0);
+      if (!availableItems.length) {
+        showToast("No available inventory items to create a mock order.");
+        return;
+      }
+
+      const item = availableItems[Math.floor(Math.random() * availableItems.length)];
+      const variation = Array.isArray(item.variations) && item.variations.length ? item.variations[0].name : undefined;
+      const cart = [{ name: item.name, qty: 1, ...(variation ? { variation } : {}) }];
+      const details = {
+        name: "Admin Test Order",
+        phone: "0000000000",
+        address: "",
+        service: "Dine-in",
+        time: "As soon as possible",
+        payment: "Cash on Delivery",
+        notes: "Mock order generated from the admin dashboard.",
+      };
+
+      try {
+        const res = await fetch(ORDERS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ details, cart }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `Mock order failed (${res.status})`);
+        await syncOrdersFromApi();
+        try { await syncInventoryFromApi(); } catch { }
+        renderOrders();
+        if (currentView === "inventory") {
+          renderInventory();
+          renderStockDeductions();
+        }
+        showToast("Mock order generated!");
+      } catch (error) {
+        console.error("Mock order failed:", error);
+        showToast(`⚠️ ${error?.message || "Mock order failed"}`);
       }
     }
 
