@@ -3155,3 +3155,19 @@ footer strong {
 #place-order-btn {
   margin-top: 12px;
 }
+
+@media (max-width: 1060px) {
+  .checkout-page {
+    padding-bottom: 88px;
+  }
+
+  #place-order-btn {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    margin-top: 0;
+    box-shadow: 0 12px 32px rgba(82, 39, 19, 0.18);
+  }
+}
