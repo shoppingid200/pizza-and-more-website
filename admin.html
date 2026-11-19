@@ -1015,50 +1015,6 @@
             "sabut dhania",
             "dhania",
             "dhanya",
-
-
-    async function handleQuickSave(name, trElement) {
-      const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
-      const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
-      const availVal = trElement.querySelector(".avail-checkbox").checked;
-      const codVal = trElement.querySelector(".cod-checkbox").checked;
-
-      const inventory = readInventory();
-      const item = inventory.find((x) => x.name === name);
-      if (item) {
-        item.price = priceVal;
-        item.stock = stockVal;
-        item.available = availVal;
-        item.codEnabled = codVal;
-        await saveInventory(inventory);
-        showToast(`Updated ${name}`);
-        renderInventory();
-      }
-    }
-
-    async function handleQuickDelete(name) {
-      if (!confirm(`Are you sure you want to delete "${name}" from the inventory menu?`)) return;
-      const inventory = readInventory();
-      const filtered = inventory.filter((x) => x.name !== name);
-      await saveInventory(filtered);
-      showToast(`Deleted ${name}`);
-      renderInventory();
-    }
-
-    const REGIONAL_DICTIONARY = {
-      "cumin seeds": [
-            "jeera",
-            "zeera",
-            "jira",
-            "geera",
-            "jera",
-            "zira"
-      ],
-      "coriander seeds": [
-            "khada dhaniya",
-            "sabut dhania",
-            "dhania",
-            "dhanya",
             "daniya",
             "dhania seed"
       ],
@@ -2094,7 +2050,6 @@
             "ors powder"
       ]
 };
-
     async function autoGenerateTags() {
       const nameInput = document.getElementById("new-item-name").value.trim().toLowerCase();
       if (!nameInput) return;
