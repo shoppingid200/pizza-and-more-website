@@ -53,6 +53,16 @@ function normalizeInventory(inventory) {
         available: Boolean(item.available),
         codEnabled: Boolean(item.codEnabled),
       };
+      if (Array.isArray(item.sizes) && item.sizes.length) {
+        normalized.sizes = [...new Map(item.sizes
+          .map((size) => String(size).trim())
+          .filter((size) => /^[A-Za-z0-9][A-Za-z0-9 _.-]*$/.test(size))
+          .map((size) => [size.toLowerCase(), size])).values()];
+        normalized.sizeStock = Object.fromEntries(normalized.sizes.map((size) => [
+          size,
+          Math.max(0, Number(item.sizeStock?.[size] ?? item.stock) || 0),
+        ]));
+      }
       if (Array.isArray(item.variations) && item.variations.length) {
         normalized.variations = item.variations
           .filter((variation) => variation && String(variation.name || "").trim())

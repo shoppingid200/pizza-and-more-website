@@ -53,11 +53,17 @@ function cleanCart(cart, inventory) {
     const name = String(line?.name || "").trim();
     const qty = Number(line?.qty || 0);
     const variation = String(line?.variation || "").trim();
+    const size = String(line?.size || "").trim();
     const inventoryItem = inventoryByName.get(name);
     if (!name || !Number.isInteger(qty) || qty < 1) throw new Error("Invalid cart item");
     if (!inventoryItem) throw new Error("Item not found: " + name);
     if (!inventoryItem.available) throw new Error(name + " is currently unavailable.");
-    if (Number(inventoryItem.stock) < qty) throw new Error("Only " + inventoryItem.stock + " of " + name + " are available.");
+    const sizeTracked = Array.isArray(inventoryItem.sizes) && inventoryItem.sizes.length > 0;
+    const availableStock = sizeTracked
+      ? Number(inventoryItem.sizeStock?.[size] ?? inventoryItem.stock) || 0
+      : Number(inventoryItem.stock);
+    if (sizeTracked && !inventoryItem.sizes.includes(size)) throw new Error("Choose a valid size for " + name + ".");
+    if (availableStock < qty) throw new Error("Only " + availableStock + " of " + name + (size ? ` in size ${size}` : "") + " are available.");
     const price = priceForCartItem(inventoryItem, line);
     if (!Number.isFinite(price) || price < 0) throw new Error("Invalid variation for " + name);
     cleaned.push({
@@ -65,6 +71,7 @@ function cleanCart(cart, inventory) {
       qty,
       price,
       variation: variation || undefined,
+      size: size || undefined,
       category: String(inventoryItem.category || ""),
       type: String(inventoryItem.type || ""),
     });
@@ -108,14 +115,16 @@ module.exports = async (req, res) => {
       } catch (error) {
         return res.status(400).json({ message: error.message });
       }
-      const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
       const settings = (await redis.get(SETTINGS_KEY)) || {};
       const minOrderPrice = Number(settings.minOrderPrice) || 0;
-      if (minOrderPrice > 0 && total < minOrderPrice) {
-        return res.status(400).json({ message: "Minimum order amount is ₹" + minOrderPrice + ". Your total is ₹" + total + "." });
+      if (minOrderPrice > 0 && subtotal < minOrderPrice) {
+        return res.status(400).json({ message: "Minimum order amount is ₹" + minOrderPrice + ". Your total is ₹" + subtotal + "." });
       }
 
       const paymentMethod = String(body.details.payment || "Cash on Delivery").trim();
+      const discount = paymentMethod === "Razorpay" && subtotal > 21 ? 21 : 0;
+      const total = subtotal - discount;
       const id = String(body.id || generateOrderId()).trim();
       let verifiedPayment;
       if (paymentMethod !== "Razorpay" && paymentMethod !== "Cash on Delivery") {
@@ -132,7 +141,15 @@ module.exports = async (req, res) => {
       const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
       for (const item of items) {
         const inventoryItem = inventoryByName.get(item.name);
-        inventoryItem.stock = Math.max(0, Number(inventoryItem.stock) - item.qty);
+        if (Array.isArray(inventoryItem.sizes) && inventoryItem.sizes.includes(item.size)) {
+          inventoryItem.sizeStock = inventoryItem.sizeStock || Object.fromEntries(
+            inventoryItem.sizes.map((size) => [size, Number(inventoryItem.stock) || 0])
+          );
+          inventoryItem.sizeStock[item.size] = Math.max(0, Number(inventoryItem.sizeStock[item.size]) - item.qty);
+          inventoryItem.stock = Math.max(0, Number(inventoryItem.stock) - item.qty);
+        } else {
+          inventoryItem.stock = Math.max(0, Number(inventoryItem.stock) - item.qty);
+        }
       }
 
       const order = {
@@ -141,6 +158,8 @@ module.exports = async (req, res) => {
         details: { ...body.details, payment: paymentMethod || "Cash on Delivery" },
         items,
         cart: items,
+        subtotal,
+        discount,
         total,
         status: "Pending",
       };
@@ -182,7 +201,16 @@ module.exports = async (req, res) => {
         const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
         for (const item of order.items || order.cart || []) {
           const inventoryItem = inventoryByName.get(item.name);
-          if (inventoryItem) inventoryItem.stock += Number(item.qty) || 0;
+          if (inventoryItem) {
+            const qty = Number(item.qty) || 0;
+            if (Array.isArray(inventoryItem.sizes) && inventoryItem.sizes.includes(item.size)) {
+              inventoryItem.sizeStock = inventoryItem.sizeStock || Object.fromEntries(
+                inventoryItem.sizes.map((size) => [size, Number(inventoryItem.stock) || 0])
+              );
+              inventoryItem.sizeStock[item.size] = (Number(inventoryItem.sizeStock[item.size]) || 0) + qty;
+            }
+            inventoryItem.stock += qty;
+          }
         }
         await redis.set(INVENTORY_KEY, inventory);
       }

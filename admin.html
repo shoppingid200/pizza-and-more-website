@@ -375,6 +375,10 @@
               </div>
               
               <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Sizes and stock (for example: S:5, M:0, L:8)</span>
+                <input type="text" id="new-item-size-stock" placeholder="S:5, M:0, L:8" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
+              </label>
+              <label class="field" style="gap: 2px;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Stock Level</span>
                 <input type="number" id="new-item-stock" min="0" required placeholder="e.g. 30" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
               </label>
@@ -1050,6 +1054,16 @@
       return inventory;
     }
 
+    function escapeInventoryValue(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
+      })[char]);
+    }
+
     function renderInventory() {
       const inventory = readInventory();
       const search = inventorySearchPhrase.toLowerCase();
@@ -1122,6 +1136,7 @@
                 </td>
                 <td data-label="Stock Level" style="padding: 12px 8px;">
                   <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                  <input type="text" class="size-stock-field" aria-label="Per-size stock" placeholder="Sizes: S:5, M:0" value="${(item.sizes || []).map((size) => `${escapeInventoryValue(size)}:${item.sizeStock?.[size] ?? item.stock}`).join(", ")}" style="width: 130px; height: 30px; margin-top: 5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: 0.7rem;" />
                   <div style="margin-top: 6px;">${stockStatus}</div>
                 </td>
                 <td data-label="Tags" style="padding: 12px 8px; max-width: 150px;">
@@ -1154,7 +1169,15 @@
         alert("MRP must be equal to or greater than the sale price.");
         return;
       }
-      const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
+      let stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
+      let sizeStock;
+      try {
+        sizeStock = parseSizeStockEntries(trElement.querySelector(".size-stock-field").value);
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      if (Object.keys(sizeStock).length) stockVal = Object.values(sizeStock).reduce((sum, count) => sum + count, 0);
       const availVal = trElement.querySelector(".avail-checkbox").checked;
       const codVal = trElement.querySelector(".cod-checkbox").checked;
 
@@ -1164,6 +1187,13 @@
         item.price = priceVal;
         item.mrp = mrpVal;
         item.stock = stockVal;
+        if (Object.keys(sizeStock).length) {
+          item.sizes = Object.keys(sizeStock);
+          item.sizeStock = sizeStock;
+        } else {
+          delete item.sizes;
+          delete item.sizeStock;
+        }
         item.available = availVal;
         item.codEnabled = codVal;
         await saveInventory(inventory);
@@ -2275,13 +2305,36 @@
       if (nameInput) nameInput.addEventListener("blur", autoGenerateTags);
     });
 
+    function parseSizeStockEntries(value) {
+      const entries = String(value || "").split(",").map((entry) => entry.trim()).filter(Boolean);
+      const sizeStock = {};
+      for (const entry of entries) {
+        const match = entry.match(/^([A-Za-z0-9][A-Za-z0-9 _.-]*)\s*:\s*(\d+)$/);
+        if (!match) throw new Error("Enter sizes and stock like S:5, M:0, L:8. Use letters, numbers, spaces, dots, or hyphens for size names.");
+        const size = match[1].trim();
+        if (Object.keys(sizeStock).some((existing) => existing.toLowerCase() === size.toLowerCase())) {
+          throw new Error("Each size can appear only once.");
+        }
+        sizeStock[size] = Math.max(0, Number(match[2]));
+      }
+      return sizeStock;
+    }
+
     async function addNewItem(e) {
       e.preventDefault();
       const name = document.querySelector("#new-item-name").value.trim();
       const category = document.querySelector("#new-item-category").value;
       const type = document.querySelector("#new-item-type").value;
       const desc = document.querySelector("#new-item-desc").value.trim();
-      const stock = Number(document.querySelector("#new-item-stock").value) || 0;
+      let stock = Number(document.querySelector("#new-item-stock").value) || 0;
+      let sizeStock;
+      try {
+        sizeStock = parseSizeStockEntries(document.querySelector("#new-item-size-stock").value);
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      if (Object.keys(sizeStock).length) stock = Object.values(sizeStock).reduce((sum, count) => sum + count, 0);
 
       if (isCompressingNewItemImages) {
         alert("Please wait for the selected images to finish processing.");
@@ -2328,6 +2381,10 @@
         available: true,
         codEnabled: true
       };
+      if (Object.keys(sizeStock).length) {
+        newItem.sizes = Object.keys(sizeStock);
+        newItem.sizeStock = sizeStock;
+      }
       if (images.length) {
         newItem.images = images;
         newItem.image = images[0];

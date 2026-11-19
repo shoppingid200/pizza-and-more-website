@@ -1,5 +1,12 @@
 const productImage = document.getElementById("product-image");
 const productThumbnails = document.getElementById("product-thumbnails");
+const productGalleryControls = document.getElementById("product-gallery-controls");
+const productImagePrev = document.getElementById("product-image-prev");
+const productImageNext = document.getElementById("product-image-next");
+const productImageCount = document.getElementById("product-image-count");
+const imageLightbox = document.getElementById("image-lightbox");
+const imageLightboxImg = document.getElementById("image-lightbox-img");
+const imageLightboxClose = document.getElementById("image-lightbox-close");
 const productTitle = document.getElementById("product-title");
 const productCategory = document.getElementById("product-category");
 const productPrice = document.getElementById("product-price");
@@ -7,9 +14,12 @@ const productMrp = document.getElementById("product-mrp");
 const productDiscount = document.getElementById("product-discount");
 const productDesc = document.getElementById("product-desc");
 const productVariations = document.getElementById("product-variations");
-const variantSelect = document.getElementById("product-variant-select");
+const variantOptions = document.getElementById("variant-options");
+const selectedVariantName = document.getElementById("selected-variant-name");
+const productCodBenefit = document.getElementById("product-cod-benefit");
 const productSizes = document.getElementById("product-sizes");
 const sizeOptions = document.getElementById("size-options");
+const selectedSizeName = document.getElementById("selected-size-name");
 const productStock = document.getElementById("product-stock");
 const qtyInput = document.getElementById("product-qty");
 const qtyMinus = document.getElementById("qty-minus");
@@ -28,6 +38,11 @@ let currentProduct = null;
 let selectedVariation = null;
 let selectedSize = null;
 let maxStock = 0;
+let galleryImages = [];
+let galleryIndex = 0;
+let activeMainImage = null;
+let lastGallerySwipeAt = 0;
+let galleryPointerStart = null;
 
 function formatRupees(value) {
   return "₹" + value;
@@ -47,6 +62,28 @@ function updateProductPrice(price, mrp) {
     productDiscount.hidden = true;
   }
 }
+
+function openProductImage(image) {
+  imageLightboxImg.src = image.src;
+  imageLightboxImg.alt = image.alt;
+  imageLightbox.hidden = false;
+  document.body.classList.add("image-lightbox-open");
+  imageLightboxClose.focus();
+}
+
+function closeProductImage() {
+  imageLightbox.hidden = true;
+  document.body.classList.remove("image-lightbox-open");
+  productImage.querySelector(".product-image-expand")?.focus();
+}
+
+imageLightboxClose.addEventListener("click", closeProductImage);
+imageLightbox.addEventListener("click", (event) => {
+  if (event.target === imageLightbox) closeProductImage();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !imageLightbox.hidden) closeProductImage();
+});
 
 function showToast(message) {
   toast.textContent = message;
@@ -85,53 +122,97 @@ function updateQtyBounds() {
   buyNowBtn.disabled = maxStock === 0;
 }
 
+function showGalleryImage(index, direction = 1) {
+  if (!galleryImages.length || !activeMainImage) return;
+  galleryIndex = (index + galleryImages.length) % galleryImages.length;
+  activeMainImage.src = galleryImages[galleryIndex];
+  activeMainImage.alt = `${currentProduct.name}, image ${galleryIndex + 1} of ${galleryImages.length}`;
+  productImageCount.textContent = `${galleryIndex + 1} / ${galleryImages.length}`;
+
+  activeMainImage.classList.remove("gallery-slide-next", "gallery-slide-prev");
+  void activeMainImage.offsetWidth;
+  activeMainImage.classList.add(direction >= 0 ? "gallery-slide-next" : "gallery-slide-prev");
+
+  productThumbnails.querySelectorAll(".product-thumbnail").forEach((button, buttonIndex) => {
+    const active = buttonIndex === galleryIndex;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
 function renderProductGallery() {
-  const images = Array.isArray(currentProduct.images) && currentProduct.images.length
+  galleryImages = Array.isArray(currentProduct.images) && currentProduct.images.length
     ? currentProduct.images.filter((image) => typeof image === "string" && image)
     : (currentProduct.image ? [currentProduct.image] : []);
+  galleryIndex = galleryImages.length ? galleryIndex % galleryImages.length : 0;
   productImage.replaceChildren();
   productThumbnails.replaceChildren();
+  activeMainImage = null;
+  productGalleryControls.hidden = galleryImages.length < 2;
+  productThumbnails.hidden = galleryImages.length < 2;
 
-  if (!images.length) {
+  if (!galleryImages.length) {
     const placeholder = document.createElement("div");
     placeholder.className = "product-image-placeholder";
     placeholder.textContent = "No image";
     productImage.appendChild(placeholder);
-    productThumbnails.hidden = true;
     return;
   }
 
-  const mainImage = document.createElement("img");
-  mainImage.src = images[0];
-  mainImage.alt = currentProduct.name;
-  mainImage.className = "product-main-image";
-  productImage.appendChild(mainImage);
+  activeMainImage = document.createElement("img");
+  activeMainImage.src = galleryImages[galleryIndex];
+  activeMainImage.alt = `${currentProduct.name}, image ${galleryIndex + 1} of ${galleryImages.length}`;
+  activeMainImage.className = "product-main-image";
+  const expandImageButton = document.createElement("button");
+  expandImageButton.type = "button";
+  expandImageButton.className = "product-image-expand";
+  expandImageButton.setAttribute("aria-label", "View full size image of " + currentProduct.name);
+  expandImageButton.appendChild(activeMainImage);
+  expandImageButton.addEventListener("click", () => {
+    if (Date.now() - lastGallerySwipeAt > 500) openProductImage(activeMainImage);
+  });
+  productImage.appendChild(expandImageButton);
 
-  productThumbnails.hidden = images.length < 2;
-  if (images.length < 2) return;
+  if (galleryImages.length < 2) return;
 
-  images.forEach((src, index) => {
+  galleryImages.forEach((src, index) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `product-thumbnail${index === 0 ? " active" : ""}`;
+    button.className = `product-thumbnail${index === galleryIndex ? " active" : ""}`;
     button.setAttribute("aria-label", `Show product image ${index + 1}`);
-    button.setAttribute("aria-pressed", index === 0 ? "true" : "false");
+    button.setAttribute("aria-pressed", String(index === galleryIndex));
     const thumbnail = document.createElement("img");
     thumbnail.src = src;
     thumbnail.alt = "";
     button.appendChild(thumbnail);
-    button.addEventListener("click", () => {
-      mainImage.src = src;
-      productThumbnails.querySelectorAll(".product-thumbnail").forEach((item) => {
-        item.classList.remove("active");
-        item.setAttribute("aria-pressed", "false");
-      });
-      button.classList.add("active");
-      button.setAttribute("aria-pressed", "true");
-    });
+    button.addEventListener("click", () => showGalleryImage(index, index >= galleryIndex ? 1 : -1));
     productThumbnails.appendChild(button);
   });
+
+  productImageCount.textContent = `${galleryIndex + 1} / ${galleryImages.length}`;
 }
+
+productImagePrev.addEventListener("click", () => showGalleryImage(galleryIndex - 1, -1));
+productImageNext.addEventListener("click", () => showGalleryImage(galleryIndex + 1, 1));
+
+productImage.addEventListener("pointerdown", (event) => {
+  if (event.pointerType !== "touch") return;
+  galleryPointerStart = { x: event.clientX, y: event.clientY };
+});
+
+productImage.addEventListener("pointerup", (event) => {
+  if (!galleryPointerStart || galleryImages.length < 2) return;
+  const deltaX = event.clientX - galleryPointerStart.x;
+  const deltaY = event.clientY - galleryPointerStart.y;
+  galleryPointerStart = null;
+  if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+  lastGallerySwipeAt = Date.now();
+  showGalleryImage(galleryIndex + (deltaX < 0 ? 1 : -1), deltaX < 0 ? 1 : -1);
+});
+
+productImage.addEventListener("pointercancel", () => {
+  galleryPointerStart = null;
+});
 
 function renderProduct() {
   if (!currentProduct) return;
@@ -152,6 +233,7 @@ function renderProduct() {
     ? "In stock: " + maxStock + " available"
     : "Out of stock";
   productStock.style.color = available ? "var(--basil)" : "var(--tomato)";
+  productCodBenefit.hidden = currentProduct.codEnabled === false;
 
   const variations = currentProduct.variations && currentProduct.variations.length
     ? currentProduct.variations
@@ -161,19 +243,43 @@ function renderProduct() {
     ? currentProduct.sizes
     : null;
 
-  // Size buttons
   if (sizes) {
     productSizes.hidden = false;
-    sizeOptions.innerHTML = sizes.map((s) => {
-      const active = selectedSize === s ? "active" : "";
-      return '<button type="button" class="size-btn ' + active + '" data-size="' + s + '">' + s + "</button>";
-    }).join("");
-    if (!selectedSize) selectedSize = sizes[0];
-    sizeOptions.querySelectorAll(".size-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        selectedSize = btn.dataset.size;
-        sizeOptions.querySelectorAll(".size-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+    const sizeStock = currentProduct.sizeStock || {};
+    const availableSizes = sizes.filter((size) => Number(sizeStock[size] ?? currentProduct.stock) > 0);
+    selectedSize = sizes.includes(selectedSize) && Number(sizeStock[selectedSize] ?? currentProduct.stock) > 0
+      ? selectedSize
+      : (availableSizes[0] || null);
+    maxStock = selectedSize ? Math.max(0, Number(sizeStock[selectedSize] ?? currentProduct.stock) || 0) : 0;
+    selectedSizeName.textContent = selectedSize || "Unavailable";
+    productStock.textContent = maxStock > 0 ? `In stock for ${selectedSize}: ${maxStock} available` : `No sizes currently available`;
+    productStock.style.color = maxStock > 0 ? "var(--basil)" : "var(--tomato)";
+    sizeOptions.replaceChildren();
+    sizes.forEach((size) => {
+      const available = Number(sizeStock[size] ?? currentProduct.stock) > 0;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `size-btn${selectedSize === size ? " active" : ""}${available ? "" : " out-of-stock"}`;
+      button.dataset.size = size;
+      button.setAttribute("aria-pressed", String(selectedSize === size));
+      button.setAttribute("aria-label", `Size ${size}${available ? "" : ", out of stock"}`);
+      button.disabled = !available;
+      button.textContent = size;
+      sizeOptions.appendChild(button);
+    });
+    sizeOptions.querySelectorAll(".size-btn:not(:disabled)").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedSize = button.dataset.size;
+        maxStock = Math.max(0, Number(sizeStock[selectedSize] ?? currentProduct.stock) || 0);
+        selectedSizeName.textContent = selectedSize;
+        productStock.textContent = `In stock for ${selectedSize}: ${maxStock} available`;
+        sizeOptions.querySelectorAll(".size-btn").forEach((item) => {
+          const isSelected = item === button;
+          item.classList.toggle("active", isSelected);
+          item.setAttribute("aria-pressed", String(isSelected));
+        });
+        qtyInput.value = 1;
+        updateQtyBounds();
       });
     });
   } else {
@@ -183,15 +289,27 @@ function renderProduct() {
 
   if (variations) {
     productVariations.hidden = false;
-    variantSelect.innerHTML = variations.map(
-      (v) => '<option value="' + v.name + '">' + v.name + " · " + formatRupees(v.price) + "</option>"
-    ).join("");
     selectedVariation = variations.find(v => selectedVariation && v.name === selectedVariation.name) || variations[0];
-    variantSelect.value = selectedVariation.name;
+    selectedVariantName.textContent = selectedVariation.name;
+    variantOptions.replaceChildren();
+    variations.forEach((variation) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `size-btn${selectedVariation.name === variation.name ? " active" : ""}`;
+      button.dataset.variation = variation.name;
+      button.setAttribute("aria-pressed", String(selectedVariation.name === variation.name));
+      button.textContent = variation.name;
+      variantOptions.appendChild(button);
+    });
+    variantOptions.querySelectorAll(".size-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedVariation = variations.find(v => v.name === button.dataset.variation) || variations[0];
+        renderProduct();
+      });
+    });
     updateProductPrice(selectedVariation.price, selectedVariation.mrp || currentProduct.mrp);
-    maxStock = Number(currentProduct.stock || 0);
   } else {
-  productVariations.hidden = true;
+    productVariations.hidden = true;
     selectedVariation = null;
   }
 
@@ -266,12 +384,6 @@ async function loadProduct() {
 
   renderProduct();
 }
-
-variantSelect.addEventListener("change", (e) => {
-  const v = currentProduct.variations.find((x) => x.name === e.target.value);
-  selectedVariation = v || null;
-  renderProduct();
-});
 
 qtyMinus.addEventListener("click", () => {
   qtyInput.value = Math.max(1, Number(qtyInput.value) - 1);

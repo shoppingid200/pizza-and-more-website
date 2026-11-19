@@ -7,6 +7,8 @@ const PAYMENT_API_URL = "/api/payment";
 const checkoutItems = document.querySelector("#checkout-items");
 const summaryCount = document.querySelector("#summary-count");
 const summaryTotal = document.querySelector("#summary-total");
+const summarySubtotal = document.querySelector("#summary-subtotal");
+const onlineDiscountRow = document.querySelector("#online-discount-row");
 const orderForm = document.querySelector("#order-form");
 const toast = document.querySelector("#toast");
 const locationStatus = document.querySelector("#location-status");
@@ -181,10 +183,17 @@ function cartStats() {
   );
 }
 
+function onlinePaymentDiscount(subtotal, paymentMethod = document.getElementById("payment-mode")?.value) {
+  return paymentMethod === "Razorpay" && subtotal > 21 ? 21 : 0;
+}
+
 function renderCart() {
   const { count, total } = cartStats();
+  const discount = onlinePaymentDiscount(total);
   summaryCount.textContent = `${count} ${count === 1 ? "item" : "items"}`;
-  summaryTotal.textContent = formatRupees(total);
+  summarySubtotal.textContent = formatRupees(total);
+  summaryTotal.textContent = formatRupees(total - discount);
+  onlineDiscountRow.hidden = discount === 0;
 
   const notice = document.getElementById("min-order-notice");
   if (notice) {
@@ -424,11 +433,14 @@ function validateStockAvailability() {
     const inventory = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)) || [];
     for (const cartItem of cart) {
       const invItem = inventory.find((item) => item.name === cartItem.name);
-      if (!invItem || !invItem.available || invItem.stock < cartItem.qty) {
+      const stockForLine = invItem?.sizes?.includes(cartItem.size)
+        ? Number(invItem.sizeStock?.[cartItem.size] ?? invItem.stock) || 0
+        : Number(invItem?.stock) || 0;
+      if (!invItem || !invItem.available || stockForLine < cartItem.qty) {
         return {
           available: false,
           message: invItem
-            ? `Sorry, only ${invItem.stock} of ${cartItem.name} are available in stock.`
+            ? `Sorry, only ${stockForLine} of ${cartItem.name}${cartItem.size ? ` in size ${cartItem.size}` : ""} are available in stock.`
             : `Sorry, ${cartItem.name} is no longer available.`
         };
       }
@@ -448,6 +460,10 @@ function deductInventoryStock(cartItems) {
       const invItem = inventory.find((item) => item.name === cartItem.name);
       if (invItem) {
         invItem.stock = Math.max(0, invItem.stock - cartItem.qty);
+        if (invItem.sizes?.includes(cartItem.size)) {
+          invItem.sizeStock = invItem.sizeStock || Object.fromEntries(invItem.sizes.map((size) => [size, Number(invItem.stock) || 0]));
+          invItem.sizeStock[cartItem.size] = Math.max(0, Number(invItem.sizeStock[cartItem.size]) - cartItem.qty);
+        }
         updated = true;
       }
     });
@@ -552,13 +568,16 @@ async function submitOrder(event) {
     const removedItems = [];
     cart = cart.filter(item => {
       const inv = invMap.get(item.name);
-      if (!inv || !inv.available || inv.stock <= 0) {
-        removedItems.push(item.name);
+      const stockForLine = inv?.sizes?.includes(item.size)
+        ? Number(inv.sizeStock?.[item.size] ?? inv.stock) || 0
+        : Number(inv?.stock) || 0;
+      if (!inv || !inv.available || stockForLine <= 0) {
+        removedItems.push(item.size ? `${item.name} (${item.size})` : item.name);
         return false;
       }
-      // Also cap qty to available stock
-      if (inv.stock < item.qty) {
-        item.qty = inv.stock;
+      // Cap quantity to the selected size's available stock.
+      if (stockForLine < item.qty) {
+        item.qty = stockForLine;
       }
       return true;
     });
@@ -701,6 +720,22 @@ function bootScrollAnimations() {
   }, 100);
 }
 
+function initializePlaceOrderDock() {
+  document.getElementById("payment-mode")?.addEventListener("change", renderCart);
+
+  const checkoutSummary = document.querySelector(".checkout-summary");
+  if (!checkoutSummary) return;
+
+  const mobileCheckout = window.matchMedia("(max-width: 1060px)");
+  const syncPlaceOrderDock = () => {
+    const shouldDock = mobileCheckout.matches && checkoutSummary.getBoundingClientRect().top <= window.innerHeight;
+    document.body.classList.toggle("checkout-summary-reached", shouldDock);
+  };
+  syncPlaceOrderDock();
+  window.addEventListener("scroll", syncPlaceOrderDock, { passive: true });
+  window.addEventListener("resize", syncPlaceOrderDock);
+}
+
 async function bootOrderPage() {
   try {
     const res = await fetch("/api/settings");
@@ -737,8 +772,11 @@ async function bootOrderPage() {
     const removedItems = [];
     cart = cart.filter(item => {
       const inv = invMap.get(item.name);
-      if (inv && (!inv.available || inv.stock <= 0)) {
-        removedItems.push(item.name);
+      const stockForLine = inv?.sizes?.includes(item.size)
+        ? Number(inv.sizeStock?.[item.size] ?? inv.stock) || 0
+        : Number(inv?.stock) || 0;
+      if (inv && (!inv.available || stockForLine <= 0)) {
+        removedItems.push(item.size ? `${item.name} (${item.size})` : item.name);
         return false;
       }
       return true;
@@ -753,18 +791,6 @@ async function bootOrderPage() {
 
   renderCart();
   bootScrollAnimations();
-
-  const checkoutSummary = document.querySelector(".checkout-summary");
-  if (checkoutSummary) {
-    const mobileCheckout = window.matchMedia("(max-width: 1060px)");
-    const syncPlaceOrderDock = () => {
-      const shouldDock = mobileCheckout.matches && checkoutSummary.getBoundingClientRect().top <= window.innerHeight;
-      document.body.classList.toggle("checkout-summary-reached", shouldDock);
-    };
-    syncPlaceOrderDock();
-    window.addEventListener("scroll", syncPlaceOrderDock, { passive: true });
-    window.addEventListener("resize", syncPlaceOrderDock);
-  }
 
   checkoutItems.addEventListener("click", (event) => {
     const button = event.target.closest("[data-summary-item]");
@@ -974,4 +1000,5 @@ async function bootOrderPage() {
   }
 }
 
+initializePlaceOrderDock();
 bootOrderPage();

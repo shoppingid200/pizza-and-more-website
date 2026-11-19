@@ -26,6 +26,11 @@
             <div class="product-image" id="product-image">
               <div class="product-image-placeholder">No image</div>
             </div>
+            <div class="product-gallery-controls" id="product-gallery-controls" hidden>
+              <button type="button" id="product-image-prev" aria-label="Previous product image">‹</button>
+              <span id="product-image-count" aria-live="polite">1 / 1</span>
+              <button type="button" id="product-image-next" aria-label="Next product image">›</button>
+            </div>
             <div class="product-thumbnails" id="product-thumbnails" aria-label="Product images" hidden></div>
           </div>
           <div class="product-info">
@@ -39,14 +44,20 @@
 
             <p id="product-desc">Description</p>
 
+            <div class="product-benefits" aria-label="Offers and policies">
+              <p class="product-benefit product-online-offer"><span aria-hidden="true">✦</span><span><strong>Pay online and save ₹21</strong></span></p>
+              <p class="product-benefit"><span aria-hidden="true">↩</span><span><strong>7 day return policy</strong></span></p>
+              <p class="product-benefit" id="product-cod-benefit"><span aria-hidden="true">✓</span><span><strong>Cash on Delivery available</strong></span></p>
+            </div>
+
             <div class="product-sizes" id="product-sizes" hidden>
-              <label>Size</label>
+              <label>Selected size: <strong id="selected-size-name"></strong></label>
               <div class="size-options" id="size-options"></div>
             </div>
 
             <div class="product-variations" id="product-variations" hidden>
-              <label>Variant</label>
-              <select id="product-variant-select"></select>
+              <label>Selected option: <strong id="selected-variant-name"></strong></label>
+              <div class="size-options" id="variant-options" role="group" aria-label="Choose a product option"></div>
             </div>
 
             <div class="product-stock" id="product-stock"></div>
@@ -73,6 +84,11 @@
         </div>
       </section>
     </main>
+
+    <div class="image-lightbox" id="image-lightbox" role="dialog" aria-modal="true" aria-label="Product image preview" hidden>
+      <button type="button" class="image-lightbox-close" id="image-lightbox-close" aria-label="Close image preview">×</button>
+      <img id="image-lightbox-img" alt="">
+    </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

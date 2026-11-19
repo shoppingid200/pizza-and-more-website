@@ -53,10 +53,15 @@ function calculateAuthoritativeTotal(cart, inventory) {
   for (const line of cart) {
     const name = String(line?.name || "").trim();
     const qty = Number(line?.qty || 0);
+    const size = String(line?.size || "").trim();
     const inventoryItem = inventoryByName.get(name);
     if (!name || !Number.isInteger(qty) || qty < 1) throw new Error("Invalid cart item");
-    if (!inventoryItem || !inventoryItem.available || Number(inventoryItem.stock) < qty) {
-      throw new Error(name + " is unavailable or has insufficient stock.");
+    const sizeTracked = Array.isArray(inventoryItem?.sizes) && inventoryItem.sizes.length > 0;
+    const availableStock = sizeTracked
+      ? Number(inventoryItem?.sizeStock?.[size] ?? inventoryItem?.stock)
+      : Number(inventoryItem?.stock);
+    if (!inventoryItem || !inventoryItem.available || availableStock < qty || (sizeTracked && !inventoryItem.sizes.includes(size))) {
+      throw new Error(name + (size ? ` size ${size}` : "") + " is unavailable or has insufficient stock.");
     }
     const price = priceForCartItem(inventoryItem, line);
     if (!Number.isFinite(price) || price < 0) throw new Error("Invalid variation for " + name);
@@ -104,6 +109,10 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: error.message });
       }
 
+      const subtotal = total;
+      const discount = subtotal > 21 ? 21 : 0;
+      total = subtotal - discount;
+
       const merchantOrderId = generateMerchantOrderId();
       const razorpayOrder = await razorpayRequest("/v1/orders", keyId, keySecret, {
         amount: Math.round(total * 100),
@@ -114,6 +123,8 @@ module.exports = async (req, res) => {
       await redis.set(PAYMENT_KEY_PREFIX + merchantOrderId, {
         status: "created",
         amount: razorpayOrder.amount,
+        subtotal,
+        discount,
         currency: razorpayOrder.currency,
         razorpayOrderId: razorpayOrder.id,
         createdAt: new Date().toISOString(),
@@ -122,6 +133,8 @@ module.exports = async (req, res) => {
         merchantOrderId,
         razorpayOrderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
+        subtotal,
+        discount,
         currency: razorpayOrder.currency,
         keyId,
       });
