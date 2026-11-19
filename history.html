@@ -46,7 +46,7 @@
           <button class="history-filter-tab active" data-filter="All">All</button>
           <button class="history-filter-tab" data-filter="Pending">Pending</button>
           <button class="history-filter-tab" data-filter="Preparing">Preparing</button>
-          <button class="history-filter-tab" data-filter="Out for Delivery">Delivery</button>
+          <button class="history-filter-tab" data-filter="Out for Delivery">Shipped</button>
           <button class="history-filter-tab" data-filter="Fulfilled">Completed</button>
           <button class="history-filter-tab" data-filter="Cancelled">Cancelled</button>
         </div>
@@ -143,6 +143,31 @@
         return data;
       }
 
+      async function submitReturnRequest(form) {
+        const orderId = form.dataset.orderId;
+        const upiId = form.elements.upiId?.value.trim() || "";
+        const button = form.querySelector("button[type='submit']");
+        button.disabled = true;
+        try {
+          const res = await fetch(ORDERS_API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ action: "request-return", id: orderId, upiId }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || "Unable to send return request");
+          const orders = readAllOrders();
+          const index = orders.findIndex((order) => order.id === orderId);
+          if (index >= 0 && data.order) orders[index] = data.order;
+          saveAllOrders(orders);
+          renderOrderHistory();
+          showToast("Return request sent to the store");
+        } catch (error) {
+          button.disabled = false;
+          showToast(String(error?.message || "Return request failed"));
+        }
+      }
+
       async function handleCancelOrder(orderId) {
         if (!confirm("Are you sure you want to cancel this order?")) return;
         const orders = readAllOrders();
@@ -173,7 +198,7 @@
           }));
         }
         return steps.map((step, i) => ({
-          label: step === "Fulfilled" ? "Delivered" : step === "Out for Delivery" ? "Out for Delivery" : step,
+          label: step === "Fulfilled" ? "Delivered" : step === "Out for Delivery" ? "Shipped" : step,
           active: i <= currentIdx,
           current: i === currentIdx,
         }));
@@ -208,6 +233,7 @@
             
             // Show actual status (Out for Delivery) directly
             let displayStatus = order.status;
+            const visibleStatus = displayStatus === "Out for Delivery" ? "Shipped" : displayStatus;
             
             const statusClass = `status-${displayStatus.toLowerCase().replace(/\s+/g, "-")}`;
 
@@ -221,7 +247,7 @@
                   itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(217, 45, 32, 0.1); color: var(--tomato-dark); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Cancelled</span>`;
                   textStyle = 'text-decoration: line-through; opacity: 0.6;';
                 } else if (displayStatus === "Out for Delivery") {
-                  itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(37, 211, 102, 0.1); color: #25D366; border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivering</span>`;
+                  itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(37, 211, 102, 0.1); color: #25D366; border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Shipped</span>`;
                 } else if (displayStatus === "Fulfilled") {
                   itemStatusBadge = `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(18, 128, 92, 0.1); color: var(--basil); border-radius: 999px; text-transform: uppercase; font-weight: 900; margin-left: 6px; vertical-align: middle;">Delivered</span>`;
                 }
@@ -282,6 +308,21 @@
             `;
 
             const canCancel = order.status === "Pending";
+            const deliveredAt = Date.parse(order.fulfilledAt || "");
+            const returnEligible = order.status === "Fulfilled" && Number.isFinite(deliveredAt) && Date.now() >= deliveredAt && Date.now() - deliveredAt <= 7 * 24 * 60 * 60 * 1000;
+            const returnRequestHtml = order.returnRequest
+              ? `<div class="history-return-notice">
+                  <strong>Return request: ${order.returnRequest.status || "Requested"}</strong>
+                  <span>Submitted: ${new Date(order.returnRequest.submittedAt).toLocaleString()}</span>
+                  ${order.returnRequest.acceptedAt ? `<span>Return Accepted: ${new Date(order.returnRequest.acceptedAt).toLocaleString()}</span>` : ""}
+                  ${order.returnRequest.refundInitiatedAt ? `<span>Refund Initiated: ${new Date(order.returnRequest.refundInitiatedAt).toLocaleString()}</span>` : ""}
+                </div>`
+              : returnEligible
+                ? `<form class="return-request-form" data-order-id="${order.id}">
+                    ${order.details.payment === "Cash on Delivery" ? `<label>UPI ID for refund<input class="return-upi-input" name="upiId" type="text" inputmode="email" placeholder="name@bank" autocomplete="off" required></label>` : `<p>Your online payment details will be sent with this request.</p>`}
+                    <button type="submit" class="button primary history-action-btn">Request Return</button>
+                  </form>`
+                : "";
 
             return `
               <div class="history-order-card" data-order-status="${order.status}">
@@ -291,12 +332,13 @@
                     <div class="history-card-date">${date}</div>
                   </div>
                   <div class="history-status">
-                    <span class="status-badge ${statusClass}">${displayStatus}</span>
+                    <span class="status-badge ${statusClass}">${visibleStatus}</span>
                   </div>
                 </div>
                 
                 ${timelineHtml}
                 ${deliveryCodeHtml}
+                ${returnRequestHtml}
                 
                 <div class="history-card-body">
                   <div class="history-items-section">
@@ -383,6 +425,13 @@
           filterTabs.querySelectorAll(".history-filter-tab").forEach(t => t.classList.remove("active"));
           tab.classList.add("active");
           renderOrderHistory();
+        });
+
+        historyList.addEventListener("submit", (e) => {
+          const returnForm = e.target.closest(".return-request-form");
+          if (!returnForm) return;
+          e.preventDefault();
+          submitReturnRequest(returnForm);
         });
 
         // Cancel button delegation

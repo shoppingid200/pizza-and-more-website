@@ -176,7 +176,7 @@
             </svg>
           </div>
           <div class="admin-stat-info">
-            <span class="admin-stat-label">Active (Prep/Delivery)</span>
+            <span class="admin-stat-label">Active (Prep/Shipped)</span>
             <strong class="admin-stat-val" id="stat-active">0</strong>
           </div>
         </div>
@@ -200,8 +200,9 @@
           <button class="admin-tab active" data-filter="All">All Orders</button>
           <button class="admin-tab" data-filter="Pending">Pending</button>
           <button class="admin-tab" data-filter="Preparing">Preparing</button>
-          <button class="admin-tab" data-filter="Out for Delivery">Delivery</button>
+          <button class="admin-tab" data-filter="Out for Delivery">Shipped</button>
           <button class="admin-tab" data-filter="Fulfilled">Fulfilled</button>
+          <button class="admin-tab" data-filter="Returns">Return Requests</button>
           <button class="admin-tab" data-filter="Cancelled">Cancelled</button>
         </div>
 
@@ -231,7 +232,7 @@
               </button>
               <button class="button ghost admin-sidebar-action" id="btn-clear-all" type="button"
                 style="color: var(--tomato-dark); border-color: var(--tomato);">
-                Clear All Orders
+                Clear Delivered Orders (10+ days)
               </button>
             </div>
           </div>
@@ -311,24 +312,25 @@
               
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div class="field" style="gap: 2px;">
-                  <label for="new-item-category" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</label>
-                  <select id="new-item-category" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
-                    <option value="Clothing">Clothing</option>
-                    <option value="Accessories">Accessories</option>
-                    <option value="Crockery">Crockery</option>
-                    <option value="Other Items">Other Items</option>
-                  </select>
-                  <button type="button" id="add-category-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add category</button>
+                  <label for="new-item-top-type" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</label>
+                  <select id="new-item-top-type" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);"></select>
+                  <button type="button" id="add-type-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add type</button>
                 </div>
-                <label class="field" style="gap: 2px;">
-                  <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</span>
+                <div class="field" style="gap: 2px;">
+                  <label for="new-item-type" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</label>
                   <select id="new-item-type" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
                     <option value="Apparel">Apparel</option>
                     <option value="Accessory">Accessory</option>
                     <option value="Homeware">Homeware</option>
                     <option value="General">General</option>
                   </select>
-                </label>
+                  <button type="button" id="add-category-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add category</button>
+                </div>
+                <div class="field" style="gap: 2px;">
+                  <label for="new-item-category" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Subcategory</label>
+                  <select id="new-item-category" style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);"><option value="">No subcategory</option></select>
+                  <button type="button" id="add-subcategory-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add subcategory</button>
+                </div>
               </div>
               
               <label class="field" style="gap: 2px;">
@@ -697,7 +699,7 @@
 
       // Filter
       const filtered = orders.filter((o) => {
-        const statusMatch = currentFilter === "All" || o.status === currentFilter;
+        const statusMatch = currentFilter === "All" || (currentFilter === "Returns" ? Boolean(o.returnRequest) : o.status === currentFilter);
         const name = o.details.name || "";
         const phone = o.details.phone || "";
         const address = o.details.address || "";
@@ -817,9 +819,9 @@
           let statusBadgeContent = order.status;
           if (order.status === "Out for Delivery") {
             if (order.partnerAccepted) {
-              statusBadgeContent = `Out for Delivery ✓ (Accepted by ${order.deliveryPartner})`;
+              statusBadgeContent = `Shipped ✓ (Accepted by ${order.deliveryPartner})`;
             } else {
-              statusBadgeContent = `Out for Delivery ⏳ (Waiting for Partner)`;
+              statusBadgeContent = `Shipped ⏳ (Waiting for Partner)`;
             }
           }
 
@@ -855,6 +857,20 @@
                       <label>Delivery Address</label>
                       <div class="address">${order.details.address || "No delivery address supplied (Dine-in/Drive-thru)"}</div>
                     </div>
+                    ${order.returnRequest ? `
+                    <div class="admin-info-block" style="padding: 12px; border: 1px solid var(--tomato); border-radius: 10px; background: rgba(217, 45, 32, 0.06);">
+                      <label style="color: var(--tomato-dark);">Return Request · ${order.returnRequest.status || "Requested"}</label>
+                      <div>Requested: ${new Date(order.returnRequest.submittedAt).toLocaleString()}</div>
+                      <div>Payment: ${order.returnRequest.paymentMethod || order.details.payment}</div>
+                      ${order.returnRequest.upiId ? `<div>Refund UPI ID: <strong>${order.returnRequest.upiId}</strong></div>` : ""}
+                      <div>Customer: ${order.details.name} · ${order.details.phone}</div>
+                      <div>Order placed: ${new Date(order.createdAt).toLocaleString()}</div>
+                      <div>Return items: ${(order.returnRequest.items || []).map((item) => `${item.qty} × ${item.name}`).join(", ")}</div>
+                      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                        <button type="button" class="admin-action-btn return-status-btn" data-id="${order.id}" data-return-status="Accepted" ${order.returnRequest.status !== "Requested" ? "disabled" : ""}>Accept Return</button>
+                        <button type="button" class="admin-action-btn fulfill-btn return-status-btn" data-id="${order.id}" data-return-status="Refund Initiated" ${order.returnRequest.status !== "Accepted" ? "disabled" : ""}>Refund Initiated</button>
+                      </div>
+                    </div>` : ""}
                     ${order.details.notes ? `
                     <div class="admin-info-block">
                       <label>Cooking Notes</label>
@@ -1080,9 +1096,10 @@
 
       const filtered = inventory.filter((item) => {
         const matchSearch = !search ||
-          item.name.toLowerCase().includes(search) ||
-          item.category.toLowerCase().includes(search) ||
-          item.type.toLowerCase().includes(search);
+          String(item.name || "").toLowerCase().includes(search) ||
+          String(item.type || "").toLowerCase().includes(search) ||
+          String(item.category || "").toLowerCase().includes(search) ||
+          String(item.subcategory || "").toLowerCase().includes(search);
 
         const isOutOfStock = item.stock <= 0 || !item.available;
         const isLowStock = item.stock > 0 && item.stock < 10;
@@ -1127,7 +1144,7 @@
                     <div>
                       <div style="font-weight: 850; font-size: 1rem; color: var(--ink);">${item.name}</div>
                       <div style="font-size: 0.78rem; color: var(--muted); margin-top: 2px;">
-                        ${item.category} · <span style="font-style: italic;">${item.type}</span>
+                        ${item.subcategory ? `${item.type} · ${item.category} · ${item.subcategory}` : item.category || item.type}
                       </div>
                       <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px; max-width: 320px; line-height: 1.3;">
                         ${item.desc || "No description"}
@@ -2318,59 +2335,154 @@
       document.getElementById("new-item-tags").value = Array.from(tagSet).join(", ");
     }
 
+    const pendingCategoryOptions = new Map();
+    const pendingSubcategoryOptions = new Map();
+
     // Attach listeners once DOM is ready
     document.addEventListener("DOMContentLoaded", () => {
       const tagBtn = document.getElementById("btn-auto-tag");
       const nameInput = document.getElementById("new-item-name");
       const addCategoryBtn = document.getElementById("add-category-btn");
+      const addSubcategoryBtn = document.getElementById("add-subcategory-btn");
+      const addTypeBtn = document.getElementById("add-type-btn");
+      const typeSelect = document.getElementById("new-item-top-type");
+      const categorySelect = document.getElementById("new-item-type");
+      refreshNewItemTypes();
       refreshNewItemCategories();
+      refreshNewItemSubcategories();
       if (tagBtn) tagBtn.addEventListener("click", autoGenerateTags);
       if (nameInput) nameInput.addEventListener("blur", autoGenerateTags);
-      if (addCategoryBtn) addCategoryBtn.addEventListener("click", addNewCategory);
+      if (typeSelect) typeSelect.addEventListener("change", () => {
+        refreshNewItemCategories();
+        refreshNewItemSubcategories();
+      });
+      if (categorySelect) categorySelect.addEventListener("change", () => refreshNewItemSubcategories());
+      if (addCategoryBtn) addCategoryBtn.addEventListener("click", () => addCatalogOption("category"));
+      if (addSubcategoryBtn) addSubcategoryBtn.addEventListener("click", () => addCatalogOption("subcategory"));
+      if (addTypeBtn) addTypeBtn.addEventListener("click", () => addCatalogOption("type"));
     });
 
-    function refreshNewItemCategories(selectedCategory) {
-      const categorySelect = document.getElementById("new-item-category");
-      if (!categorySelect) return;
-      const categories = new Set(["Clothing", "Accessories", "Crockery", "Other Items"]);
-      readInventory().forEach((item) => {
-        const category = String(item.category || "").trim();
-        if (category) categories.add(category);
-      });
-      const current = selectedCategory || categorySelect.value;
-      categorySelect.replaceChildren();
-      categories.forEach((category) => {
+    function refreshNewItemCategories(selectedValue) {
+      const select = document.getElementById("new-item-type");
+      const type = document.getElementById("new-item-top-type").value;
+      const values = new Set();
+      if (type) {
+        readInventory().forEach((item) => {
+          if (Object.prototype.hasOwnProperty.call(item, "subcategory") && item.type === type && item.category) values.add(String(item.category).trim());
+        });
+        (pendingCategoryOptions.get(type) || new Set()).forEach((value) => values.add(value));
+      }
+      const current = selectedValue || select.value;
+      select.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = type ? "Select or add a category" : "Select a type first";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      select.appendChild(placeholder);
+      values.forEach((value) => {
         const option = document.createElement("option");
-        option.value = category;
-        option.textContent = category;
-        categorySelect.appendChild(option);
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
       });
-      if (current && categories.has(current)) categorySelect.value = current;
+      select.disabled = !type;
+      if (current && values.has(current)) select.value = current;
     }
 
-    function addNewCategory() {
-      const input = window.prompt("Enter a category name (up to 40 characters):");
+    function refreshNewItemSubcategories(selectedValue) {
+      const select = document.getElementById("new-item-category");
+      const type = document.getElementById("new-item-top-type").value;
+      const category = document.getElementById("new-item-type").value;
+      const key = JSON.stringify([type, category]);
+      const values = new Set();
+      if (type && category) {
+        readInventory().forEach((item) => {
+          if (item.subcategory && item.type === type && item.category === category) values.add(String(item.subcategory).trim());
+        });
+        (pendingSubcategoryOptions.get(key) || new Set()).forEach((value) => values.add(value));
+      }
+      const current = selectedValue || select.value;
+      select.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = category ? "No subcategory" : "Select a category first";
+      placeholder.selected = true;
+      select.appendChild(placeholder);
+      values.forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+      select.disabled = !type || !category;
+      if (current && values.has(current)) select.value = current;
+    }
+
+    function refreshNewItemTypes(selectedValue) {
+      const select = document.getElementById("new-item-top-type");
+      const values = new Set(readInventory().map((item) => String(item.type || "").trim()).filter(Boolean));
+      const current = selectedValue || select.value;
+      select.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select or add a type";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      select.appendChild(placeholder);
+      values.forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+      if (current && values.has(current)) select.value = current;
+    }
+
+    function addCatalogOption(level) {
+      const type = document.getElementById("new-item-top-type").value;
+      const category = document.getElementById("new-item-type").value;
+      if (level === "category" && !type) {
+        alert("Add or select a type first.");
+        return;
+      }
+      if (level === "subcategory" && (!type || !category)) {
+        alert("Select a type and category first.");
+        return;
+      }
+      const input = window.prompt(`Enter a ${level} name (up to 40 characters):`);
       if (input === null) return;
-      const category = input.trim();
-      if (!category) {
-        alert("Enter a category name.");
+      const value = input.trim();
+      if (!value || value.length > 40) {
+        alert(`Enter a ${level} name up to 40 characters.`);
         return;
       }
-      if (category.length > 40) {
-        alert("Category names can be up to 40 characters.");
+      if (level === "type") {
+        const values = new Set(readInventory().map((item) => String(item.type || "").trim()));
+        if (values.has(value)) {
+          document.getElementById("new-item-top-type").value = value;
+        } else {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          document.getElementById("new-item-top-type").appendChild(option);
+          document.getElementById("new-item-top-type").value = value;
+        }
+        refreshNewItemCategories();
+        refreshNewItemSubcategories();
         return;
       }
-      const categorySelect = document.getElementById("new-item-category");
-      const existing = Array.from(categorySelect.options).find((option) => option.value.toLowerCase() === category.toLowerCase());
-      if (existing) {
-        categorySelect.value = existing.value;
+      if (level === "category") {
+        if (!pendingCategoryOptions.has(type)) pendingCategoryOptions.set(type, new Set());
+        pendingCategoryOptions.get(type).add(value);
+        refreshNewItemCategories(value);
+        refreshNewItemSubcategories();
         return;
       }
-      const option = document.createElement("option");
-      option.value = category;
-      option.textContent = category;
-      categorySelect.appendChild(option);
-      categorySelect.value = category;
+      const key = JSON.stringify([type, category]);
+      if (!pendingSubcategoryOptions.has(key)) pendingSubcategoryOptions.set(key, new Set());
+      pendingSubcategoryOptions.get(key).add(value);
+      refreshNewItemSubcategories(value);
     }
 
     function parseSizeStockEntries(value) {
@@ -2413,8 +2525,9 @@
     async function addNewItem(e) {
       e.preventDefault();
       const name = document.querySelector("#new-item-name").value.trim();
-      const category = document.querySelector("#new-item-category").value;
-      const type = document.querySelector("#new-item-type").value;
+      const type = document.querySelector("#new-item-top-type").value;
+      const category = document.querySelector("#new-item-type").value;
+      const subcategory = document.querySelector("#new-item-category").value;
       const desc = document.querySelector("#new-item-desc").value.trim();
       const colorFamily = document.querySelector("#new-item-color-family").value.trim();
       const colorName = document.querySelector("#new-item-color-name").value.trim();
@@ -2471,6 +2584,7 @@
       const newItem = {
         name,
         category,
+        subcategory,
         type,
         desc,
         price: variations[0].price,
@@ -2846,6 +2960,23 @@
       }
     }
 
+    async function handleReturnStatus(orderId, status) {
+      try {
+        const res = await fetch(ORDERS_API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ action: "update-return-status", id: orderId, status }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `Could not update return status (${res.status})`);
+        await syncOrdersFromApi();
+        renderOrders();
+        showToast(data.message || `Return status updated to ${status}`);
+      } catch (error) {
+        showToast(String(error?.message || "Could not update return status"));
+      }
+    }
+
     async function handleAction(id, action, deliveryPartner) {
       try {
         let res;
@@ -2933,6 +3064,12 @@
         const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
         if (cancelItemBtn) {
           handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
+          return;
+        }
+
+        const returnStatusBtn = e.target.closest(".return-status-btn");
+        if (returnStatusBtn) {
+          handleReturnStatus(returnStatusBtn.dataset.id, returnStatusBtn.dataset.returnStatus);
           return;
         }
 
@@ -3032,21 +3169,24 @@
 
       // Clear All trigger
       document.querySelector("#btn-clear-all").addEventListener("click", async () => {
-        if (!confirm("Are you SURE you want to clear ALL orders? This cannot be undone!")) return;
-        const orders = readOrders();
-        // Delete each order from server
-        for (const order of orders) {
-          try {
-            await fetch(ORDERS_API_URL, {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({ id: order.id }),
-            });
-          } catch { }
+        const confirmed = confirm("Remove only orders delivered at least 10 days ago? Pending, preparing, shipped, and recent orders will stay.");
+        if (!confirmed) return;
+
+        try {
+          await syncOrdersFromApi();
+          const res = await fetch(ORDERS_API_URL, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ action: "clear-expired-fulfilled" }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || `Clear failed (${res.status})`);
+          await syncOrdersFromApi();
+          renderOrders();
+          showToast(`${Number(data.deletedCount) || 0} old delivered order(s) removed`);
+        } catch (error) {
+          showToast(error?.message || "Could not clear old delivered orders");
         }
-        await syncOrdersFromApi();
-        renderOrders();
-        showToast("All order logs cleared");
       });
 
       // Inventory search trigger

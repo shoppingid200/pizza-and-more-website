@@ -89,12 +89,29 @@
               </svg>
               <input id="menu-search" type="search" placeholder="Search products" autocomplete="off" />
             </label>
-            <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Menu categories">
-              <span class="skeleton-tab" aria-hidden="true"></span>
-              <span class="skeleton-tab" aria-hidden="true"></span>
-              <span class="skeleton-tab" aria-hidden="true"></span>
-              <span class="skeleton-tab" aria-hidden="true"></span>
-              <span class="skeleton-tab" aria-hidden="true"></span>
+            <div class="menu-action-controls">
+              <div class="shop-category-browser">
+                <button class="button ghost shop-category-toggle" id="shop-by-category-btn" type="button" aria-expanded="false" aria-controls="shop-category-panel">Shop by Category</button>
+                <div class="shop-category-panel" id="shop-category-panel" hidden>
+                  <label>Type
+                    <select id="shop-type-select"><option value="">Choose a type</option></select>
+                  </label>
+                  <label>Category
+                    <select id="shop-category-select" disabled><option value="">Choose a type first</option></select>
+                  </label>
+                  <label>Subcategory
+                    <select id="shop-subcategory-select" disabled><option value="">Choose a category first</option></select>
+                  </label>
+                </div>
+              </div>
+              <div class="sort-control">
+                <label for="menu-sort">Sort by</label>
+                <select id="menu-sort">
+                  <option value="default">Recommended</option>
+                  <option value="price-asc">Price: Low to high</option>
+                  <option value="price-desc">Price: High to low</option>
+                </select>
+              </div>
             </div>
           </div>
 

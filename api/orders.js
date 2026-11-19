@@ -48,6 +48,15 @@ function generateOrderId() {
 
 function cleanCart(cart, inventory) {
   const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
+  const quantities = new Map();
+  for (const line of cart) {
+    const key = [String(line?.name || "").trim(), String(line?.variation || "").trim(), String(line?.size || "").trim()].join("\u0000");
+    const qty = Number(line?.qty || 0);
+    if (!Number.isInteger(qty) || qty < 1) throw new Error("Invalid cart item");
+    const previous = quantities.get(key);
+    quantities.set(key, { ...line, qty: (previous?.qty || 0) + qty });
+  }
+  cart = [...quantities.values()];
   const cleaned = [];
   for (const line of cart) {
     const name = String(line?.name || "").trim();
@@ -74,6 +83,7 @@ function cleanCart(cart, inventory) {
       size: size || undefined,
       category: String(inventoryItem.category || ""),
       type: String(inventoryItem.type || ""),
+      subcategory: String(inventoryItem.subcategory || ""),
     });
   }
   if (!cleaned.length) throw new Error("Cart is empty");
@@ -129,6 +139,12 @@ module.exports = async (req, res) => {
       let verifiedPayment;
       if (paymentMethod !== "Razorpay" && paymentMethod !== "Cash on Delivery") {
         return res.status(400).json({ message: "Unsupported payment method." });
+      }
+      if (paymentMethod === "Cash on Delivery" && (
+        settings.codEnabled === false ||
+        items.some((item) => inventory.find((inventoryItem) => inventoryItem.name === item.name)?.codEnabled === false)
+      )) {
+        return res.status(400).json({ message: "Cash on Delivery is unavailable for this order." });
       }
       if (paymentMethod === "Razorpay") {
         try {
@@ -191,6 +207,9 @@ module.exports = async (req, res) => {
       const order = orders[index];
       const previousStatus = order.status;
       order.status = status;
+      if (status === "Fulfilled" && previousStatus !== "Fulfilled") {
+        order.fulfilledAt = new Date().toISOString();
+      }
       if (status === "Out for Delivery" && previousStatus !== "Out for Delivery") {
         order.deliveryCode = order.deliveryCode || String(Math.floor(100000 + Math.random() * 900000));
         order.deliveryPartner = String(body.deliveryPartner || "").trim();
@@ -200,6 +219,7 @@ module.exports = async (req, res) => {
       if (status === "Cancelled" && previousStatus !== "Cancelled" && previousStatus !== "Fulfilled") {
         const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
         for (const item of order.items || order.cart || []) {
+          if (item.cancelled) continue;
           const inventoryItem = inventoryByName.get(item.name);
           if (inventoryItem) {
             const qty = Number(item.qty) || 0;
@@ -221,8 +241,19 @@ module.exports = async (req, res) => {
 
     if (req.method === "DELETE") {
       const body = await readJsonBody(req);
-      const id = String(body.id || "").trim();
       const orders = Array.isArray(storedOrders) ? storedOrders : [];
+      if (body.action === "clear-expired-fulfilled") {
+        const cutoff = Date.now() - 10 * 24 * 60 * 60 * 1000;
+        const remainingOrders = orders.filter((order) => {
+          if (order?.status !== "Fulfilled") return true;
+          const fulfilledAt = Date.parse(order.fulfilledAt || "");
+          return !Number.isFinite(fulfilledAt) || fulfilledAt > cutoff;
+        });
+        const deletedCount = orders.length - remainingOrders.length;
+        if (deletedCount > 0) await redis.set(ORDERS_KEY, remainingOrders);
+        return res.status(200).json({ message: "Expired delivered orders cleared", deletedCount });
+      }
+      const id = String(body.id || "").trim();
       const nextOrders = orders.filter((order) => order?.id !== id);
       if (nextOrders.length === orders.length) return res.status(404).json({ message: "Order not found" });
       await redis.set(ORDERS_KEY, nextOrders);
@@ -238,6 +269,51 @@ module.exports = async (req, res) => {
       if (!id || index < 0) return res.status(404).json({ message: "Order not found" });
 
       const order = orders[index];
+      if (action === "request-return") {
+        if (order.status !== "Fulfilled") return res.status(409).json({ message: "Returns are available only after delivery." });
+        const deliveredAt = Date.parse(order.fulfilledAt || "");
+        const ageMs = Date.now() - deliveredAt;
+        if (!Number.isFinite(deliveredAt) || ageMs < 0 || ageMs > 7 * 24 * 60 * 60 * 1000) {
+          return res.status(409).json({ message: "The 7-day return period has expired." });
+        }
+        if (order.returnRequest) return res.status(409).json({ message: "A return request already exists for this order." });
+        const paymentMethod = String(order.details?.payment || "").trim();
+        let upiId = "";
+        if (paymentMethod === "Cash on Delivery") {
+          upiId = String(body.upiId || "").trim();
+          if (!/^[\w.-]{2,256}@[\w.-]{2,64}$/.test(upiId)) {
+            return res.status(400).json({ message: "Enter a valid UPI ID for the COD refund." });
+          }
+        } else if (paymentMethod !== "Razorpay") {
+          return res.status(400).json({ message: "Return requests are supported for Razorpay and Cash on Delivery orders." });
+        }
+        order.returnRequest = {
+          status: "Requested",
+          submittedAt: new Date().toISOString(),
+          paymentMethod,
+          upiId: upiId || undefined,
+          customer: { ...order.details },
+          items: (order.items || order.cart || []).filter((item) => !item.cancelled).map((item) => ({ name: item.name, qty: item.qty, price: item.price, size: item.size, variation: item.variation })),
+          orderTotal: order.total,
+        };
+        await redis.set(ORDERS_KEY, orders);
+        return res.status(201).json({ message: "Return request sent to the store", order });
+      }
+      if (action === "update-return-status") {
+        const nextStatus = String(body.status || "").trim();
+        if (!order.returnRequest) return res.status(404).json({ message: "Return request not found" });
+        if (nextStatus === "Accepted" && order.returnRequest.status === "Requested") {
+          order.returnRequest.status = "Accepted";
+          order.returnRequest.acceptedAt = new Date().toISOString();
+        } else if (nextStatus === "Refund Initiated" && order.returnRequest.status === "Accepted") {
+          order.returnRequest.status = "Refund Initiated";
+          order.returnRequest.refundInitiatedAt = new Date().toISOString();
+        } else {
+          return res.status(409).json({ message: "Return request status cannot be changed to that state." });
+        }
+        await redis.set(ORDERS_KEY, orders);
+        return res.status(200).json({ message: `Return status updated to ${nextStatus}`, order });
+      }
       if (action === "accept-delivery") {
         const partner = String(body.partner || "").trim();
         if (!partner) return res.status(400).json({ message: "Partner name is required" });
@@ -274,6 +350,19 @@ module.exports = async (req, res) => {
         const item = items.find((entry) => entry.name === itemName);
         if (!item) return res.status(404).json({ message: "Item not found in this order" });
         if (item.cancelled) return res.status(409).json({ message: "Item is already cancelled" });
+        const inventory = await ensureSeededInventory(redis);
+        const inventoryItem = inventory.find((entry) => entry.name === item.name);
+        if (inventoryItem) {
+          const qty = Number(item.qty) || 0;
+          if (Array.isArray(inventoryItem.sizes) && inventoryItem.sizes.includes(item.size)) {
+            inventoryItem.sizeStock = inventoryItem.sizeStock || Object.fromEntries(
+              inventoryItem.sizes.map((size) => [size, Number(inventoryItem.stock) || 0])
+            );
+            inventoryItem.sizeStock[item.size] = (Number(inventoryItem.sizeStock[item.size]) || 0) + qty;
+          }
+          inventoryItem.stock = (Number(inventoryItem.stock) || 0) + qty;
+          await redis.set(INVENTORY_KEY, inventory);
+        }
         item.cancelled = true;
         order.total = Math.max(0, Number(order.total) - Number(item.price || 0) * Number(item.qty || 1));
         if (items.every((entry) => entry.cancelled)) order.status = "Cancelled";

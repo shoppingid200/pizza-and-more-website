@@ -48,6 +48,15 @@ function generateMerchantOrderId() {
 function calculateAuthoritativeTotal(cart, inventory) {
   if (!Array.isArray(cart) || !cart.length) throw new Error("Cart is empty");
   const inventoryByName = new Map(inventory.map((item) => [item.name, item]));
+  const quantities = new Map();
+  for (const line of cart) {
+    const key = [String(line?.name || "").trim(), String(line?.variation || "").trim(), String(line?.size || "").trim()].join("\u0000");
+    const qty = Number(line?.qty || 0);
+    if (!Number.isInteger(qty) || qty < 1) throw new Error("Invalid cart item");
+    const previous = quantities.get(key);
+    quantities.set(key, { ...line, qty: (previous?.qty || 0) + qty });
+  }
+  cart = [...quantities.values()];
   let total = 0;
 
   for (const line of cart) {

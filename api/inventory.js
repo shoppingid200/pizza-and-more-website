@@ -46,12 +46,15 @@ function normalizeInventory(inventory) {
         name: String(item.name).trim(),
         category: String(item.category || "Other Items").trim(),
         type: String(item.type || "General").trim(),
+        ...(Object.prototype.hasOwnProperty.call(item, "subcategory")
+          ? { subcategory: String(item.subcategory || "").trim() }
+          : {}),
         desc: String(item.desc || "").trim(),
         price: Math.max(0, Number(item.price) || 0),
         mrp: Math.max(0, Number(item.mrp) || 0),
         stock: Math.max(0, Number(item.stock) || 0),
         available: Boolean(item.available),
-        codEnabled: Boolean(item.codEnabled),
+        codEnabled: item.codEnabled !== false,
       };
       const colorFamily = String(item.colorFamily || "").trim();
       const colorName = String(item.colorName || "").trim();

@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
         settings.minOrderPrice = Number(body.minOrderPrice);
       }
       if (body.codEnabled !== undefined) {
-        settings.codEnabled = Boolean(body.codEnabled);
+        settings.codEnabled = body.codEnabled === true;
       }
 
       await redis.set(SETTINGS_KEY, settings);

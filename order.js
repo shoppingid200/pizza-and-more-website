@@ -156,6 +156,7 @@ function readCart() {
     return items
       .map((item) => ({
         category: item.category || "Menu",
+        subcategory: item.subcategory || "",
         desc: item.desc || "",
         name: item.name,
         price: Number(item.price) || 0,
@@ -742,7 +743,7 @@ async function bootOrderPage() {
     if (res.ok) {
       const data = await res.json();
       minOrderPrice = Number(data.minOrderPrice) || 0;
-      const storeCODEnabled = Boolean(data.codEnabled);
+      const storeCODEnabled = data.codEnabled !== false;
       const paymentSelect = document.getElementById("payment-mode");
 
       // Per-item COD check: if any cart item has codEnabled=false, COD is unavailable
@@ -959,7 +960,7 @@ async function bootOrderPage() {
             if (mapPreview) mapPreview.classList.remove("is-visible");
             if (detailsSection) detailsSection.hidden = false;
             if (savedSummary) savedSummary.hidden = true;
-            document.getElementById("address-house")?.focus();
+            document.getElementById("address-pincode")?.focus();
           });
         }
       }

@@ -87,6 +87,10 @@
               <h3>Delivery address</h3>
               <div class="field-grid">
                 <label class="field">
+                  <span>Pincode (Required)</span>
+                  <input id="address-pincode" name="addrPincode" type="tel" inputmode="numeric" autocomplete="postal-code" pattern="\d{6}" maxlength="6" required />
+                </label>
+                <label class="field">
                   <span>Flat, House no., Building, Company, Apartment (Required)</span>
                   <input id="address-house" name="addrHouse" type="text" autocomplete="address-line1" required />
                 </label>
@@ -101,10 +105,6 @@
                 <label class="field">
                   <span>State (Required)</span>
                   <input id="address-state" name="addrState" type="text" autocomplete="address-level1" required />
-                </label>
-                <label class="field">
-                  <span>Pincode (Required)</span>
-                  <input id="address-pincode" name="addrPincode" type="tel" inputmode="numeric" autocomplete="postal-code" pattern="\d{6}" maxlength="6" required />
                 </label>
                 <label class="field">
                   <span>Landmark (Optional)</span>

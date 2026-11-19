@@ -278,7 +278,9 @@ function renderProduct() {
   renderProductColors();
 
   productTitle.textContent = currentProduct.name;
-  productCategory.textContent = currentProduct.category;
+  productCategory.textContent = currentProduct.subcategory
+    ? [currentProduct.type, currentProduct.category, currentProduct.subcategory].filter(Boolean).join(" · ")
+    : currentProduct.category || currentProduct.type || "Category";
   productDesc.textContent = currentProduct.desc || "No description.";
 
   const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
@@ -417,6 +419,7 @@ function addToCart() {
     cart.push({
       name: currentProduct.name,
       category: currentProduct.category || "",
+      subcategory: currentProduct.subcategory || "",
       type: currentProduct.type || "",
       desc: currentProduct.desc || "",
       price,
@@ -496,6 +499,7 @@ qtyInput.addEventListener("input", updateQtyBounds);
     const directItem = {
       name: currentProduct.name,
       category: currentProduct.category || "",
+      subcategory: currentProduct.subcategory || "",
       type: currentProduct.type || "",
       desc: currentProduct.desc || "",
       price,

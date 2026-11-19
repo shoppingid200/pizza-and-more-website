@@ -959,10 +959,109 @@ h1 {
 
 .menu-tools {
   display: grid;
-  grid-template-columns: minmax(220px, 360px) 1fr;
+  grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
   gap: 16px;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.menu-action-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.menu-action-controls > .sort-control,
+.menu-action-controls > .shop-category-browser {
+  align-self: flex-start;
+}
+
+.sort-control {
+  display: grid;
+  flex: 0 0 180px;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sort-control select {
+  width: 180px;
+  min-height: 40px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.shop-category-browser {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-category-toggle {
+  width: 180px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
+.shop-category-panel[hidden] {
+  display: none;
+}
+
+.shop-category-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(82, 39, 19, 0.08);
+}
+
+.shop-category-panel label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.shop-category-panel select {
+  width: 100%;
+  min-height: 46px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.shop-category-panel select:disabled {
+  opacity: 0.6;
 }
 
 .search-box {
@@ -1101,7 +1200,7 @@ h1 {
 .menu-price-control {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 4px;
   min-width: 0;
 }
@@ -1109,7 +1208,7 @@ h1 {
 .item-price-detail {
   display: inline-flex;
   align-items: baseline;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
   flex-wrap: wrap;
   color: var(--tomato-dark);
@@ -2014,6 +2113,31 @@ footer strong {
   .menu-tools {
     grid-template-columns: 1fr;
   }
+
+  .shop-category-browser,
+  .shop-category-panel {
+    width: 100%;
+  }
+
+  .menu-action-controls .shop-category-browser {
+    width: auto;
+    flex: 1 1 0;
+  }
+
+  .menu-action-controls .shop-category-toggle,
+  .menu-action-controls .sort-control {
+    width: 100%;
+    flex: 1 1 0;
+  }
+
+  .menu-action-controls .sort-control select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .shop-category-panel {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -2157,7 +2281,11 @@ footer strong {
     font-size: 2.5rem;
   }
 
-  .menu-grid,
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
   .review-metrics,
   .field-grid,
   .admin-stats-grid {
@@ -2334,6 +2462,57 @@ footer strong {
   align-items: center;
 }
 
+.return-request-form,
+.history-return-notice {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.history-return-notice {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.history-return-notice strong {
+  color: var(--ink);
+}
+
+.return-request-form p,
+.history-return-notice {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.return-request-form label {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 260px);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.return-upi-input {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.return-request-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .cancel-order-btn {
   background: transparent;
   border: 1px solid var(--tomato);
@@ -2351,6 +2530,11 @@ footer strong {
 }
 
 /* --- ADMIN PANEL SPECIFIC STYLES --- */
+.return-status-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .admin-body {
   background: #fbf9f4;
   color: var(--ink);

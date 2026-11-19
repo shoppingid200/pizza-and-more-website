@@ -281,8 +281,13 @@ async function syncInventoryFromApi() {
 }
 
 const menuGrid = document.querySelector("#menu-grid");
-const tabs = document.querySelector("#category-tabs");
+const shopCategoryButton = document.querySelector("#shop-by-category-btn");
+const shopCategoryPanel = document.querySelector("#shop-category-panel");
+const shopTypeSelect = document.querySelector("#shop-type-select");
+const shopCategorySelect = document.querySelector("#shop-category-select");
+const shopSubcategorySelect = document.querySelector("#shop-subcategory-select");
 const searchInput = document.querySelector("#menu-search");
+const menuSortSelect = document.querySelector("#menu-sort");
 const cartLines = document.querySelector("#cart-lines");
 const cartCount = document.querySelector("#cart-count");
 const cartTotal = document.querySelector("#cart-total");
@@ -292,7 +297,9 @@ const toast = document.querySelector("#toast");
 const CART_STORAGE_KEY = "mount-parche-cart";
 const cart = new Map();
 
-let activeCategory = "All";
+let selectedShopType = "";
+let selectedShopCategory = "";
+let selectedShopSubcategory = "";
 
 function formatRupees(value) {
   return `₹${value}`;
@@ -321,6 +328,7 @@ function saveCart() {
   const items = [...cart.entries()].map(([cartKey, { item, qty, variation }]) => ({
     cartKey,
     category: item.category,
+    subcategory: item.subcategory,
     desc: item.desc,
     name: item.name,
     price: variation && item.variations ? (item.variations.find(v => v.name === variation) || {}).price || item.price : item.price,
@@ -345,41 +353,88 @@ function restoreCart() {
   saveCart();
 }
 
-function getCategories() {
-  const inventory = readInventory();
-  const categories = inventory
-    .map((item) => String(item.category || "").trim())
-    .filter(Boolean);
-  return ["All", ...new Set(categories)];
+function getShopHierarchy(item) {
+  if (Object.prototype.hasOwnProperty.call(item, "subcategory")) {
+    return {
+      type: String(item.type || "").trim(),
+      category: String(item.category || "").trim(),
+      subcategory: String(item.subcategory || "").trim()
+    };
+  }
+  // Legacy products already use type for the top-level selector and category for its child.
+  return {
+    type: String(item.type || "").trim(),
+    category: String(item.category || "").trim(),
+    subcategory: ""
+  };
 }
 
-function renderTabs() {
-  const categories = getCategories();
-  tabs.replaceChildren();
-  categories.forEach((category) => {
-    const button = document.createElement("button");
-    const isActive = category === activeCategory;
-    button.className = `category-tab${isActive ? " active" : ""}`;
-    button.type = "button";
-    button.setAttribute("role", "tab");
-    button.setAttribute("aria-selected", String(isActive));
-    button.dataset.category = category;
-    button.textContent = category;
-    tabs.appendChild(button);
+function replaceSelectOptions(select, values, placeholder, selectedValue = "") {
+  select.replaceChildren();
+  const prompt = document.createElement("option");
+  prompt.value = "";
+  prompt.textContent = placeholder;
+  select.appendChild(prompt);
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
   });
+  if (selectedValue && values.includes(selectedValue)) select.value = selectedValue;
+}
+
+function renderShopCategoryOptions() {
+  const inventory = readInventory();
+  const hierarchy = inventory.map(getShopHierarchy);
+  const types = [...new Set(hierarchy.map((item) => item.type).filter(Boolean))];
+  if (!types.includes(selectedShopType)) selectedShopType = "";
+  replaceSelectOptions(shopTypeSelect, types, "Choose a type", selectedShopType);
+
+  const categories = [...new Set(hierarchy
+    .filter((item) => item.type === selectedShopType)
+    .map((item) => item.category)
+    .filter(Boolean))];
+  if (!categories.includes(selectedShopCategory)) selectedShopCategory = "";
+  replaceSelectOptions(shopCategorySelect, categories, selectedShopType ? "Choose a category" : "Choose a type first", selectedShopCategory);
+  shopCategorySelect.disabled = !selectedShopType || categories.length === 0;
+
+  const subcategories = [...new Set(hierarchy
+    .filter((item) => item.type === selectedShopType && item.category === selectedShopCategory)
+    .map((item) => item.subcategory)
+    .filter(Boolean))];
+  if (!subcategories.includes(selectedShopSubcategory)) selectedShopSubcategory = "";
+  replaceSelectOptions(shopSubcategorySelect, subcategories, subcategories.length ? "All in this category" : "No subcategories", selectedShopSubcategory);
+  shopSubcategorySelect.disabled = !selectedShopCategory || subcategories.length === 0;
 }
 
 function currentItems() {
   const inventory = readInventory();
   const searchTerm = searchInput.value.trim().toLowerCase();
-  return inventory.filter((item) => {
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+  const filteredItems = inventory.filter((item) => {
+    const hierarchy = getShopHierarchy(item);
+    const matchesType = !selectedShopType || hierarchy.type === selectedShopType;
+    const matchesCategory = !selectedShopCategory || hierarchy.category === selectedShopCategory;
+    const matchesSubcategory = !selectedShopSubcategory || hierarchy.subcategory === selectedShopSubcategory;
     const tagsString = item.tags ? item.tags.join(" ") : "";
-    const matchesSearch = [item.name, item.desc, item.category, item.type, tagsString]
+    const matchesSearch = [item.name, item.desc, item.type, item.category, item.subcategory, tagsString]
       .join(" ")
       .toLowerCase()
       .includes(searchTerm);
-    return matchesCategory && matchesSearch;
+    return matchesType && matchesCategory && matchesSubcategory && matchesSearch;
+  });
+  const sortOrder = menuSortSelect.value;
+  if (sortOrder === "default") return filteredItems;
+
+  const getPrice = (item) => {
+    const variationPrices = Array.isArray(item.variations)
+      ? item.variations.map((variation) => Number(variation.price)).filter((price) => Number.isFinite(price))
+      : [];
+    return variationPrices.length ? Math.min(...variationPrices) : Number(item.price) || 0;
+  };
+  return filteredItems.sort((a, b) => {
+    const difference = getPrice(a) - getPrice(b);
+    return sortOrder === "price-desc" ? -difference : difference;
   });
 }
 
@@ -437,7 +492,7 @@ function renderMenu() {
               </div>
               <p class="item-desc">${item.desc}</p>
               <div class="item-meta" data-action-container-for="${item.name}">
-                <span class="item-tag">${item.type}</span>
+                <span class="item-tag">${[item.category, item.subcategory].filter(Boolean).join(" · ") || item.type}</span>
                 ${actionControl}
               </div>
             </div>
@@ -671,20 +726,39 @@ async function bootMenu() {
   }
 
   restoreCart();
-  renderTabs();
+  renderShopCategoryOptions();
   renderMenu();
   renderCart();
   syncMenuButtons();
 
-  tabs.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-category]");
-    if (!button) return;
-    activeCategory = button.dataset.category;
-    renderTabs();
+  shopCategoryButton.addEventListener("click", () => {
+    const willOpen = shopCategoryPanel.hidden;
+    shopCategoryPanel.hidden = !willOpen;
+    shopCategoryButton.setAttribute("aria-expanded", String(willOpen));
+  });
+
+  shopTypeSelect.addEventListener("change", () => {
+    selectedShopType = shopTypeSelect.value;
+    selectedShopCategory = "";
+    selectedShopSubcategory = "";
+    renderShopCategoryOptions();
+    renderMenu();
+  });
+
+  shopCategorySelect.addEventListener("change", () => {
+    selectedShopCategory = shopCategorySelect.value;
+    selectedShopSubcategory = "";
+    renderShopCategoryOptions();
+    renderMenu();
+  });
+
+  shopSubcategorySelect.addEventListener("change", () => {
+    selectedShopSubcategory = shopSubcategorySelect.value;
     renderMenu();
   });
 
   searchInput.addEventListener("input", renderMenu);
+  menuSortSelect.addEventListener("change", renderMenu);
 
   document.addEventListener("change", (event) => {
     if (event.target.classList.contains("var-select")) {
@@ -749,7 +823,7 @@ async function bootMenu() {
       const inventory = await syncInventoryFromApi();
       const cartChanged = reconcileCartWithInventory(inventory);
       if (cartChanged) showToast("Cart updated due to stock changes.");
-      renderTabs();
+      renderShopCategoryOptions();
       renderMenu();
       renderCart();
     } catch {
@@ -761,7 +835,7 @@ async function bootMenu() {
   // Dynamic cross-tab stock sync
   window.addEventListener("storage", (event) => {
     if (event.key === INVENTORY_STORAGE_KEY || event.key === null) {
-      renderTabs();
+      renderShopCategoryOptions();
       renderMenu();
       
       let cartChanged = false;
