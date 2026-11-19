@@ -53,6 +53,12 @@ function normalizeInventory(inventory) {
         available: Boolean(item.available),
         codEnabled: Boolean(item.codEnabled),
       };
+      const colorFamily = String(item.colorFamily || "").trim();
+      const colorName = String(item.colorName || "").trim();
+      if (colorFamily && colorName && colorFamily.length <= 80 && colorName.length <= 40) {
+        normalized.colorFamily = colorFamily;
+        normalized.colorName = colorName;
+      }
       if (Array.isArray(item.sizes) && item.sizes.length) {
         normalized.sizes = [...new Map(item.sizes
           .map((size) => String(size).trim())

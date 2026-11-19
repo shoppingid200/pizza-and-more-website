@@ -336,6 +336,14 @@
                   style="min-height: 44px; padding: 6px 8px; font-size:0.75rem; border-radius: 6px; border: 1px solid var(--line);" rows="2"></textarea>
               </label>
               
+              <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Color family (private, max 80 characters)</span>
+                <input type="text" id="new-item-color-family" maxlength="80" placeholder="e.g. Everyday Cotton Tee" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
+              </label>
+              <label class="field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Color name</span>
+                <input type="text" id="new-item-color-name" maxlength="40" placeholder="e.g. Navy Blue" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
+              </label>
               <div class="field" style="gap: 2px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Tags (Comma separated)</span>
@@ -1123,6 +1131,8 @@
                         ${item.desc || "No description"}
                       </div>
                       ${item.variations && item.variations.length > 0 ? `<div style="font-size: 0.72rem; color: var(--cobalt); margin-top: 4px; font-weight: 700;">${item.variations.map(v => v.name + ': ₹' + v.price).join(' · ')}</div>` : ''}
+                      <input type="text" class="color-family-field" data-name="${item.name}" maxlength="80" aria-label="Private color family name" placeholder="Private color family (max 80 chars)" value="${escapeInventoryValue(item.colorFamily || "")}" style="width: min(260px, 100%); height: 30px; margin-top: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 0.72rem;" />
+                      <input type="text" class="color-name-field" data-name="${item.name}" maxlength="40" aria-label="Color name" placeholder="Color name (e.g. Navy Blue)" value="${escapeInventoryValue(item.colorName || "")}" style="width: min(260px, 100%); height: 30px; margin-top: 4px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 0.72rem;" />
                     </div>
                   </div>
                 </td>
@@ -1178,6 +1188,12 @@
         return;
       }
       if (Object.keys(sizeStock).length) stockVal = Object.values(sizeStock).reduce((sum, count) => sum + count, 0);
+      const colorFamily = trElement.querySelector(".color-family-field").value.trim();
+      const colorName = trElement.querySelector(".color-name-field").value.trim();
+      if (colorFamily.length > 80 || colorName.length > 40 || Boolean(colorFamily) !== Boolean(colorName)) {
+        alert("Enter both a color family name (up to 80 characters) and a color name (up to 40 characters), or leave both blank.");
+        return;
+      }
       const availVal = trElement.querySelector(".avail-checkbox").checked;
       const codVal = trElement.querySelector(".cod-checkbox").checked;
 
@@ -1186,6 +1202,8 @@
       if (item) {
         item.price = priceVal;
         item.mrp = mrpVal;
+        item.colorFamily = colorFamily;
+        item.colorName = colorName;
         item.stock = stockVal;
         if (Object.keys(sizeStock).length) {
           item.sizes = Object.keys(sizeStock);
@@ -2326,6 +2344,16 @@
       const category = document.querySelector("#new-item-category").value;
       const type = document.querySelector("#new-item-type").value;
       const desc = document.querySelector("#new-item-desc").value.trim();
+      const colorFamily = document.querySelector("#new-item-color-family").value.trim();
+      const colorName = document.querySelector("#new-item-color-name").value.trim();
+      if (colorFamily.length > 80) {
+        alert("Color family names can be up to 80 characters.");
+        return;
+      }
+      if (colorName.length > 40 || Boolean(colorFamily) !== Boolean(colorName)) {
+        alert("Enter both a color family name (up to 80 characters) and a color name (up to 40 characters), or leave both blank.");
+        return;
+      }
       let stock = Number(document.querySelector("#new-item-stock").value) || 0;
       let sizeStock;
       try {
@@ -2381,6 +2409,10 @@
         available: true,
         codEnabled: true
       };
+      if (colorFamily && colorName) {
+        newItem.colorFamily = colorFamily;
+        newItem.colorName = colorName;
+      }
       if (Object.keys(sizeStock).length) {
         newItem.sizes = Object.keys(sizeStock);
         newItem.sizeStock = sizeStock;

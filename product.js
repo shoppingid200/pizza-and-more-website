@@ -13,6 +13,9 @@ const productPrice = document.getElementById("product-price");
 const productMrp = document.getElementById("product-mrp");
 const productDiscount = document.getElementById("product-discount");
 const productDesc = document.getElementById("product-desc");
+const productColors = document.getElementById("product-colors");
+const productColorOptions = document.getElementById("product-color-options");
+const selectedColorName = document.getElementById("selected-color-name");
 const productVariations = document.getElementById("product-variations");
 const variantOptions = document.getElementById("variant-options");
 const selectedVariantName = document.getElementById("selected-variant-name");
@@ -214,8 +217,57 @@ productImage.addEventListener("pointercancel", () => {
   galleryPointerStart = null;
 });
 
+function renderProductColors() {
+  productColorOptions.replaceChildren();
+  const family = String(currentProduct.colorFamily || "").trim();
+  const colorName = String(currentProduct.colorName || "").trim();
+  const matches = family && colorName
+    ? inventory.filter((item) => String(item.colorFamily || "").trim() === family && String(item.colorName || "").trim())
+    : [];
+
+  if (matches.length < 2) {
+    productColors.hidden = true;
+    return;
+  }
+
+  selectedColorName.textContent = colorName;
+  matches.forEach((item) => {
+    const itemColorName = String(item.colorName).trim();
+    const isCurrent = item.name === currentProduct.name;
+    const link = document.createElement("a");
+    const hasStock = item.available !== false && (Array.isArray(item.sizes) && item.sizes.length
+      ? item.sizes.some((size) => Number((item.sizeStock || {})[size] ?? item.stock) > 0)
+      : Number(item.stock) > 0);
+    link.className = `product-color-option${isCurrent ? " active" : ""}${hasStock ? "" : " unavailable"}`;
+    link.href = "product.html?name=" + encodeURIComponent(item.name);
+    link.setAttribute("aria-label", `${itemColorName}${isCurrent ? ", selected" : ""}${hasStock ? "" : ", out of stock"}`);
+    if (isCurrent) link.setAttribute("aria-current", "page");
+
+    const imageUrl = Array.isArray(item.images) && item.images.length ? item.images[0] : item.image;
+    if (imageUrl) {
+      const image = document.createElement("img");
+      image.src = imageUrl;
+      image.alt = "";
+      image.loading = "lazy";
+      link.appendChild(image);
+    } else {
+      const swatch = document.createElement("span");
+      swatch.className = "product-color-swatch";
+      swatch.setAttribute("aria-hidden", "true");
+      link.appendChild(swatch);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = itemColorName;
+    link.appendChild(label);
+    productColorOptions.appendChild(link);
+  });
+  productColors.hidden = false;
+}
+
 function renderProduct() {
   if (!currentProduct) return;
+  renderProductColors();
 
   productTitle.textContent = currentProduct.name;
   productCategory.textContent = currentProduct.category;
