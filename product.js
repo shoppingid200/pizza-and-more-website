@@ -40,6 +40,7 @@ let inventory = [];
 let currentProduct = null;
 let selectedVariation = null;
 let selectedSize = null;
+let variationsMatchSizes = false;
 let maxStock = 0;
 let galleryImages = [];
 let galleryIndex = 0;
@@ -221,8 +222,13 @@ function renderProductColors() {
   productColorOptions.replaceChildren();
   const family = String(currentProduct.colorFamily || "").trim();
   const colorName = String(currentProduct.colorName || "").trim();
-  const matches = family && colorName
-    ? inventory.filter((item) => String(item.colorFamily || "").trim() === family && String(item.colorName || "").trim())
+  const isPlaceholderColor = colorName.toLowerCase() === "free";
+  const matches = family && family.toLowerCase() !== "free" && colorName && !isPlaceholderColor
+    ? inventory.filter((item) => {
+        const itemFamily = String(item.colorFamily || "").trim();
+        const itemColor = String(item.colorName || "").trim();
+        return itemFamily === family && itemColor && itemColor.toLowerCase() !== "free";
+      })
     : [];
 
   if (matches.length < 2) {
@@ -294,6 +300,9 @@ function renderProduct() {
   const sizes = Array.isArray(currentProduct.sizes) && currentProduct.sizes.length
     ? currentProduct.sizes
     : null;
+  const normalizeOption = (value) => String(value || "").trim().toLowerCase();
+  variationsMatchSizes = Boolean(sizes && variations && sizes.length === variations.length &&
+    sizes.every((size) => variations.some((variation) => normalizeOption(variation.name) === normalizeOption(size))));
 
   if (sizes) {
     productSizes.hidden = false;
@@ -303,6 +312,13 @@ function renderProduct() {
       ? selectedSize
       : (availableSizes[0] || null);
     maxStock = selectedSize ? Math.max(0, Number(sizeStock[selectedSize] ?? currentProduct.stock) || 0) : 0;
+    if (variationsMatchSizes && selectedSize) {
+      selectedVariation = variations.find((variation) => normalizeOption(variation.name) === normalizeOption(selectedSize)) || null;
+      if (selectedVariation) updateProductPrice(selectedVariation.price, selectedVariation.mrp || currentProduct.mrp);
+    } else if (variationsMatchSizes) {
+      selectedVariation = null;
+      updateProductPrice(currentProduct.price, currentProduct.mrp);
+    }
     selectedSizeName.textContent = selectedSize || "Unavailable";
     productStock.textContent = maxStock > 0 ? `In stock for ${selectedSize}: ${maxStock} available` : `No sizes currently available`;
     productStock.style.color = maxStock > 0 ? "var(--basil)" : "var(--tomato)";
@@ -323,6 +339,10 @@ function renderProduct() {
       button.addEventListener("click", () => {
         selectedSize = button.dataset.size;
         maxStock = Math.max(0, Number(sizeStock[selectedSize] ?? currentProduct.stock) || 0);
+        if (variationsMatchSizes) {
+          selectedVariation = variations.find((variation) => normalizeOption(variation.name) === normalizeOption(selectedSize)) || null;
+          if (selectedVariation) updateProductPrice(selectedVariation.price, selectedVariation.mrp || currentProduct.mrp);
+        }
         selectedSizeName.textContent = selectedSize;
         productStock.textContent = `In stock for ${selectedSize}: ${maxStock} available`;
         sizeOptions.querySelectorAll(".size-btn").forEach((item) => {
@@ -339,7 +359,7 @@ function renderProduct() {
     selectedSize = null;
   }
 
-  if (variations) {
+  if (variations && !variationsMatchSizes) {
     productVariations.hidden = false;
     selectedVariation = variations.find(v => selectedVariation && v.name === selectedVariation.name) || variations[0];
     selectedVariantName.textContent = selectedVariation.name;
@@ -362,7 +382,7 @@ function renderProduct() {
     updateProductPrice(selectedVariation.price, selectedVariation.mrp || currentProduct.mrp);
   } else {
     productVariations.hidden = true;
-    selectedVariation = null;
+    if (!variationsMatchSizes) selectedVariation = null;
   }
 
   qtyInput.value = 1;
@@ -370,8 +390,13 @@ function renderProduct() {
   addToCartMessage.textContent = "";
 }
 
+function getCartVariation() {
+  return variationsMatchSizes ? null : selectedVariation;
+}
+
 function addToCart() {
   if (!currentProduct) return;
+  const variationForCart = getCartVariation();
   const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
   const qty = Number(qtyInput.value) || 1;
 
@@ -381,7 +406,7 @@ function addToCart() {
   }
 
   const cart = readCart();
-  const existing = cart.find((item) => item.name === currentProduct.name && item.variation === (selectedVariation ? selectedVariation.name : null) && item.size === (selectedSize || null));
+  const existing = cart.find((item) => item.name === currentProduct.name && item.variation === (variationForCart ? variationForCart.name : null) && item.size === (selectedSize || null));
 
   if (existing) {
     existing.qty += qty;
@@ -394,7 +419,7 @@ function addToCart() {
       desc: currentProduct.desc || "",
       price,
       qty,
-      variation: selectedVariation ? selectedVariation.name : null,
+      variation: variationForCart ? variationForCart.name : null,
       size: selectedSize || null,
       codEnabled: currentProduct.codEnabled !== false
     });
@@ -451,6 +476,7 @@ qtyInput.addEventListener("input", updateQtyBounds);
 
   addToCartBtn.addEventListener("click", addToCart);
   buyNowBtn.addEventListener("click", () => {
+    const variationForCart = getCartVariation();
     const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
     const qty = Number(qtyInput.value) || 1;
     if (qty > maxStock) {
@@ -464,7 +490,7 @@ qtyInput.addEventListener("input", updateQtyBounds);
       desc: currentProduct.desc || "",
       price,
       qty,
-      variation: selectedVariation ? selectedVariation.name : null,
+      variation: variationForCart ? variationForCart.name : null,
       size: selectedSize || null,
       codEnabled: currentProduct.codEnabled !== false
     };

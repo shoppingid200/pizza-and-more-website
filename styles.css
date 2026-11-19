@@ -1963,6 +1963,10 @@ footer strong {
     display: none;
   }
 
+  #home .hero-copy {
+    gap: 12px;
+  }
+
   .topbar {
     grid-template-columns: 1fr auto;
     gap: 12px;
@@ -2002,7 +2006,7 @@ footer strong {
 
   .hero-inner {
     width: min(100% - 32px, 1180px);
-    padding: 36px 0 44px;
+    padding: 24px 0 28px;
   }
 
   h1 {
@@ -2028,7 +2032,16 @@ footer strong {
 
   .menu-section,
   .visit-section {
-    padding: 48px 0;
+    padding: 32px 0;
+  }
+
+  .section-heading {
+    margin-bottom: 18px;
+  }
+
+  .menu-tools {
+    gap: 10px;
+    margin-bottom: 16px;
   }
 
   .reviews-section {
@@ -2432,6 +2445,10 @@ footer strong {
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 24px;
   align-items: start;
+}
+
+#inventory-view-container .admin-grid-layout {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .admin-orders-list {

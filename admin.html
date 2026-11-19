@@ -386,6 +386,7 @@
               <label class="field" style="gap: 2px;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Sizes and stock (for example: S:5, M:0, L:8)</span>
                 <input type="text" id="new-item-size-stock" placeholder="S:5, M:0, L:8" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
+                <small style="color: var(--muted); line-height: 1.35;">Stock level is the total of these size quantities. Leave blank to enter one total stock number below.</small>
               </label>
               <label class="field" style="gap: 2px;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Stock Level</span>
@@ -1148,6 +1149,7 @@
                 <td data-label="Stock Level" style="padding: 12px 8px;">
                   <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
                   <input type="text" class="size-stock-field" aria-label="Per-size stock" placeholder="Sizes: S:5, M:0" value="${(item.sizes || []).map((size) => `${escapeInventoryValue(size)}:${item.sizeStock?.[size] ?? item.stock}`).join(", ")}" style="width: 130px; height: 30px; margin-top: 5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: 0.7rem;" />
+                  <small style="display:block;margin-top:4px;color:var(--muted);font-size:0.65rem;line-height:1.3;">Total stock is the sum of size quantities.</small>
                   <div style="margin-top: 6px;">${stockStatus}</div>
                 </td>
                 <td data-label="Tags" style="padding: 12px 8px; max-width: 150px;">
