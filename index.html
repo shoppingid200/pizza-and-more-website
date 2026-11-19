@@ -82,13 +82,6 @@
             <p>Browse products and add anything you like to your order.</p>
           </div>
 
-          <nav id="category-breadcrumbs" class="category-breadcrumbs" aria-label="Category path"></nav>
-          <div class="category-tabs category-tiles" id="category-tabs" aria-label="Shop by category">
-            <span class="skeleton-tab" aria-hidden="true"></span>
-            <span class="skeleton-tab" aria-hidden="true"></span>
-            <span class="skeleton-tab" aria-hidden="true"></span>
-          </div>
-
           <div class="menu-tools reveal">
             <label class="search-box">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -96,18 +89,13 @@
               </svg>
               <input id="menu-search" type="search" placeholder="Search products" autocomplete="off" />
             </label>
-            <label id="age-filter-wrap" class="age-filter" hidden>
-              <span>Age</span>
-              <select id="age-filter" aria-label="Filter by age">
-                <option value="">All ages</option>
-                <option value="0-2">0–2 years</option>
-                <option value="3-5">3–5 years</option>
-                <option value="6-8">6–8 years</option>
-                <option value="9-12">9–12 years</option>
-                <option value="13-15">13–15 years</option>
-                <option value="16+">16+ years</option>
-              </select>
-            </label>
+            <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Menu categories">
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+              <span class="skeleton-tab" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="menu-layout">

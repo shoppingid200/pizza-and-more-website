@@ -313,8 +313,12 @@
                 <div class="field" style="gap: 2px;">
                   <label for="new-item-category" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</label>
                   <select id="new-item-category" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
-                    <option value="">Choose a category</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Crockery">Crockery</option>
+                    <option value="Other Items">Other Items</option>
                   </select>
+                  <button type="button" id="add-category-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add category</button>
                 </div>
                 <label class="field" style="gap: 2px;">
                   <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</span>
@@ -327,19 +331,6 @@
                 </label>
               </div>
               
-              <label class="field" style="gap: 2px;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Age group (optional)</span>
-                <select id="new-item-age-group" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
-                  <option value="">All ages / not specified</option>
-                  <option value="0-2">0–2 years</option>
-                  <option value="3-5">3–5 years</option>
-                  <option value="6-8">6–8 years</option>
-                  <option value="9-12">9–12 years</option>
-                  <option value="13-15">13–15 years</option>
-                  <option value="16+">16+ years</option>
-                </select>
-              </label>
-
               <label class="field" style="gap: 2px;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Description</span>
                 <textarea id="new-item-desc" required placeholder="Fresh bread toasted with garlic butter..."
@@ -403,28 +394,6 @@
               
               <button class="button primary" type="submit" style="width: 100%; min-height: 36px; margin-top: 4px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">Add Item</button>
             </form>
-          </div>
-
-          <div class="admin-panel-card category-manager" style="padding: 16px; margin-top: 16px;">
-            <h3 style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 0; font-size: 1.1rem; color: var(--ink);">Shop Categories</h3>
-            <p style="font-size: 0.78rem; color: var(--muted); margin: 0 0 12px;">Add a category or choose a parent to add a subcategory. Each level can have its own image.</p>
-            <div id="category-tree-admin" class="category-tree-admin" aria-live="polite"></div>
-            <div style="display: grid; gap: 8px; margin-top: 14px;">
-              <label class="field" style="gap: 3px;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">Add under</span>
-                <select id="category-parent-select" style="min-height: 34px; padding: 0 8px;"><option value="">Top-level category</option></select>
-              </label>
-              <label class="field" style="gap: 3px;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">Category name</span>
-                <input id="new-category-name" type="text" maxlength="60" placeholder="e.g. Child or Girl" style="min-height: 34px; padding: 0 8px;" />
-              </label>
-              <label class="field" style="gap: 3px;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">Category picture</span>
-                <input id="new-category-image" type="file" accept="image/*" />
-              </label>
-              <img id="new-category-image-preview" alt="Category image preview" hidden style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px;" />
-              <button type="button" class="button primary" id="save-new-category" style="min-height: 38px;">Add category</button>
-            </div>
           </div>
 
           <!-- Stock Deduction Audit Log -->
@@ -931,18 +900,12 @@
 
     // INVENTORY LOGIC
     const INVENTORY_STORAGE_KEY = "mount-parche-inventory";
-    const CATEGORY_TREE_STORAGE_KEY = "mount-parche-category-tree";
-    const CATEGORY_TREE_API_URL = "/api/categories";
-    const AGE_GROUPS = ["0-2", "3-5", "6-8", "9-12", "13-15", "16+"];
-    const DEFAULT_CATEGORY_TREE = [];
-    let categoryTree = [];
     const inventoryTbody = document.querySelector("#inventory-tbody");
     const inventorySearch = document.querySelector("#inventory-search");
     const addItemForm = document.querySelector("#add-item-form");
     const MAX_ITEM_IMAGES = 8;
     let selectedNewItemImages = [];
     let isCompressingNewItemImages = false;
-    let newCategoryImageData = "";
 
     let inventorySearchPhrase = "";
     let inventoryFilter = "All";
@@ -1168,20 +1131,6 @@
                       <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px; max-width: 320px; line-height: 1.3;">
                         ${item.desc || "No description"}
                       </div>
-                      <label style="display:grid;gap:3px;margin-top:6px;font-size:0.65rem;color:var(--muted);font-weight:700;">Category path
-                        <select class="item-category-field" data-name="${escapeInventoryValue(item.name)}" style="width:min(260px,100%);height:30px;border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:0.7rem;">${categoryOptionsHtml(productCategoryId(item))}</select>
-                      </label>
-                      <label style="display:grid;gap:3px;margin-top:4px;font-size:0.65rem;color:var(--muted);font-weight:700;">Age group
-                        <select class="item-age-field" data-name="${escapeInventoryValue(item.name)}" style="width:min(260px,100%);height:30px;border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:0.7rem;">
-                          <option value=""${item.ageGroup ? "" : " selected"}>All ages / not specified</option>
-                          <option value="0-2"${item.ageGroup === "0-2" ? " selected" : ""}>0–2 years</option>
-                          <option value="3-5"${item.ageGroup === "3-5" ? " selected" : ""}>3–5 years</option>
-                          <option value="6-8"${item.ageGroup === "6-8" ? " selected" : ""}>6–8 years</option>
-                          <option value="9-12"${item.ageGroup === "9-12" ? " selected" : ""}>9–12 years</option>
-                          <option value="13-15"${item.ageGroup === "13-15" ? " selected" : ""}>13–15 years</option>
-                          <option value="16+"${item.ageGroup === "16+" ? " selected" : ""}>16+ years</option>
-                        </select>
-                      </label>
                       ${item.variations && item.variations.length > 0 ? `<div style="font-size: 0.72rem; color: var(--cobalt); margin-top: 4px; font-weight: 700;">${item.variations.map(v => v.name + ': ₹' + v.price).join(' · ')}</div>` : ''}
                       <input type="text" class="color-family-field" data-name="${item.name}" maxlength="80" aria-label="Private color family name" placeholder="Private color family (max 80 chars)" value="${escapeInventoryValue(item.colorFamily || "")}" style="width: min(260px, 100%); height: 30px; margin-top: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 0.72rem;" />
                       <input type="text" class="color-name-field" data-name="${item.name}" maxlength="40" aria-label="Color name" placeholder="Color name (e.g. Navy Blue)" value="${escapeInventoryValue(item.colorName || "")}" style="width: min(260px, 100%); height: 30px; margin-top: 4px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 0.72rem;" />
@@ -1240,13 +1189,6 @@
         return;
       }
       if (Object.keys(sizeStock).length) stockVal = Object.values(sizeStock).reduce((sum, count) => sum + count, 0);
-      const selectedCategoryId = trElement.querySelector(".item-category-field").value;
-      const selectedCategory = selectedCategoryId ? findCategoryEntry(selectedCategoryId) : null;
-      if (selectedCategoryId && !selectedCategory) {
-        alert("Choose a valid category path.");
-        return;
-      }
-      const ageGroup = trElement.querySelector(".item-age-field").value;
       const colorFamily = trElement.querySelector(".color-family-field").value.trim();
       const colorName = trElement.querySelector(".color-name-field").value.trim();
       if (colorFamily.length > 80 || colorName.length > 40 || Boolean(colorFamily) !== Boolean(colorName)) {
@@ -1261,16 +1203,6 @@
       if (item) {
         item.price = priceVal;
         item.mrp = mrpVal;
-        if (selectedCategory) {
-          item.category = selectedCategory.node.name;
-          item.categoryId = selectedCategory.node.id;
-          item.categoryPath = selectedCategory.path;
-        } else {
-          delete item.categoryId;
-          delete item.categoryPath;
-        }
-        if (ageGroup) item.ageGroup = ageGroup;
-        else delete item.ageGroup;
         item.colorFamily = colorFamily;
         item.colorName = colorName;
         item.stock = stockVal;
@@ -2384,207 +2316,60 @@
       document.getElementById("new-item-tags").value = Array.from(tagSet).join(", ");
     }
 
-    function flattenCategoryTree(nodes = categoryTree, parentPath = []) {
-      return nodes.flatMap((node) => {
-        const path = [...parentPath, node.name];
-        return [{ node, path }, ...flattenCategoryTree(node.children || [], path)];
-      });
-    }
-
-    function findCategoryEntry(id, nodes = categoryTree, parentPath = []) {
-      for (const node of nodes) {
-        const path = [...parentPath, node.name];
-        if (node.id === id) return { node, path };
-        const found = findCategoryEntry(id, node.children || [], path);
-        if (found) return found;
-      }
-      return null;
-    }
-
-    function categoryOptionsHtml(selectedId = "", includeEmpty = true) {
-      const empty = includeEmpty ? '<option value="">Unassigned / choose category</option>' : "";
-      return empty + flattenCategoryTree().map(({ node, path }) =>
-        `<option value="${escapeInventoryValue(node.id)}"${node.id === selectedId ? " selected" : ""}>${escapeInventoryValue(path.join(" > "))}</option>`
-      ).join("");
-    }
-
-    function productCategoryId(item) {
-      if (item.categoryId) return item.categoryId;
-      return flattenCategoryTree().find(({ node, path }) => node.name === item.category && path.length === 1)?.node.id || "";
-    }
-
-    function populateCategorySelect(select, selectedId = "", placeholder = "Choose a category") {
-      if (!select) return;
-      select.replaceChildren();
-      if (placeholder) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = placeholder;
-        select.appendChild(option);
-      }
-      flattenCategoryTree().forEach(({ node, path }) => {
-        const option = document.createElement("option");
-        option.value = node.id;
-        option.textContent = path.join(" > ");
-        select.appendChild(option);
-      });
-      if (selectedId && Array.from(select.options).some((option) => option.value === selectedId)) select.value = selectedId;
-    }
-
-    function refreshNewItemCategories(selectedId) {
-      populateCategorySelect(document.getElementById("new-item-category"), selectedId || document.getElementById("new-item-category")?.value);
-    }
-
-    function renderAdminCategoryTree() {
-      const tree = document.getElementById("category-tree-admin");
-      if (!tree) return;
-      tree.replaceChildren();
-      const parentSelect = document.getElementById("category-parent-select");
-      parentSelect.replaceChildren(new Option("Top-level category", ""));
-      flattenCategoryTree().forEach(({ node, path }) => parentSelect.appendChild(new Option(path.join(" > "), node.id)));
-
-      if (!categoryTree.length) {
-        const empty = document.createElement("p");
-        empty.className = "category-tree-empty";
-        empty.textContent = "No categories yet. Add a top-level category to begin.";
-        tree.appendChild(empty);
-      }
-
-      const appendNodes = (nodes, depth = 0) => nodes.forEach((node) => {
-        const row = document.createElement("div");
-        row.className = "category-admin-node";
-        row.style.marginInlineStart = `${depth * 16}px`;
-        if (node.image) {
-          const image = document.createElement("img");
-          image.src = node.image;
-          image.alt = "";
-          row.appendChild(image);
-        }
-        const name = document.createElement("span");
-        name.textContent = node.name;
-        row.appendChild(name);
-        const addChild = document.createElement("button");
-        addChild.type = "button";
-        addChild.className = "button ghost category-add-child";
-        addChild.textContent = "+ Subcategory";
-        addChild.dataset.parentId = node.id;
-        row.appendChild(addChild);
-        tree.appendChild(row);
-        appendNodes(node.children || [], depth + 1);
-      });
-      appendNodes(categoryTree);
-      refreshNewItemCategories();
-    }
-
-    async function syncCategoryTreeFromApi() {
-      try {
-        const response = await fetch(`${CATEGORY_TREE_API_URL}?t=${Date.now()}`, { headers: { Accept: "application/json" } });
-        if (!response.ok) throw new Error("Could not load categories");
-        const categories = await response.json();
-        if (!Array.isArray(categories)) throw new Error("Invalid category list");
-        categoryTree = categories;
-        localStorage.setItem(CATEGORY_TREE_STORAGE_KEY, JSON.stringify(categoryTree));
-      } catch (error) {
-        try {
-          const cached = JSON.parse(localStorage.getItem(CATEGORY_TREE_STORAGE_KEY) || "[]");
-          categoryTree = Array.isArray(cached) ? cached : [];
-        } catch {
-          categoryTree = [];
-        }
-        console.warn("Category sync skipped:", error);
-      }
-      renderAdminCategoryTree();
-    }
-
-    async function saveCategoryTree(nextTree) {
-      const response = await fetch(CATEGORY_TREE_API_URL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ categories: nextTree }),
-      });
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || result.message || `Save failed (${response.status})`);
-      }
-      categoryTree = await response.json();
-      localStorage.setItem(CATEGORY_TREE_STORAGE_KEY, JSON.stringify(categoryTree));
-      renderAdminCategoryTree();
-      renderInventory();
-    }
-
-    async function addCategoryFromForm() {
-      const nameInput = document.getElementById("new-category-name");
-      const name = nameInput.value.trim();
-      const parentId = document.getElementById("category-parent-select").value;
-      if (!name) return alert("Enter a category name.");
-      if (name.length > 60) return alert("Category names can be up to 60 characters.");
-      const siblings = parentId ? findCategoryEntry(parentId)?.node.children || [] : categoryTree;
-      if (siblings.some((node) => node.name.toLowerCase() === name.toLowerCase())) {
-        return alert("A category with that name already exists at this level.");
-      }
-      const node = {
-        id: crypto.randomUUID().replace(/-/g, ""),
-        name,
-        image: newCategoryImageData,
-        children: [],
-      };
-      const nextTree = JSON.parse(JSON.stringify(categoryTree));
-      if (!parentId) nextTree.push(node);
-      else {
-        const parent = findCategoryEntry(parentId, nextTree)?.node;
-        if (!parent) return alert("Choose a valid parent category.");
-        parent.children = parent.children || [];
-        parent.children.push(node);
-      }
-      try {
-        await saveCategoryTree(nextTree);
-        nameInput.value = "";
-        document.getElementById("new-category-image").value = "";
-        document.getElementById("new-category-image-preview").hidden = true;
-        newCategoryImageData = "";
-        document.getElementById("category-parent-select").value = "";
-        showToast(`Added ${name}`);
-      } catch (error) {
-        showToast(`Could not save category: ${error.message}`);
-      }
-    }
-
-    function addNewCategory() {
-      document.getElementById("category-parent-select").value = "";
-      document.getElementById("new-category-name").focus();
-    }
-
+    // Attach listeners once DOM is ready
     document.addEventListener("DOMContentLoaded", () => {
       const tagBtn = document.getElementById("btn-auto-tag");
       const nameInput = document.getElementById("new-item-name");
-      const categoryTreeAdmin = document.getElementById("category-tree-admin");
-      const categoryImageInput = document.getElementById("new-category-image");
+      const addCategoryBtn = document.getElementById("add-category-btn");
+      refreshNewItemCategories();
       if (tagBtn) tagBtn.addEventListener("click", autoGenerateTags);
       if (nameInput) nameInput.addEventListener("blur", autoGenerateTags);
-      document.getElementById("save-new-category")?.addEventListener("click", addCategoryFromForm);
-      categoryTreeAdmin?.addEventListener("click", (event) => {
-        const button = event.target.closest(".category-add-child");
-        if (!button) return;
-        document.getElementById("category-parent-select").value = button.dataset.parentId;
-        document.getElementById("new-category-name").focus();
-      });
-      categoryImageInput?.addEventListener("change", async () => {
-        const file = categoryImageInput.files?.[0];
-        if (!file) return;
-        try {
-          newCategoryImageData = await compressImage(file, 900, 0.72);
-          const preview = document.getElementById("new-category-image-preview");
-          preview.src = newCategoryImageData;
-          preview.hidden = false;
-        } catch (error) {
-          newCategoryImageData = "";
-          categoryImageInput.value = "";
-          alert(`Could not process category picture: ${error.message}`);
-        }
-      });
-      refreshNewItemCategories();
-      renderAdminCategoryTree();
+      if (addCategoryBtn) addCategoryBtn.addEventListener("click", addNewCategory);
     });
+
+    function refreshNewItemCategories(selectedCategory) {
+      const categorySelect = document.getElementById("new-item-category");
+      if (!categorySelect) return;
+      const categories = new Set(["Clothing", "Accessories", "Crockery", "Other Items"]);
+      readInventory().forEach((item) => {
+        const category = String(item.category || "").trim();
+        if (category) categories.add(category);
+      });
+      const current = selectedCategory || categorySelect.value;
+      categorySelect.replaceChildren();
+      categories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+      if (current && categories.has(current)) categorySelect.value = current;
+    }
+
+    function addNewCategory() {
+      const input = window.prompt("Enter a category name (up to 40 characters):");
+      if (input === null) return;
+      const category = input.trim();
+      if (!category) {
+        alert("Enter a category name.");
+        return;
+      }
+      if (category.length > 40) {
+        alert("Category names can be up to 40 characters.");
+        return;
+      }
+      const categorySelect = document.getElementById("new-item-category");
+      const existing = Array.from(categorySelect.options).find((option) => option.value.toLowerCase() === category.toLowerCase());
+      if (existing) {
+        categorySelect.value = existing.value;
+        return;
+      }
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      categorySelect.appendChild(option);
+      categorySelect.value = category;
+    }
 
     function parseSizeStockEntries(value) {
       const entries = String(value || "").split(",").map((entry) => entry.trim()).filter(Boolean);
@@ -2604,15 +2389,7 @@
     async function addNewItem(e) {
       e.preventDefault();
       const name = document.querySelector("#new-item-name").value.trim();
-      const categoryId = document.querySelector("#new-item-category").value;
-      const categoryEntry = findCategoryEntry(categoryId);
-      if (!categoryEntry) {
-        alert("Create or choose a category before adding this product.");
-        return;
-      }
-      const category = categoryEntry.node.name;
-      const categoryPath = categoryEntry.path;
-      const ageGroup = document.querySelector("#new-item-age-group").value;
+      const category = document.querySelector("#new-item-category").value;
       const type = document.querySelector("#new-item-type").value;
       const desc = document.querySelector("#new-item-desc").value.trim();
       const colorFamily = document.querySelector("#new-item-color-family").value.trim();
@@ -2670,9 +2447,6 @@
       const newItem = {
         name,
         category,
-        categoryId,
-        categoryPath,
-        ageGroup,
         type,
         desc,
         price: variations[0].price,
@@ -3192,7 +2966,6 @@
       } catch (e) {
         console.warn("Initial inventory sync skipped:", e);
       }
-      await syncCategoryTreeFromApi();
       renderOrders();
       renderInventory();
       renderStockDeductions();
