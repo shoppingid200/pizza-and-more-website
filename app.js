@@ -347,26 +347,26 @@ function restoreCart() {
 
 function getCategories() {
   const inventory = readInventory();
-  return ["All", ...new Set(inventory.map((item) => item.category))];
+  const categories = inventory
+    .map((item) => String(item.category || "").trim())
+    .filter(Boolean);
+  return ["All", ...new Set(categories)];
 }
 
 function renderTabs() {
   const categories = getCategories();
-  tabs.innerHTML = categories
-    .map(
-      (category) => `
-        <button
-          class="category-tab${category === activeCategory ? " active" : ""}"
-          type="button"
-          role="tab"
-          aria-selected="${category === activeCategory}"
-          data-category="${category}"
-        >
-          ${category}
-        </button>
-      `
-    )
-    .join("");
+  tabs.replaceChildren();
+  categories.forEach((category) => {
+    const button = document.createElement("button");
+    const isActive = category === activeCategory;
+    button.className = `category-tab${isActive ? " active" : ""}`;
+    button.type = "button";
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(isActive));
+    button.dataset.category = category;
+    button.textContent = category;
+    tabs.appendChild(button);
+  });
 }
 
 function currentItems() {

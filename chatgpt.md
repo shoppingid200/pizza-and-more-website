@@ -80,3 +80,7 @@ UPSTASH_REDIS_REST_TOKEN=
 ## Product color families
 
 Inventory Manager can group separate product listings with a private color-family name (up to 80 characters) and assign each listing a buyer-facing color name (up to 40 characters). Product pages show clickable color choices with thumbnails; each choice opens its own product listing, preserving separate names, prices, sizes, stock, and checkout items. The private family name is used only to connect listings and is not displayed in storefront text.
+
+## Product categories
+
+Inventory Manager supports adding a custom category from the Add New Item form. Categories used by saved products are retained in inventory and appear as storefront category tabs.

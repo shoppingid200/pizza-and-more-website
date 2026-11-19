@@ -310,15 +310,16 @@
               </label>
               
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <label class="field" style="gap: 2px;">
-                  <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</span>
+                <div class="field" style="gap: 2px;">
+                  <label for="new-item-category" style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Category</label>
                   <select id="new-item-category" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
                     <option value="Clothing">Clothing</option>
                     <option value="Accessories">Accessories</option>
                     <option value="Crockery">Crockery</option>
                     <option value="Other Items">Other Items</option>
                   </select>
-                </label>
+                  <button type="button" id="add-category-btn" class="button ghost" style="min-height: 30px; margin-top: 4px; padding: 0 8px; font-size: 0.72rem;">+ Add category</button>
+                </div>
                 <label class="field" style="gap: 2px;">
                   <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Type</span>
                   <select id="new-item-type" required style="min-height: 32px; padding: 0 6px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);">
@@ -2319,9 +2320,56 @@
     document.addEventListener("DOMContentLoaded", () => {
       const tagBtn = document.getElementById("btn-auto-tag");
       const nameInput = document.getElementById("new-item-name");
+      const addCategoryBtn = document.getElementById("add-category-btn");
+      refreshNewItemCategories();
       if (tagBtn) tagBtn.addEventListener("click", autoGenerateTags);
       if (nameInput) nameInput.addEventListener("blur", autoGenerateTags);
+      if (addCategoryBtn) addCategoryBtn.addEventListener("click", addNewCategory);
     });
+
+    function refreshNewItemCategories(selectedCategory) {
+      const categorySelect = document.getElementById("new-item-category");
+      if (!categorySelect) return;
+      const categories = new Set(["Clothing", "Accessories", "Crockery", "Other Items"]);
+      readInventory().forEach((item) => {
+        const category = String(item.category || "").trim();
+        if (category) categories.add(category);
+      });
+      const current = selectedCategory || categorySelect.value;
+      categorySelect.replaceChildren();
+      categories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+      if (current && categories.has(current)) categorySelect.value = current;
+    }
+
+    function addNewCategory() {
+      const input = window.prompt("Enter a category name (up to 40 characters):");
+      if (input === null) return;
+      const category = input.trim();
+      if (!category) {
+        alert("Enter a category name.");
+        return;
+      }
+      if (category.length > 40) {
+        alert("Category names can be up to 40 characters.");
+        return;
+      }
+      const categorySelect = document.getElementById("new-item-category");
+      const existing = Array.from(categorySelect.options).find((option) => option.value.toLowerCase() === category.toLowerCase());
+      if (existing) {
+        categorySelect.value = existing.value;
+        return;
+      }
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      categorySelect.appendChild(option);
+      categorySelect.value = category;
+    }
 
     function parseSizeStockEntries(value) {
       const entries = String(value || "").split(",").map((entry) => entry.trim()).filter(Boolean);
