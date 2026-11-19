@@ -555,6 +555,7 @@
     let searchPhrase = "";
     let lastKnownOrderCount = 0;
     let deliveryPartnersList = [];
+    let currentView = "orders";
 
     function formatRupees(value) {
       return `₹${value}`;
@@ -2465,6 +2466,59 @@
     }
 
     async function bootAdmin() {
+      // Register order actions before startup sync or rendering so the buttons
+      // remain interactive even if another dashboard section fails to initialize.
+      ordersList.addEventListener("click", (e) => {
+        const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
+        if (cancelItemBtn) {
+          handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
+          return;
+        }
+
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+
+        let deliveryPartner = "";
+        if (btn.dataset.action === "Out for Delivery") {
+          const select = document.getElementById(`delivery-select-${btn.dataset.id}`);
+          if (select) deliveryPartner = select.value;
+        }
+
+        handleAction(btn.dataset.id, btn.dataset.action, deliveryPartner);
+      });
+
+      const views = {
+        orders: ["orders-view-container", "tab-orders-view"],
+        inventory: ["inventory-view-container", "tab-inventory-view"],
+        delivery: ["delivery-partners-view-container", "tab-delivery-partners-view"],
+        settings: ["settings-view-container", "tab-settings-view"],
+      };
+      const showView = (viewName) => {
+        currentView = viewName;
+        for (const [name, [containerId, buttonId]] of Object.entries(views)) {
+          document.getElementById(containerId).style.display = name === viewName ? "" : "none";
+          const button = document.getElementById(buttonId);
+          button.classList.toggle("primary", name === viewName);
+          button.classList.toggle("ghost", name !== viewName);
+        }
+        if (viewName === "inventory") {
+          try {
+            renderInventory();
+            renderStockDeductions();
+          } catch (error) {
+            console.error("Inventory view failed to render:", error);
+          }
+        } else if (viewName === "delivery") {
+          renderDeliveryPartners();
+        } else if (viewName === "settings") {
+          loadSettings();
+        }
+      };
+      document.getElementById("tab-orders-view").addEventListener("click", () => showView("orders"));
+      document.getElementById("tab-inventory-view").addEventListener("click", () => showView("inventory"));
+      document.getElementById("tab-delivery-partners-view").addEventListener("click", () => showView("delivery"));
+      document.getElementById("tab-settings-view").addEventListener("click", () => showView("settings"));
+
       // Sync both orders AND inventory from API on startup
       try {
         await syncOrdersFromApi();
@@ -2510,25 +2564,7 @@
         renderOrders();
       });
 
-      // Order card action button triggers
-      ordersList.addEventListener("click", (e) => {
-        const cancelItemBtn = e.target.closest(".admin-cancel-item-btn");
-        if (cancelItemBtn) {
-          handleCancelItem(cancelItemBtn.dataset.orderId, cancelItemBtn.dataset.itemName);
-          return;
-        }
 
-        const btn = e.target.closest("[data-action]");
-        if (!btn) return;
-
-        let deliveryPartner = "";
-        if (btn.dataset.action === "Out for Delivery") {
-          const select = document.getElementById(`delivery-select-${btn.dataset.id}`);
-          if (select) deliveryPartner = select.value;
-        }
-
-        handleAction(btn.dataset.id, btn.dataset.action, deliveryPartner);
-      });
 
       // Mock Order Generator trigger
       document.querySelector("#btn-mock-order").addEventListener("click", generateMockOrder);
