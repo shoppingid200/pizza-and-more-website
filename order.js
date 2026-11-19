@@ -897,6 +897,7 @@ async function bootOrderPage() {
       const savedSummary = document.getElementById("saved-summary");
       const savedSummaryText = document.getElementById("saved-summary-text");
       const editBtn = document.getElementById("edit-details-btn");
+      const addAddressBtn = document.getElementById("add-address-btn");
       if (savedSummary && savedSummaryText && (saved.addrHouse || saved.addrArea)) {
         const parts = [saved.customerName, saved.customerPhone, saved.addrHouse, saved.addrArea, saved.addrCity, saved.addrState, saved.addrPincode].filter(Boolean);
         savedSummaryText.textContent = parts.join(", ");
@@ -906,6 +907,21 @@ async function bootOrderPage() {
           editBtn.addEventListener("click", () => {
             if (detailsSection) detailsSection.hidden = false;
             if (savedSummary) savedSummary.hidden = true;
+          });
+        }
+        if (addAddressBtn) {
+          addAddressBtn.addEventListener("click", () => {
+            ["address-house", "address-area", "address-city", "address-state", "address-pincode", "address-landmark", "map-link", "latitude", "longitude"].forEach((id) => {
+              const input = document.getElementById(id);
+              if (input) input.value = "";
+            });
+            const status = document.getElementById("location-status");
+            if (status) status.textContent = "No map location selected.";
+            const mapPreview = document.getElementById("interactive-map");
+            if (mapPreview) mapPreview.classList.remove("is-visible");
+            if (detailsSection) detailsSection.hidden = false;
+            if (savedSummary) savedSummary.hidden = true;
+            document.getElementById("address-house")?.focus();
           });
         }
       }

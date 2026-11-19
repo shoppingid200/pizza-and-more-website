@@ -1145,6 +1145,69 @@ h1 {
   padding: 20px;
 }
 
+#details-section[hidden] {
+  display: none !important;
+}
+
+.checkout-details-panel {
+  gap: 16px;
+}
+
+.checkout-details-group {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.checkout-details-group h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.checkout-details-group h3 span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.checkout-details-group .field-grid {
+  row-gap: 12px;
+}
+
+.phone-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.phone-input-wrap input {
+  padding-right: 40px;
+}
+
+#phone-valid-tick {
+  position: absolute;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  color: var(--basil);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.map-search-field {
+  position: relative;
+}
+
+.map-fields {
+  align-items: end;
+}
+
+.map-fields .location-button {
+  min-height: 48px;
+}
+
 .panel-title {
   display: flex;
   gap: 12px;
@@ -3107,23 +3170,6 @@ footer strong {
   color: #fff;
   border-color: var(--ink);
 }
-.saved-address-box {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.saved-address-box p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--ink);
-  line-height: 1.4;
-}
 .saved-summary {
   margin-bottom: 16px;
   padding: 14px 16px;
@@ -3152,21 +3198,32 @@ footer strong {
   flex: 0 0 auto;
 }
 
+.saved-summary-row .button {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
 #place-order-btn {
   margin-top: 12px;
 }
 
 @media (max-width: 1060px) {
   .checkout-page {
-    padding-bottom: 88px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* The summary's reveal transform creates a containing block for fixed descendants. */
+  .checkout-summary.reveal {
+    transform: none;
   }
 
   #place-order-btn {
     position: fixed;
     left: 16px;
     right: 16px;
-    bottom: 16px;
-    z-index: 60;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    z-index: 80;
+    width: auto;
     margin-top: 0;
     box-shadow: 0 12px 32px rgba(82, 39, 19, 0.18);
   }
