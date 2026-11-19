@@ -1,4 +1,6 @@
 const productImage = document.getElementById("product-image");
+const productContent = document.getElementById("product-content");
+const productSkeleton = document.getElementById("product-skeleton");
 const productThumbnails = document.getElementById("product-thumbnails");
 const productGalleryControls = document.getElementById("product-gallery-controls");
 const productImagePrev = document.getElementById("product-image-prev");
@@ -432,11 +434,17 @@ function addToCart() {
   window.dispatchEvent(new Event("storage"));
 }
 
+function showProductContent() {
+  productSkeleton.hidden = true;
+  productContent.hidden = false;
+}
+
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
   const nameParam = decodeURIComponent(params.get("name") || "");
   const idParam = decodeURIComponent(params.get("id") || "");
   if (!nameParam && !idParam) {
+    showProductContent();
     productTitle.textContent = "Product not found";
     return;
   }
@@ -455,10 +463,12 @@ async function loadProduct() {
     return item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") === idParam;
   });
   if (!currentProduct) {
+    showProductContent();
     productTitle.textContent = "Product not found";
     return;
   }
 
+  showProductContent();
   renderProduct();
 }
 

@@ -16,6 +16,84 @@
 }
 
 /* Product page */
+.product-page[hidden],
+.product-skeleton[hidden] {
+  display: none;
+}
+
+.product-skeleton {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.product-skeleton-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #e9e6e3;
+}
+
+.skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.62), transparent);
+  content: "";
+  transform: translateX(-100%);
+  animation: product-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.product-skeleton-image {
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f0eff1;
+}
+
+.skeleton-category { width: 76px; height: 11px; }
+.skeleton-title { width: 90%; height: 42px; }
+.skeleton-title-short { width: 62%; }
+.skeleton-price { width: 74px; height: 28px; }
+.skeleton-description { width: 78%; height: 14px; }
+
+.product-skeleton-benefits {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 280px);
+  padding: 14px;
+  border: 1px solid rgba(18, 128, 92, 0.12);
+  border-radius: 10px;
+  background: rgba(239, 250, 243, 0.5);
+}
+
+.skeleton-benefit { width: 82%; height: 11px; }
+.skeleton-benefit:nth-child(2) { width: 70%; }
+.skeleton-benefit:nth-child(3) { width: 76%; }
+.skeleton-quantity-label { width: 64px; height: 10px; margin-top: 4px; }
+.skeleton-quantity { width: 90px; height: 40px; }
+.product-skeleton-actions { display: flex; gap: 8px; width: 100%; }
+.skeleton-action { width: 50%; max-width: 140px; height: 42px; border-radius: 8px; }
+
+@keyframes product-skeleton-shimmer {
+  to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block::after { animation: none; }
+}
+
 .product-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -349,9 +427,14 @@ body.image-lightbox-open {
 }
 
 @media (max-width: 768px) {
+  .product-skeleton,
   .product-page {
     grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .product-skeleton-image {
+    min-height: 280px;
   }
 }
 
@@ -1523,6 +1606,10 @@ h1 {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 850;
+}
+
+.field[hidden] {
+  display: none !important;
 }
 
 .field input,

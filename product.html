@@ -21,7 +21,30 @@
 
     <main class="checkout-page">
       <section class="checkout-shell" aria-labelledby="product-title">
-        <div class="product-page">
+        <div class="product-skeleton" id="product-skeleton" role="status" aria-label="Loading product">
+          <div class="product-skeleton-gallery">
+            <div class="skeleton-block product-skeleton-image"></div>
+          </div>
+          <div class="product-skeleton-info" aria-hidden="true">
+            <div class="skeleton-block skeleton-category"></div>
+            <div class="skeleton-block skeleton-title"></div>
+            <div class="skeleton-block skeleton-title skeleton-title-short"></div>
+            <div class="skeleton-block skeleton-price"></div>
+            <div class="skeleton-block skeleton-description"></div>
+            <div class="product-skeleton-benefits">
+              <div class="skeleton-block skeleton-benefit"></div>
+              <div class="skeleton-block skeleton-benefit"></div>
+              <div class="skeleton-block skeleton-benefit"></div>
+            </div>
+            <div class="skeleton-block skeleton-quantity-label"></div>
+            <div class="skeleton-block skeleton-quantity"></div>
+            <div class="product-skeleton-actions">
+              <div class="skeleton-block skeleton-action"></div>
+              <div class="skeleton-block skeleton-action"></div>
+            </div>
+          </div>
+        </div>
+        <div class="product-page" id="product-content" hidden>
           <div class="product-gallery">
             <div class="product-image" id="product-image">
               <div class="product-image-placeholder">No image</div>

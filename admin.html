@@ -386,10 +386,10 @@
               <label class="field" style="gap: 2px;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Sizes and stock (for example: S:5, M:0, L:8)</span>
                 <input type="text" id="new-item-size-stock" placeholder="S:5, M:0, L:8" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
-                <small style="color: var(--muted); line-height: 1.35;">Stock level is the total of these size quantities. Leave blank to enter one total stock number below.</small>
+                <small id="new-item-stock-help" style="color: var(--muted); line-height: 1.35;">When you enter size quantities above, total stock is calculated automatically.</small>
               </label>
-              <label class="field" style="gap: 2px;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Stock Level</span>
+              <label class="field" id="new-item-total-stock-field" style="gap: 2px;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Stock Level (items without sizes)</span>
                 <input type="number" id="new-item-stock" min="0" required placeholder="e.g. 30" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--line);" />
               </label>
               
@@ -2388,6 +2388,28 @@
       return sizeStock;
     }
 
+    function updateNewItemStockField() {
+      const sizeInput = document.getElementById("new-item-size-stock");
+      const stockField = document.getElementById("new-item-total-stock-field");
+      const stockInput = document.getElementById("new-item-stock");
+      const stockHelp = document.getElementById("new-item-stock-help");
+      try {
+        const sizeStock = parseSizeStockEntries(sizeInput.value);
+        const hasSizes = Object.keys(sizeStock).length > 0;
+        stockField.hidden = hasSizes;
+        stockInput.required = !hasSizes;
+        stockHelp.textContent = hasSizes
+          ? `Total stock is calculated automatically: ${Object.values(sizeStock).reduce((sum, count) => sum + count, 0)}.`
+          : "When you enter size quantities above, total stock is calculated automatically.";
+      } catch {
+        stockField.hidden = false;
+        stockInput.required = true;
+        stockHelp.textContent = "Enter sizes and quantities like S:5, M:0, L:8. Total stock will be calculated automatically.";
+      }
+    }
+
+    document.getElementById("new-item-size-stock").addEventListener("input", updateNewItemStockField);
+
     async function addNewItem(e) {
       e.preventDefault();
       const name = document.querySelector("#new-item-name").value.trim();
@@ -2476,6 +2498,7 @@
       await saveInventory(inventory);
       showToast(`Added ${name} to catalog!`);
       addItemForm.reset();
+      updateNewItemStockField();
       selectedNewItemImages = [];
       renderNewItemImagePreviews();
       // Reset variations container
