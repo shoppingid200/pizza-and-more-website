@@ -48,6 +48,7 @@ function normalizeInventory(inventory) {
         type: String(item.type || "General").trim(),
         desc: String(item.desc || "").trim(),
         price: Math.max(0, Number(item.price) || 0),
+        mrp: Math.max(0, Number(item.mrp) || 0),
         stock: Math.max(0, Number(item.stock) || 0),
         available: Boolean(item.available),
         codEnabled: Boolean(item.codEnabled),
@@ -58,9 +59,18 @@ function normalizeInventory(inventory) {
           .map((variation) => ({
             name: String(variation.name).trim(),
             price: Math.max(0, Number(variation.price) || 0),
+            mrp: Math.max(0, Number(variation.mrp) || 0),
           }));
       }
-      if (typeof item.image === "string" && item.image.trim()) normalized.image = item.image.trim();
+      const images = Array.isArray(item.images) ? item.images.slice() : [];
+      if (typeof item.image === "string" && item.image.trim() && !images.includes(item.image.trim())) {
+        images.unshift(item.image.trim());
+      }
+      const normalizedImages = [...new Set(images.filter((image) => typeof image === "string" && image.trim()).map((image) => image.trim()))].slice(0, 8);
+      if (normalizedImages.length) {
+        normalized.images = normalizedImages;
+        normalized.image = normalizedImages[0];
+      }
       if (Array.isArray(item.tags)) normalized.tags = item.tags.map(String).filter(Boolean);
       return normalized;
     });

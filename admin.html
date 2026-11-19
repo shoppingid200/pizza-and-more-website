@@ -345,19 +345,18 @@
               </div>
               
               <div class="field" style="gap: 4px; display: flex; flex-direction: column;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Item Image</span>
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Item Images (Up to 8)</span>
                 <div style="display: flex; gap: 6px;">
                   <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.7rem; padding: 4px; margin: 0; background: var(--paper); min-height: 28px; border-radius: 6px;">
                     📷 Camera
                     <input type="file" id="new-item-image-cam" accept="image/*" capture="environment" style="display: none;" />
                   </label>
                   <label class="button ghost" style="flex: 1; text-align: center; cursor: pointer; border-color: var(--line); font-size: 0.7rem; padding: 4px; margin: 0; background: var(--paper); min-height: 28px; border-radius: 6px;">
-                    🖼️ Gallery
-                    <input type="file" id="new-item-image-file" accept="image/*" style="display: none;" />
+                    🖼️ Choose images
+                    <input type="file" id="new-item-image-file" accept="image/*" multiple style="display: none;" />
                   </label>
                 </div>
-                <input type="hidden" id="new-item-image" />
-                <img id="new-item-image-preview" style="display:none; width:100%; max-height:100px; object-fit:cover; border-radius:6px; margin-top:4px;" alt="Preview" />
+                <div id="new-item-image-previews" class="admin-image-previews" aria-live="polite"></div>
               </div>
               
               <div style="border: 1px solid var(--line); padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.4);">
@@ -366,9 +365,10 @@
                   <button type="button" id="add-variation-btn" style="background: white; border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">+ Add</button>
                 </div>
                 <div id="variations-container" style="display: grid; gap: 6px;">
-                  <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
+                  <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: center;">
                     <input type="text" class="var-name" placeholder="Name" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" />
-                    <input type="number" class="var-price" placeholder="₹ Price" min="0" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" />
+                    <input type="number" class="var-price" placeholder="₹ Sale price" min="0" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" />
+                    <input type="number" class="var-mrp" placeholder="₹ MRP" min="0" style="min-height: 28px; padding: 0 6px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" />
                     <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1rem; padding: 0 2px;">&times;</button>
                   </div>
                 </div>
@@ -890,6 +890,9 @@
     const inventoryTbody = document.querySelector("#inventory-tbody");
     const inventorySearch = document.querySelector("#inventory-search");
     const addItemForm = document.querySelector("#add-item-form");
+    const MAX_ITEM_IMAGES = 8;
+    let selectedNewItemImages = [];
+    let isCompressingNewItemImages = false;
 
     let inventorySearchPhrase = "";
     let inventoryFilter = "All";
@@ -1096,7 +1099,7 @@
               <tr style="border-bottom: 1px solid var(--line); vertical-align: middle;">
                 <td data-label="Details" style="padding: 12px 8px;">
                   <div style="display: flex; gap: 10px; align-items: flex-start;">
-                    ${item.image ? `<img src="${item.image}" style="width:48px;height:48px;border-radius:4px;object-fit:cover;flex-shrink:0;" alt="">` : ''}
+                    ${(item.images?.[0] || item.image) ? `<img src="${item.images?.[0] || item.image}" style="width:48px;height:48px;border-radius:4px;object-fit:cover;flex-shrink:0;" alt="">` : ''}
                     <div>
                       <div style="font-weight: 850; font-size: 1rem; color: var(--ink);">${item.name}</div>
                       <div style="font-size: 0.78rem; color: var(--muted); margin-top: 2px;">
@@ -1110,7 +1113,12 @@
                   </div>
                 </td>
                 <td data-label="Price (₹)" style="padding: 12px 8px;">
-                  <input type="number" min="0" value="${item.price}" class="price-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                  <label style="display:grid;gap:4px;font-size:0.65rem;color:var(--muted);font-weight:700;">Sale price
+                    <input type="number" min="0" value="${item.price}" class="price-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                  </label>
+                  <label style="display:grid;gap:4px;margin-top:6px;font-size:0.65rem;color:var(--muted);font-weight:700;">MRP
+                    <input type="number" min="0" value="${item.mrp || ''}" class="mrp-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
+                  </label>
                 </td>
                 <td data-label="Stock Level" style="padding: 12px 8px;">
                   <input type="number" min="0" value="${item.stock}" class="stock-field" data-name="${item.name}" style="width: 76px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-weight:800;" />
@@ -1126,7 +1134,9 @@
                   <input type="checkbox" class="cod-checkbox" data-name="${item.name}" ${item.codEnabled !== false ? "checked" : ""} style="width: 18px; height: 18px; margin: 0; cursor:pointer;" />
                 </td>
                 <td data-label="Actions" style="padding: 12px 8px; text-align: right;">
-                  <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                  <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="button ghost btn-add-images" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 8px; font-size: 0.72rem; border-radius: 4px;">Photos (${(Array.isArray(item.images) && item.images.length ? item.images.length : (item.image ? 1 : 0))})</button>
+                    <input type="file" class="inventory-images-input" data-name="${item.name}" accept="image/*" multiple style="display: none;">
                     <button class="button primary btn-quick-save" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; display:inline-flex; align-items:center; justify-content:center;">Save</button>
                     <button class="button ghost btn-quick-delete" data-name="${item.name}" style="min-height: 32px; height: 32px; padding: 0 10px; font-size: 0.78rem; border-radius: 4px; border-color: var(--tomato); color: var(--tomato-dark); display:inline-flex; align-items:center; justify-content:center;">Delete</button>
                   </div>
@@ -1139,6 +1149,11 @@
 
     async function handleQuickSave(name, trElement) {
       const priceVal = Number(trElement.querySelector(".price-field").value) || 0;
+      const mrpVal = Number(trElement.querySelector(".mrp-field").value) || 0;
+      if (mrpVal > 0 && mrpVal < priceVal) {
+        alert("MRP must be equal to or greater than the sale price.");
+        return;
+      }
       const stockVal = Number(trElement.querySelector(".stock-field").value) || 0;
       const availVal = trElement.querySelector(".avail-checkbox").checked;
       const codVal = trElement.querySelector(".cod-checkbox").checked;
@@ -1147,6 +1162,7 @@
       const item = inventory.find((x) => x.name === name);
       if (item) {
         item.price = priceVal;
+        item.mrp = mrpVal;
         item.stock = stockVal;
         item.available = availVal;
         item.codEnabled = codVal;
@@ -2267,15 +2283,23 @@
       const desc = document.querySelector("#new-item-desc").value.trim();
       const stock = Number(document.querySelector("#new-item-stock").value) || 0;
 
-      // Use pre-compressed image if available
-      const imageInput = document.querySelector("#new-item-image");
-      let imageBase64 = imageInput.dataset.compressedBase64 || null;
+      if (isCompressingNewItemImages) {
+        alert("Please wait for the selected images to finish processing.");
+        return;
+      }
+      const images = selectedNewItemImages.slice(0, MAX_ITEM_IMAGES);
 
       // Read variations
       const variations = Array.from(document.querySelectorAll('#variations-container .variation-row')).map(row => ({
         name: row.querySelector('.var-name').value.trim(),
-        price: Number(row.querySelector('.var-price').value) || 0
+        price: Number(row.querySelector('.var-price').value) || 0,
+        mrp: Number(row.querySelector('.var-mrp').value) || 0
       })).filter(v => v.name && v.price > 0);
+
+      if (variations.some(v => v.mrp > 0 && v.mrp < v.price)) {
+        alert("MRP must be equal to or greater than the sale price.");
+        return;
+      }
 
       if (variations.length === 0) {
         alert("Please add at least one variation with a name and price.");
@@ -2297,26 +2321,30 @@
         type,
         desc,
         price: variations[0].price,
+        mrp: variations[0].mrp,
         variations,
         stock,
         tags: tagsArray,
         available: true,
         codEnabled: true
       };
-      if (imageBase64) newItem.image = imageBase64;
+      if (images.length) {
+        newItem.images = images;
+        newItem.image = images[0];
+      }
 
       inventory.push(newItem);
       await saveInventory(inventory);
       showToast(`Added ${name} to catalog!`);
       addItemForm.reset();
-      document.querySelector("#new-item-image-preview").style.display = "none";
-      const mainInput = document.querySelector("#new-item-image");
-      if (mainInput) delete mainInput.dataset.compressedBase64;
+      selectedNewItemImages = [];
+      renderNewItemImagePreviews();
       // Reset variations container
       document.querySelector("#variations-container").innerHTML = `
-          <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;">
+          <div class="variation-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: center;">
             <input type="text" class="var-name" placeholder="e.g. Regular" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" value="Regular" />
-            <input type="number" class="var-price" placeholder="Price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
+            <input type="number" class="var-price" placeholder="Sale price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
+            <input type="number" class="var-mrp" placeholder="MRP ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
             <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
           </div>
         `;
@@ -2342,43 +2370,98 @@
       const container = document.getElementById('variations-container');
       const row = document.createElement('div');
       row.className = 'variation-row';
-      row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center;';
+      row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: center;';
       row.innerHTML = `
           <input type="text" class="var-name" placeholder="e.g. 1kg" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
-          <input type="number" class="var-price" placeholder="Price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
+          <input type="number" class="var-price" placeholder="Sale price ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
+          <input type="number" class="var-mrp" placeholder="MRP ₹" min="0" style="min-height: 32px; padding: 0 8px; font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px;" />
           <button type="button" class="remove-var-btn" style="background: none; border: none; color: var(--tomato); cursor: pointer; font-size: 1.1rem; padding: 0 4px;">&times;</button>
         `;
       container.appendChild(row);
       bindVarRemoveButtons();
     });
 
-    // === Image preview (File Upload) ===
-    const handleImageChange = async (e) => {
-      const file = e.target.files[0];
-      const mainInput = document.getElementById('new-item-image');
-      const preview = document.getElementById('new-item-image-preview');
-      if (file) {
-        try {
-          // Show loading state if it's a huge photo
-          preview.style.display = 'block';
-          preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="50" font-family="sans-serif">Loading...</text></svg>';
-          
-          const base64 = await compressImage(file, 600, 0.6);
-          preview.src = base64;
-          mainInput.dataset.compressedBase64 = base64;
-        } catch (err) {
-          console.error("Preview failed:", err);
-          alert("Image error: " + err.message);
-          preview.src = "";
-          preview.style.display = 'none';
-        }
-      } else {
-        preview.style.display = 'none';
-        delete mainInput.dataset.compressedBase64;
+    // === Multiple product images ===
+    const newItemImagePreviews = document.getElementById("new-item-image-previews");
+
+    function renderNewItemImagePreviews() {
+      if (!newItemImagePreviews) return;
+      newItemImagePreviews.innerHTML = selectedNewItemImages.map((src, index) => `
+        <div class="admin-image-preview">
+          <img src="${src}" alt="Product image ${index + 1}">
+          <button type="button" class="remove-new-item-image" data-index="${index}" aria-label="Remove image ${index + 1}">×</button>
+          ${index === 0 ? '<span class="primary-image-label">Main</span>' : ''}
+        </div>
+      `).join("");
+      if (isCompressingNewItemImages) {
+        newItemImagePreviews.insertAdjacentHTML("beforeend", '<span class="image-processing-note">Processing selected images…</span>');
       }
+    }
+
+    newItemImagePreviews?.addEventListener("click", (event) => {
+      const removeButton = event.target.closest(".remove-new-item-image");
+      if (!removeButton) return;
+      selectedNewItemImages.splice(Number(removeButton.dataset.index), 1);
+      renderNewItemImagePreviews();
+    });
+
+    const handleImageChange = async (event) => {
+      if (isCompressingNewItemImages) {
+        event.target.value = "";
+        alert("Please wait for the current images to finish processing.");
+        return;
+      }
+      const files = Array.from(event.target.files || []);
+      const remaining = MAX_ITEM_IMAGES - selectedNewItemImages.length;
+      if (files.length > remaining) alert(`You can add up to ${MAX_ITEM_IMAGES} images per item.`);
+      const filesToProcess = files.slice(0, Math.max(0, remaining));
+      isCompressingNewItemImages = true;
+      renderNewItemImagePreviews();
+      for (const file of filesToProcess) {
+        try {
+          selectedNewItemImages.push(await compressImage(file, 600, 0.6));
+          renderNewItemImagePreviews();
+        } catch (error) {
+          alert(`Image error: ${error.message}`);
+        }
+      }
+      isCompressingNewItemImages = false;
+      event.target.value = "";
+      renderNewItemImagePreviews();
     };
-    document.getElementById('new-item-image-cam')?.addEventListener('change', handleImageChange);
-    document.getElementById('new-item-image-file')?.addEventListener('change', handleImageChange);
+    document.getElementById("new-item-image-cam")?.addEventListener("change", handleImageChange);
+    document.getElementById("new-item-image-file")?.addEventListener("change", handleImageChange);
+
+    async function appendImagesToItem(name, files) {
+      const inventory = readInventory();
+      const item = inventory.find((entry) => entry.name === name);
+      if (!item) return;
+      const existingImages = Array.isArray(item.images) && item.images.length
+        ? item.images.slice()
+        : (item.image ? [item.image] : []);
+      const remaining = MAX_ITEM_IMAGES - existingImages.length;
+      if (remaining <= 0) {
+        showToast(`This item already has the maximum of ${MAX_ITEM_IMAGES} images.`);
+        return;
+      }
+      if (files.length > remaining) showToast(`Only ${remaining} more image${remaining === 1 ? "" : "s"} can be added.`);
+
+      try {
+        const additions = [];
+        for (const file of Array.from(files).slice(0, remaining)) {
+          additions.push(await compressImage(file, 600, 0.6));
+        }
+        if (!additions.length) return;
+        item.images = [...existingImages, ...additions];
+        item.image = item.images[0];
+        await saveInventory(inventory);
+        renderInventory();
+        showToast(`Added ${additions.length} photo${additions.length === 1 ? "" : "s"} to ${name}.`);
+      } catch (error) {
+        console.error("Could not add product images:", error);
+        showToast(`Image upload failed: ${error.message}`);
+      }
+    }
 
     function renderStockDeductions() {
       const logContainer = document.querySelector("#stock-deductions-log");
@@ -2823,6 +2906,12 @@
 
       // Inventory table quick save / delete triggers
       inventoryTbody.addEventListener("click", (e) => {
+        const addImagesBtn = e.target.closest(".btn-add-images");
+        if (addImagesBtn) {
+          addImagesBtn.closest("tr")?.querySelector(".inventory-images-input")?.click();
+          return;
+        }
+
         const saveBtn = e.target.closest(".btn-quick-save");
         if (saveBtn) {
           const name = saveBtn.dataset.name;
@@ -2835,6 +2924,15 @@
         if (deleteBtn) {
           handleQuickDelete(deleteBtn.dataset.name);
         }
+      });
+
+      inventoryTbody.addEventListener("change", (e) => {
+        const imageInput = e.target.closest(".inventory-images-input");
+        if (!imageInput || !imageInput.files?.length) return;
+        const files = Array.from(imageInput.files);
+        const name = imageInput.dataset.name;
+        imageInput.value = "";
+        appendImagesToItem(name, files);
       });
 
       // Add Catalog Item submit trigger

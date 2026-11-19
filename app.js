@@ -398,21 +398,26 @@ function renderMenu() {
         const hasVariations = item.variations && item.variations.length > 0;
         const hasImage = item.image && item.image.length > 0;
         
-        let priceDisplay = '';
-        let actionControl = '';
+        const salePriceHTML = (price, mrp) => {
+          const discount = Number(mrp) > Number(price) && Number(mrp) > 0
+            ? `<span class="item-price-detail"><strong>${formatRupees(price)}</strong><del>${formatRupees(mrp)}</del><em>${Math.round(((mrp - price) / mrp) * 100)}% off</em></span>`
+            : `<span class="item-price">${formatRupees(price)}</span>`;
+          return discount;
+        };
 
         if (isOutOfStock) {
-          priceDisplay = `<span class="item-price">${formatRupees(item.price)}</span>`;
+          priceDisplay = salePriceHTML(item.price, item.mrp);
           actionControl = `<span class="status-badge status-cancelled out-of-stock-badge" style="font-size: 0.72rem; padding: 2px 8px; font-weight:900;">Out of Stock</span>`;
         } else if (hasVariations) {
-          priceDisplay = `<select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 100%; text-overflow: ellipsis; flex-shrink: 1;">
-            ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name} · ${formatRupees(v.price)}</option>`).join('')}
-          </select>`;
+          const firstVariation = item.variations[0];
+          priceDisplay = `<div class="menu-price-control"><select class="var-select" data-item-name="${item.name}" style="background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font-weight: 800; font-size: 0.82rem; padding: 4px 6px; color: var(--ink); max-width: 100%; text-overflow: ellipsis; flex-shrink: 1;">
+            ${item.variations.map(v => `<option value="${v.name}" data-price="${v.price}" data-mrp="${v.mrp || item.mrp || 0}">${v.name} · ${formatRupees(v.price)}</option>`).join('')}
+          </select><span class="variation-price-display">${salePriceHTML(firstVariation.price, firstVariation.mrp || item.mrp)}</span></div>`;
           actionControl = `<button class="add-button" type="button" data-add-var-item="${item.name}" aria-label="Add ${item.name}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" /></svg>
             </button>`;
         } else {
-          priceDisplay = `<span class="item-price">${formatRupees(item.price)}</span>`;
+          priceDisplay = salePriceHTML(item.price, item.mrp);
           actionControl = `<button class="add-button" type="button" data-add-item="${item.name}" aria-label="Add ${item.name}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" /></svg>
             </button>`;
@@ -683,6 +688,16 @@ async function bootMenu() {
 
   document.addEventListener("change", (event) => {
     if (event.target.classList.contains("var-select")) {
+      const card = event.target.closest(".menu-card");
+      const option = event.target.selectedOptions[0];
+      const priceDisplay = card?.querySelector(".variation-price-display");
+      if (priceDisplay && option) {
+        const price = Number(option.dataset.price) || 0;
+        const mrp = Number(option.dataset.mrp) || 0;
+        priceDisplay.innerHTML = mrp > price
+          ? `<span class="item-price-detail"><strong>${formatRupees(price)}</strong><del>${formatRupees(mrp)}</del><em>${Math.round(((mrp - price) / mrp) * 100)}% off</em></span>`
+          : `<span class="item-price">${formatRupees(price)}</span>`;
+      }
       syncMenuButtons();
     }
   });

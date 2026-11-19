@@ -1,4 +1,5 @@
 const productImage = document.getElementById("product-image");
+const productThumbnails = document.getElementById("product-thumbnails");
 const productTitle = document.getElementById("product-title");
 const productCategory = document.getElementById("product-category");
 const productPrice = document.getElementById("product-price");
@@ -30,6 +31,21 @@ let maxStock = 0;
 
 function formatRupees(value) {
   return "₹" + value;
+}
+
+function updateProductPrice(price, mrp) {
+  const salePrice = Number(price) || 0;
+  const listPrice = Number(mrp) || 0;
+  productPrice.textContent = formatRupees(salePrice);
+  if (listPrice > salePrice && listPrice > 0) {
+    productMrp.hidden = false;
+    productMrp.textContent = "MRP " + formatRupees(listPrice);
+    productDiscount.hidden = false;
+    productDiscount.textContent = "-" + Math.round(((listPrice - salePrice) / listPrice) * 100) + "%";
+  } else {
+    productMrp.hidden = true;
+    productDiscount.hidden = true;
+  }
 }
 
 function showToast(message) {
@@ -69,6 +85,54 @@ function updateQtyBounds() {
   buyNowBtn.disabled = maxStock === 0;
 }
 
+function renderProductGallery() {
+  const images = Array.isArray(currentProduct.images) && currentProduct.images.length
+    ? currentProduct.images.filter((image) => typeof image === "string" && image)
+    : (currentProduct.image ? [currentProduct.image] : []);
+  productImage.replaceChildren();
+  productThumbnails.replaceChildren();
+
+  if (!images.length) {
+    const placeholder = document.createElement("div");
+    placeholder.className = "product-image-placeholder";
+    placeholder.textContent = "No image";
+    productImage.appendChild(placeholder);
+    productThumbnails.hidden = true;
+    return;
+  }
+
+  const mainImage = document.createElement("img");
+  mainImage.src = images[0];
+  mainImage.alt = currentProduct.name;
+  mainImage.className = "product-main-image";
+  productImage.appendChild(mainImage);
+
+  productThumbnails.hidden = images.length < 2;
+  if (images.length < 2) return;
+
+  images.forEach((src, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `product-thumbnail${index === 0 ? " active" : ""}`;
+    button.setAttribute("aria-label", `Show product image ${index + 1}`);
+    button.setAttribute("aria-pressed", index === 0 ? "true" : "false");
+    const thumbnail = document.createElement("img");
+    thumbnail.src = src;
+    thumbnail.alt = "";
+    button.appendChild(thumbnail);
+    button.addEventListener("click", () => {
+      mainImage.src = src;
+      productThumbnails.querySelectorAll(".product-thumbnail").forEach((item) => {
+        item.classList.remove("active");
+        item.setAttribute("aria-pressed", "false");
+      });
+      button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    });
+    productThumbnails.appendChild(button);
+  });
+}
+
 function renderProduct() {
   if (!currentProduct) return;
 
@@ -77,26 +141,10 @@ function renderProduct() {
   productDesc.textContent = currentProduct.desc || "No description.";
 
   const price = selectedVariation ? Number(selectedVariation.price) : Number(currentProduct.price || 0);
-  const mrp = Number(currentProduct.mrp || 0);
-  productPrice.textContent = formatRupees(price);
-  if (mrp > price && mrp > 0) {
-    productMrp.hidden = false;
-    productMrp.textContent = "MRP " + formatRupees(mrp);
-    const pct = Math.round(((mrp - price) / mrp) * 100);
-    productDiscount.hidden = false;
-    productDiscount.textContent = "-" + pct + "%";
-  } else {
-    productMrp.hidden = true;
-    productDiscount.hidden = true;
-  }
+  const mrp = selectedVariation ? Number(selectedVariation.mrp || currentProduct.mrp || 0) : Number(currentProduct.mrp || 0);
+  updateProductPrice(price, mrp);
 
-  const container = document.querySelector("#product-image");
-  if (currentProduct.image) {
-    container.innerHTML = '<img src="' + currentProduct.image + '" alt="' + currentProduct.name + '" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:inherit;">';
-  } else {
-    container.innerHTML = '<div class="product-image-placeholder">No image</div>';
-  }
-
+  renderProductGallery();
   maxStock = Number(currentProduct.stock || 0);
   const available = currentProduct.available !== false && maxStock > 0;
 
@@ -138,19 +186,9 @@ function renderProduct() {
     variantSelect.innerHTML = variations.map(
       (v) => '<option value="' + v.name + '">' + v.name + " · " + formatRupees(v.price) + "</option>"
     ).join("");
-    selectedVariation = variations[0];
-    productPrice.textContent = formatRupees(Number(selectedVariation.price));
-    const selectedMrp = Number(currentProduct.mrp || 0);
-    if (selectedMrp > Number(selectedVariation.price) && selectedMrp > 0) {
-      productMrp.hidden = false;
-      productMrp.textContent = "MRP " + formatRupees(selectedMrp);
-      const pct = Math.round(((selectedMrp - Number(selectedVariation.price)) / selectedMrp) * 100);
-      productDiscount.hidden = false;
-      productDiscount.textContent = "-" + pct + "%";
-    } else {
-      productMrp.hidden = true;
-      productDiscount.hidden = true;
-    }
+    selectedVariation = variations.find(v => selectedVariation && v.name === selectedVariation.name) || variations[0];
+    variantSelect.value = selectedVariation.name;
+    updateProductPrice(selectedVariation.price, selectedVariation.mrp || currentProduct.mrp);
     maxStock = Number(currentProduct.stock || 0);
   } else {
   productVariations.hidden = true;

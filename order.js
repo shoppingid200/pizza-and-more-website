@@ -754,6 +754,18 @@ async function bootOrderPage() {
   renderCart();
   bootScrollAnimations();
 
+  const checkoutSummary = document.querySelector(".checkout-summary");
+  if (checkoutSummary) {
+    const mobileCheckout = window.matchMedia("(max-width: 1060px)");
+    const syncPlaceOrderDock = () => {
+      const shouldDock = mobileCheckout.matches && checkoutSummary.getBoundingClientRect().top <= window.innerHeight;
+      document.body.classList.toggle("checkout-summary-reached", shouldDock);
+    };
+    syncPlaceOrderDock();
+    window.addEventListener("scroll", syncPlaceOrderDock, { passive: true });
+    window.addEventListener("resize", syncPlaceOrderDock);
+  }
+
   checkoutItems.addEventListener("click", (event) => {
     const button = event.target.closest("[data-summary-item]");
     if (!button) return;
