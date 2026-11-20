@@ -30,7 +30,7 @@ if (isDirectOrder) {
       cart = [directItem];
       // Do NOT save to regular cart - keep Buy Now separate
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 let minOrderPrice = 0;
 
@@ -245,14 +245,14 @@ function changeQty(name, delta) {
 
 function customerDetails() {
   const formData = new FormData(orderForm);
-  
+
   const house = String(formData.get("addrHouse") || "").trim();
   const area = String(formData.get("addrArea") || "").trim();
   const landmark = String(formData.get("addrLandmark") || "").trim();
   const city = String(formData.get("addrCity") || "").trim();
   const state = String(formData.get("addrState") || "").trim();
   const pincode = String(formData.get("addrPincode") || "").trim();
-  
+
   let fullAddress = "";
   if (house) {
     fullAddress = `${house}, ${area}`;
@@ -330,25 +330,25 @@ function updateMapPreview(lat, lng) {
   const mapContainer = document.getElementById("interactive-map");
   mapContainer.classList.add("is-visible");
   mapContainer.removeAttribute("aria-hidden");
-  
+
   if (!leafletMap) {
     leafletMap = L.map('interactive-map').setView([lat, lng], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(leafletMap);
-    
+
     leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(leafletMap);
-    
-    leafletMarker.on('dragend', function() {
+
+    leafletMarker.on('dragend', function () {
       const position = leafletMarker.getLatLng();
       setMapCoordinates(position.lat, position.lng);
     });
 
-    leafletMap.on('click', function(e) {
+    leafletMap.on('click', function (e) {
       leafletMarker.setLatLng(e.latlng);
       setMapCoordinates(e.latlng.lat, e.latlng.lng);
     });
-    
+
     setTimeout(() => leafletMap.invalidateSize(), 200);
   } else {
     leafletMap.setView([lat, lng], 15);
@@ -414,13 +414,13 @@ async function syncOrdersFromApi() {
   // Only keep orders that belong to this customer (match by IDs we have locally)
   const localOrders = readAllOrders();
   const localIds = new Set(localOrders.map(o => o.id));
-  
+
   // Update local orders with server status, keep local-only orders as-is
   const merged = localOrders.map(localOrder => {
     const serverOrder = apiOrders.find(o => o.id === localOrder.id);
     return serverOrder || localOrder;
   });
-  
+
   saveAllOrders(merged);
   return merged;
 }
@@ -586,7 +586,7 @@ async function submitOrder(event) {
   }
 
   const details = customerDetails();
-  
+
   // Save profile for future orders
   const formData = new FormData(orderForm);
   const profile = {
@@ -753,7 +753,7 @@ async function bootOrderPage() {
         }
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Auto-remove out-of-stock items from cart on page load
   try {
@@ -824,7 +824,7 @@ async function bootOrderPage() {
     mapSearchInput.addEventListener("input", (event) => {
       const query = event.target.value.trim();
       clearTimeout(searchTimeout);
-      
+
       if (query.length < 3) {
         mapSearchResults.hidden = true;
         if (!query && !document.querySelector("#latitude").value) {
@@ -843,7 +843,7 @@ async function bootOrderPage() {
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=5`);
           const data = await res.json();
-          
+
           if (!data || data.length === 0) {
             mapSearchResults.innerHTML = `<li class="empty-li">No results found in India.</li>`;
             return;
@@ -875,10 +875,10 @@ async function bootOrderPage() {
 
       document.querySelector("#latitude").value = lat;
       document.querySelector("#longitude").value = lon;
-      
+
       const gmapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
       document.querySelector("#map-link").value = gmapsLink;
-      
+
       locationStatus.textContent = `Selected: ${name} (You can drag the pin to adjust)`;
       updateMapPreview(lat, lon);
     });
@@ -901,7 +901,7 @@ async function bootOrderPage() {
   // Format phone field and show green tick on 10 digits
   const phoneInput = document.getElementById("customer-phone");
   const phoneTick = document.getElementById("phone-valid-tick");
-  
+
   // Load saved profile
   try {
     const saved = JSON.parse(localStorage.getItem("mount-parche-saved-profile"));
@@ -914,7 +914,7 @@ async function bootOrderPage() {
       if (document.getElementById("address-house")) document.getElementById("address-house").value = saved.addrHouse || "";
       if (document.getElementById("address-area")) document.getElementById("address-area").value = saved.addrArea || "";
       if (document.getElementById("address-landmark")) document.getElementById("address-landmark").value = saved.addrLandmark || "";
-      
+
       // trigger phone validation
       if (saved.customerPhone && saved.customerPhone.length === 10 && phoneTick) {
         phoneTick.style.opacity = "1";
@@ -954,7 +954,7 @@ async function bootOrderPage() {
         }
       }
     }
-  } catch(e) {}
+  } catch (e) { }
 
   if (phoneInput && phoneTick) {
     phoneInput.addEventListener("input", (e) => {
@@ -976,13 +976,13 @@ async function bootOrderPage() {
             const postOffice = data[0].PostOffice[0];
             const cityInput = document.getElementById("address-city");
             const stateInput = document.getElementById("address-state");
-            
+
             if (cityInput && !cityInput.value) cityInput.value = postOffice.District;
             if (stateInput && !stateInput.value) stateInput.value = postOffice.State;
-            
+
             showToast("Address details auto-filled!");
           }
-        } catch(err) {
+        } catch (err) {
           console.error("Pincode API failed", err);
         }
       }
