@@ -195,17 +195,23 @@ module.exports = async (req, res) => {
       // Send Telegram notification (best effort)
       try {
         const { sendTelegramMessage } = require("./telegram");
+        const escapeHtml = (str) => String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const orderText = [
           "<b>New Order #" + order.id + "</b>",
-          "Customer: " + (order.details.name || "N/A"),
-          "Phone: " + (order.details.phone || "N/A"),
-          "Payment: " + (order.details.payment || "N/A"),
+          "Customer: " + escapeHtml(order.details.name || "N/A"),
+          "Phone: " + escapeHtml(order.details.phone || "N/A"),
+          "Payment: " + escapeHtml(order.details.payment || "N/A"),
           "Total: ₹" + order.total,
-          "Items: " + (order.items || []).map((item) => item.qty + " × " + item.name).join(", "),
-          "Address: " + (order.details.address || "N/A"),
-          "Service: " + (order.details.service || "N/A") + " · " + (order.details.time || "N/A"),
+          "Items: " + (order.items || []).map((item) => item.qty + " × " + escapeHtml(item.name)).join(", "),
+          "Address: " + escapeHtml(order.details.address || "N/A"),
+          "Service: " + escapeHtml(order.details.service || "N/A") + " · " + escapeHtml(order.details.time || "N/A"),
         ].join("\n");
-        await sendTelegramMessage(orderText);
+        const tgResult = await sendTelegramMessage(orderText);
+        if (tgResult && tgResult.skipped) {
+          console.warn("Telegram notification skipped:", tgResult.reason);
+        } else {
+          console.log("Telegram notification sent successfully for order", order.id);
+        }
       } catch (telegramError) {
         console.error("Telegram notification failed:", telegramError);
       }
