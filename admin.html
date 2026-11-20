@@ -561,6 +561,7 @@
     const ALL_ORDERS_KEY = "mount-parche-all-orders";
     const ORDERS_API_URL = "/api/orders";
     const INVENTORY_API_URL = "/api/inventory";
+    const UPLOAD_IMAGE_API_URL = "/api/upload-image";
 
     const ordersList = document.querySelector("#admin-orders-list");
     const searchInput = document.querySelector("#admin-search");
@@ -992,6 +993,19 @@
           img.onerror();
         }
       });
+    }
+
+    async function uploadImageToCloudinary(base64) {
+      const res = await fetch(UPLOAD_IMAGE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ image: base64 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || `Image upload failed (${res.status})`);
+      const url = data.secure_url || data.url;
+      if (!url) throw new Error("No image URL returned");
+      return url;
     }
 
     function saveInventoryLocal(inventory) {
@@ -2695,7 +2709,7 @@
       renderNewItemImagePreviews();
       for (const file of filesToProcess) {
         try {
-          selectedNewItemImages.push(await compressImage(file, 600, 0.6));
+          selectedNewItemImages.push(await uploadImageToCloudinary(await compressImage(file, 600, 0.6)));
           renderNewItemImagePreviews();
         } catch (error) {
           alert(`Image error: ${error.message}`);
@@ -2725,7 +2739,7 @@
       try {
         const additions = [];
         for (const file of Array.from(files).slice(0, remaining)) {
-          additions.push(await compressImage(file, 600, 0.6));
+          additions.push(await uploadImageToCloudinary(await compressImage(file, 600, 0.6)));
         }
         if (!additions.length) return;
         item.images = [...existingImages, ...additions];
