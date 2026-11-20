@@ -522,7 +522,7 @@ async function submitOrder(event) {
 
   if (!orderForm.reportValidity()) return;
 
-  const submitBtn = orderForm.querySelector("button[type='submit']");
+  const submitBtn = orderForm.querySelector("button[type='submit']") || document.getElementById("place-order-btn");
   const originalBtnText = submitBtn ? submitBtn.textContent : "Place order";
   if (submitBtn) {
     submitBtn.disabled = true;
