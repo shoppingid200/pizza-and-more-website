@@ -536,7 +536,6 @@ async function submitOrder(event) {
   }
 
   const restoreBtn = () => {
-    clearInterval(stepInterval);
     if (submitBtn) {
       submitBtn.textContent = originalBtnText;
       submitBtn.disabled = false;
