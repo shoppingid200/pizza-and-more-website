@@ -2264,6 +2264,25 @@ footer strong {
     gap: 12px;
   }
 
+  .menu-card .item-meta {
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .menu-card .qty-controls {
+    position: static;
+    max-width: 100%;
+    gap: 6px;
+    padding: 3px;
+  }
+
+  .menu-card .qty-controls button {
+    flex: 0 0 30px;
+    min-width: 30px;
+    min-height: 30px;
+  }
+
   .form-panel,
   .admin-stat-card {
     padding: 16px;
