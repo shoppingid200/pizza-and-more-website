@@ -191,6 +191,25 @@ module.exports = async (req, res) => {
 
       const orders = Array.isArray(storedOrders) ? storedOrders : [];
       await Promise.all([redis.set(ORDERS_KEY, [...orders, order]), redis.set(INVENTORY_KEY, inventory)]);
+
+      // Send Telegram notification (best effort)
+      try {
+        const { sendTelegramMessage } = require("./telegram");
+        const orderText = [
+          "<b>New Order #" + order.id + "</b>",
+          "Customer: " + (order.details.name || "N/A"),
+          "Phone: " + (order.details.phone || "N/A"),
+          "Payment: " + (order.details.payment || "N/A"),
+          "Total: ₹" + order.total,
+          "Items: " + (order.items || []).map((item) => item.qty + " × " + item.name).join(", "),
+          "Address: " + (order.details.address || "N/A"),
+          "Service: " + (order.details.service || "N/A") + " · " + (order.details.time || "N/A"),
+        ].join("\n");
+        await sendTelegramMessage(orderText);
+      } catch (telegramError) {
+        console.error("Telegram notification failed:", telegramError);
+      }
+
       return res.status(201).json({ order, inventory });
     }
 
