@@ -2264,6 +2264,32 @@ footer strong {
     gap: 12px;
   }
 
+  .menu-card-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .menu-card-content > .item-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px;
+  }
+
+  .menu-card-content > .item-top > :last-child {
+    justify-self: end;
+  }
+
+  .menu-card-content .menu-price-control {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .menu-card-content > .item-meta {
+    margin-top: auto;
+  }
+
   .menu-card .item-meta {
     min-width: 0;
     flex-wrap: wrap;

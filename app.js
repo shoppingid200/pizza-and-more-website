@@ -485,7 +485,7 @@ function renderMenu() {
         return `
           <article class="menu-card reveal is-visible" data-product="${safeId(item.name)}" onclick="window.location.href='product.html?id=${encodeURIComponent(safeId(item.name))}'" style="${hasImage ? 'padding:0;' : ''}">
             ${imageHTML}
-            <div style="padding:${hasImage ? '12px 16px 16px' : '0'};">
+            <div class="menu-card-content" style="padding:${hasImage ? '12px 16px 16px' : '0'};">
               <div class="item-top" style="flex-wrap: wrap;">
                 <h3 class="item-name" style="word-break: break-word;">${item.name}</h3>
                 ${priceDisplay}
