@@ -487,7 +487,7 @@ function renderMenu() {
             ${imageHTML}
             <div class="menu-card-content" style="padding:${hasImage ? '12px 16px 16px' : '0'};">
               <div class="item-top" style="flex-wrap: wrap;">
-                <h3 class="item-name" style="word-break: break-word;">${item.name}</h3>
+                <h3 class="item-name">${item.name}</h3>
                 ${priceDisplay}
               </div>
               <p class="item-desc">${item.desc}</p>
