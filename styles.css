@@ -1188,7 +1188,7 @@ h1 {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.18;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .item-price {
