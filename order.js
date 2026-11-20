@@ -530,21 +530,10 @@ async function submitOrder(event) {
     submitBtn.innerHTML = `
       <span class="btn-processing">
         <span class="btn-spinner"></span>
-        <span class="btn-step-text">Verifying items...</span>
+        <span class="btn-step-text">Processing your order...</span>
       </span>
     `;
   }
-
-  // Cycle through engaging step messages
-  const steps = ["Checking availability...", "Securing your order...", "Almost there..."];
-  let stepIdx = 0;
-  const stepInterval = setInterval(() => {
-    if (submitBtn && stepIdx < steps.length) {
-      const stepText = submitBtn.querySelector(".btn-step-text");
-      if (stepText) stepText.textContent = steps[stepIdx];
-      stepIdx++;
-    }
-  }, 800);
 
   const restoreBtn = () => {
     clearInterval(stepInterval);
