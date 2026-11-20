@@ -2271,14 +2271,14 @@ footer strong {
   }
 
   .menu-card-content > .item-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .menu-card-content > .item-top > :last-child {
-    justify-self: end;
+    align-self: flex-start;
   }
 
   .menu-card-content .menu-price-control {
