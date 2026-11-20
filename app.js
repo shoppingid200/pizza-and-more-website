@@ -510,10 +510,7 @@ function renderMenu() {
       const card = event.target.closest(".menu-card");
       if (!card) return;
       const interactive = event.target.closest("button, select, input, a");
-      if (interactive) {
-        event.stopPropagation();
-        return;
-      }
+      if (interactive) return;
       const key = card.dataset.product;
       if (!key) return;
       window.location.href = `product.html?id=${encodeURIComponent(key)}`;
