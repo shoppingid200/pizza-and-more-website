@@ -1,10 +1,3 @@
-const { Redis } = require("@upstash/redis");
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
-});
-
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
@@ -28,11 +21,11 @@ async function sendTelegramMessage(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { skipped: true, reason: "Telegram env vars not configured" };
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const url = "https://api.telegram.org/bot" + token + "/sendMessage";
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: "HTML" }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.ok) {
@@ -41,7 +34,7 @@ async function sendTelegramMessage(text) {
   return data;
 }
 
-module.exports = async (req, res) => {
+async function handler(req, res) {
   setCors(res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -56,7 +49,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: String(error?.message || "Telegram request failed") });
   }
-};
+}
 
+module.exports = handler;
 module.exports.sendTelegramMessage = sendTelegramMessage;
-module.exports.default = module.exports;
