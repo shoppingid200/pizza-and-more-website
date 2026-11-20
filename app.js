@@ -483,7 +483,7 @@ function renderMenu() {
           : '';
 
         return `
-          <article class="menu-card reveal is-visible" data-product="${safeId(item.name)}" onclick="window.location.href='product.html?id=${encodeURIComponent(safeId(item.name))}'" style="${hasImage ? 'padding:0;' : ''}">
+          <article class="menu-card reveal is-visible" data-product="${safeId(item.name)}" style="${hasImage ? 'padding:0;' : ''}">
             ${imageHTML}
             <div class="menu-card-content" style="padding:${hasImage ? '12px 16px 16px' : '0'};">
               <div class="item-top" style="flex-wrap: wrap;">
@@ -509,7 +509,11 @@ function renderMenu() {
     menuGrid.addEventListener("click", (event) => {
       const card = event.target.closest(".menu-card");
       if (!card) return;
-      if (event.target.closest("button, select, input")) return;
+      const interactive = event.target.closest("button, select, input, a");
+      if (interactive) {
+        event.stopPropagation();
+        return;
+      }
       const key = card.dataset.product;
       if (!key) return;
       window.location.href = `product.html?id=${encodeURIComponent(key)}`;
